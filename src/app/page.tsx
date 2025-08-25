@@ -91,9 +91,13 @@ export default function Home() {
 
   const styles = {
     fontFamily: 'Freigeist, sans-serif',
-    fontSize: 'clamp(2rem, 5vw, 8rem)',
-    lineHeight: "1.12"
+    lineHeight: "1.12",
+    fontSize: "clamp(2.8rem, 5vw, 8rem)"
   };
+
+  const stylesButtons = {
+    fontSize: "clamp(1.2rem, 5vw, 8rem)"
+  }
 
   return (
     <>
@@ -106,7 +110,7 @@ export default function Home() {
             Software Developer with a background that bridges engineering and design — currently at <ZigzagButton el="a" href="https://www.innocap.com/en/" target="_blank" onClick={() => console.log('Innocap clicked')}>Innocap</ZigzagButton>, where I build data intensive systems that process large volumes of hedge fund trading activity.
           </h2>
           <div>
-            <h3 style={styles} className="sm:flex-row flex-col flex gap-6">
+            <h3 style={stylesButtons} className="flex md:gap-6 gap-2">
               <span>
                 <ZigzagButton el="a" href="https://github.com/mattparisien" target="_blank" onClick={() => console.log('Software clicked')}>Software</ZigzagButton>
                 ,

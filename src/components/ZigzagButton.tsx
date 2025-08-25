@@ -71,7 +71,6 @@ export default function ZigzagButton({
 
     const styles = {
         fontFamily: 'Freigeist, sans-serif',
-        fontSize: 'clamp(2rem, 5vw, 8rem)',
         lineHeight: "1.12"
     };
 
@@ -101,9 +100,10 @@ export default function ZigzagButton({
         style: {
             ...zigzagStyle,
             border: 'none',
-            padding: '0',
+            padding: '0 0 0.1eem 0',
             margin: '0',
             cursor: 'pointer',
+            
             ...styles
         },
         className: `zigzag-button ${className}`

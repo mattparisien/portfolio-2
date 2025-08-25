@@ -18,6 +18,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link
+          rel="preload"
+          href="/assets/fonts/Fontspring-DEMO-freigeist-conlight.otf"
+          as="font"
+          type="font/otf"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body className="antialiased">
         {children}
       </body>
