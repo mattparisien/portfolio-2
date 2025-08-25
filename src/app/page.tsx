@@ -106,7 +106,7 @@ export default function Home() {
             Software Developer with a background that bridges engineering and design — currently at <ZigzagButton el="a" href="https://www.innocap.com/en/" target="_blank" onClick={() => console.log('Innocap clicked')}>Innocap</ZigzagButton>, where I build data intensive systems that process large volumes of hedge fund trading activity.
           </h2>
           <div>
-            <h3 style={styles} className="flex gap-6">
+            <h3 style={styles} className="sm:flex-row flex-col flex gap-6">
               <span>
                 <ZigzagButton el="a" href="https://github.com/mattparisien" target="_blank" onClick={() => console.log('Software clicked')}>Software</ZigzagButton>
                 ,
@@ -134,7 +134,7 @@ export default function Home() {
           {/* Close button positioned at top right of screen */}
           <button
             onClick={() => setIsModalOpen(false)}
-            className="fixed top-14 right-14 text-black hover:opacity-70 z-20 w-8 h-8 cursor-pointer"
+            className="fixed top-2 right-14 text-black hover:opacity-70 z-20 w-8 h-8 cursor-pointer"
           >
             <svg width="50" height="50" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M24 8L8 24M8 8L24 24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -142,7 +142,7 @@ export default function Home() {
           </button>
 
           <div
-            className="relative max-h-full p-14 w-full overflow-hidden"
+            className="relative max-h-full sm:p-14 w-full overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
 

@@ -76,12 +76,13 @@ export default function ZigzagButton({
     };
 
     const zigzagStyle = {
+        display: "inline",
         position: 'relative' as const,
         backgroundImage: 'url(/zigzag.svg)',
         backgroundRepeat: 'repeat-x' as const,
         backgroundPosition: 'bottom' as const,
         backgroundSize: '12px 10px',
-        paddingBottom: '2px'
+        paddingBottom: '0.05em' // Reduced from 0.15em for closer spacing
     };
 
     // Split text into individual letters for animation
