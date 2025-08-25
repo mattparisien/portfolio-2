@@ -107,7 +107,7 @@ export default function Home() {
             className="text-black leading-none"
             style={styles}
           >
-            Software Developer with a background that bridges engineering and design — currently at <ZigzagButton el="a" href="https://www.innocap.com/en/" target="_blank" onClick={() => console.log('Innocap clicked')}>Innocap</ZigzagButton>, where I build data intensive systems that process large volumes of hedge fund trading activity.
+            Software Developer with a background that bridges engineering and design <span aria-hidden="true" className="mx-2 inline-block align-baseline w-8 max-w-[6ch] h-px bg-black translate-y-[-0.2em]"></span><span className="sr-only">—</span> currently at <ZigzagButton el="a" href="https://www.innocap.com/en/" target="_blank" onClick={() => console.log('Innocap clicked')}>Innocap</ZigzagButton>, where I build data intensive systems that process large volumes of hedge fund trading activity.
           </h2>
           <div>
             <h3 style={stylesButtons} className="flex md:gap-6 gap-2">
