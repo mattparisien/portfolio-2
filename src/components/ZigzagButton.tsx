@@ -41,7 +41,7 @@ export default function ZigzagButton({
             timelineRef.current.to({}, {
                 duration: 0,
                 repeat: -1,
-                repeatDelay: 0.3,
+                repeatDelay: 0.1,
                 onRepeat: () => {
                     tick = (tick + 1) % colors.length;
                     gsap.set(letters, { color: (i) => colors[(i + tick) % colors.length] });
@@ -71,17 +71,17 @@ export default function ZigzagButton({
 
     const styles = {
         fontFamily: 'Freigeist, sans-serif',
-        lineHeight: "1.12"
+        lineHeight: '1',
     };
 
     const zigzagStyle = {
-        display: "inline",
+        display: 'inline-flex', // ensures consistent vertical box
+        alignItems: 'flex-end', // align letters to baseline visually
         position: 'relative' as const,
-        backgroundImage: 'url(/zigzag.svg)',
+        backgroundImage: 'repeating-linear-gradient(to right, currentColor 0 6px, transparent 6px 12px)',
         backgroundRepeat: 'repeat-x' as const,
-        backgroundPosition: 'bottom' as const,
-        backgroundSize: '12px 10px',
-        paddingBottom: '0.05em' // Reduced from 0.15em for closer spacing
+        backgroundPosition: '0 100%' as const,
+        backgroundSize: 'auto 2px',
     };
 
     // Split text into individual letters for animation
@@ -89,6 +89,7 @@ export default function ZigzagButton({
         return text.split('').map((char, index) => (
             <span
                 key={index}
+                style={{ display: 'inline-block', lineHeight: '1em' }}
             >
                 {char}
             </span>
@@ -100,10 +101,9 @@ export default function ZigzagButton({
         style: {
             ...zigzagStyle,
             border: 'none',
-            padding: '0 0 0.1eem 0',
+            padding: '0 0 0.05em 0', // tighter baseline padding
             margin: '0',
             cursor: 'pointer',
-            
             ...styles
         },
         className: `zigzag-button ${className}`

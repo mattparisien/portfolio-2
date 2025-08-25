@@ -121,9 +121,11 @@ export default function Home() {
                 </ZigzagButton>
                 ,
               </span>
-              <ZigzagButton el="a" href="mailto:matthewparisien4@gmail.com" onClick={() => console.log('Contact clicked')}>
-                Contact
-              </ZigzagButton>
+              <span>
+                <ZigzagButton el="a" href="mailto:matthewparisien4@gmail.com" onClick={() => console.log('Contact clicked')}>
+                  Contact
+                </ZigzagButton>
+              </span>
             </h3>
           </div>
         </div>
@@ -138,9 +140,9 @@ export default function Home() {
           {/* Close button positioned at top right of screen */}
           <button
             onClick={() => setIsModalOpen(false)}
-            className="fixed top-2 right-14 text-black hover:opacity-70 z-20 w-8 h-8 cursor-pointer"
+            className="fixed top-4 right-4 sm:right-14 sm:top-10 text-black hover:opacity-70 z-20 w-8 h-8 cursor-pointer"
           >
-            <svg width="50" height="50" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="100%" height="100%" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M24 8L8 24M8 8L24 24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
