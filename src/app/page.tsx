@@ -147,7 +147,7 @@ export default function Home() {
           >
 
             {/* Image Display */}
-            <div className="embla overflow-hidden" ref={emblaRef}>
+            <div className="embla overflow-hidden cursor-grab" ref={emblaRef}>
               <div className="embla__container flex">
                 {media.map((item, index) => (
                   <div className="embla__slide flex-[0_0_auto] min-w-0 h-[50vh] flex items-center" key={index}>
@@ -176,14 +176,14 @@ export default function Home() {
             <div className="flex justify-center gap-4 mt-6">
               <button
                 onClick={scrollPrev}
-                className="text-black text-3xl hover:opacity-70 transition-opacity"
+                className="text-black text-3xl hover:opacity-70 transition-opacity cursor-pointer"
                 style={{ fontFamily: 'Freigeist, sans-serif' }}
               >
                 ←
               </button>
               <button
                 onClick={scrollNext}
-                className="text-black text-3xl hover:opacity-70 transition-opacity"
+                className="text-black text-3xl hover:opacity-70 transition-opacity cursor-pointer"
                 style={{ fontFamily: 'Freigeist, sans-serif' }}
               >
                 →
