@@ -8,7 +8,8 @@ export const metadata: Metadata = {
   icons: [
     { rel: "icon", type: "image/svg+xml", url: "/favicon.svg", sizes: "16x16" }, // optional
 
-  ]
+  ],
+
 };
 
 export default function RootLayout({
@@ -26,6 +27,8 @@ export default function RootLayout({
           type="font/otf"
           crossOrigin="anonymous"
         />
+        <meta name="robots" content="noindex, nofollow"></meta>
+
       </head>
       <body className="antialiased">
         {children}
