@@ -27,7 +27,8 @@ export default function ZigzagButton({
         const button = buttonRef.current;
         if (!button) return;
 
-        const letters = button.querySelectorAll('span');
+        // Only target actual letter spans (exclude gap spacers)
+        const letters = button.querySelectorAll('span[data-char="true"]');
 
         const handleMouseEnter = () => {
             if (timelineRef.current) timelineRef.current.kill();
@@ -41,7 +42,7 @@ export default function ZigzagButton({
             timelineRef.current.to({}, {
                 duration: 0,
                 repeat: -1,
-                repeatDelay: 0.1,
+                repeatDelay: 0.2,
                 onRepeat: () => {
                     tick = (tick + 1) % colors.length;
                     gsap.set(letters, { color: (i) => colors[(i + tick) % colors.length] });
@@ -84,16 +85,24 @@ export default function ZigzagButton({
         backgroundSize: 'auto 2px',
     };
 
-    // Split text into individual letters for animation
+    // Split text into individual letters for animation while preserving spaces
     const renderAnimatedText = (text: string) => {
-        return text.split('').map((char, index) => (
-            <span
-                key={index}
-                style={{ display: 'inline-block', lineHeight: '1em' }}
-            >
-                {char}
-            </span>
-        ));
+        const parts = text.split(/(\s+)/); // keep spaces as separate tokens
+        return parts.map((segment, i) => {
+            if (/^\s+$/.test(segment)) {
+                // Render a fixed-width spacer so words stay visually separated in flex context
+                return <span key={`gap-${i}`} aria-hidden="true" style={{ display: 'inline-block', width: '0.5ch' }} />;
+            }
+            return segment.split('').map((char, j) => (
+                <span
+                    key={`c-${i}-${j}`}
+                    data-char="true"
+                    style={{ display: 'inline-block', lineHeight: '1em' }}
+                >
+                    {char}
+                </span>
+            ));
+        });
     };
 
     const commonProps = {
