@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: "Matthew Parisien",
   description: "Matthew Parisien — Software Developer",
   icons: [
-    { rel: "icon", type: "image/svg+xml", url: "/favicon.ico", sizes: "16x16" }, // optional
+    { rel: "icon", type: "image/svg+xml", url: "/favicon.svg", sizes: "16x16" }, // optional
 
   ]
 };
