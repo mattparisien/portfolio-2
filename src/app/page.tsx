@@ -105,11 +105,10 @@ export default function Home() {
         className="flex items-start justify-start sm:px-8 sm:py-5 px-4 py-3"
         style={{
           minHeight: '100dvh',
-          // Fallback for older Safari
           height: '100dvh',
           WebkitMinHeight: '-webkit-fill-available',
-          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.5rem)'
-        }}
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.5rem)',
+        } as React.CSSProperties}
       >
         <div className="flex flex-col justify-between items-start h-full w-full">
           <h2
