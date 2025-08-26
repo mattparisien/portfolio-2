@@ -101,8 +101,17 @@ export default function Home() {
 
   return (
     <>
-      <main className="h-screen flex items-start justify-start sm:px-8 sm:py-5 px-4 py-3">
-        <div className="flex flex-col justify-between items-start h-full">
+      <main
+        className="flex items-start justify-start sm:px-8 sm:py-5 px-4 py-3"
+        style={{
+          minHeight: '100dvh',
+          // Fallback for older Safari
+          height: '100dvh',
+          WebkitMinHeight: '-webkit-fill-available',
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.5rem)'
+        }}
+      >
+        <div className="flex flex-col justify-between items-start h-full w-full">
           <h2
             className="text-black leading-none"
             style={styles}

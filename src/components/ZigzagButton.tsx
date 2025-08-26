@@ -8,6 +8,7 @@ interface ZigzagButtonProps {
     el?: 'button' | 'a';
     href?: string;
     target?: string;
+    underline?: 'zigzag' | 'dashed' | 'squiggle';
 }
 
 export default function ZigzagButton({
@@ -16,7 +17,8 @@ export default function ZigzagButton({
     className = "",
     el = 'button',
     href,
-    target
+    target,
+    underline = 'dashed'
 }: ZigzagButtonProps) {
     const buttonRef = useRef<HTMLButtonElement | HTMLAnchorElement>(null);
     const timelineRef = useRef<gsap.core.Timeline | null>(null);
@@ -75,14 +77,40 @@ export default function ZigzagButton({
         lineHeight: '1',
     };
 
-    const zigzagStyle = {
-        display: 'inline-flex', // ensures consistent vertical box
-        alignItems: 'flex-end', // align letters to baseline visually
+    const squiggleData = encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="100" height="6" viewBox="0 0 100 6"><path d="M0 3c5-4 15 4 20 0s15-4 20 0 15 4 20 0 15-4 20 0 15 4 20 0" stroke="currentColor" stroke-width="1" fill="none" stroke-linecap="round"/></svg>`);
+
+    const underlineStyles = useMemo(() => {
+        switch (underline) {
+            case 'zigzag':
+                return {
+                    backgroundImage: 'linear-gradient(white 0,white calc(100% - .4rem),transparent calc(100% - .4rem),transparent calc(100% - .2rem),white calc(100% - .2rem),white 100%),linear-gradient(90deg,transparent,transparent 50%,currentColor 50%,currentColor 100%)',
+                    backgroundRepeat: 'repeat-x',
+                    backgroundPosition: 'bottom',
+                    backgroundSize: '200% 100%, .14em 6px'
+                } as const;
+            case 'squiggle':
+                return {
+                    backgroundImage: `url("data:image/svg+xml,${squiggleData}")`,
+                    backgroundRepeat: 'repeat-x',
+                    backgroundPosition: '0 100%',
+                    backgroundSize: 'auto 6px'
+                } as const;
+            case 'dashed':
+            default:
+                return {
+                    backgroundImage: 'repeating-linear-gradient(to right, currentColor 0 6px, transparent 6px 12px)',
+                    backgroundRepeat: 'repeat-x',
+                    backgroundPosition: '0 100%',
+                    backgroundSize: 'auto 2px'
+                } as const;
+        }
+    }, [underline, squiggleData]);
+
+    const baseUnderlineContainer = {
+        display: 'inline-flex',
+        alignItems: 'flex-end',
         position: 'relative' as const,
-        backgroundImage: 'repeating-linear-gradient(to right, currentColor 0 6px, transparent 6px 12px)',
-        backgroundRepeat: 'repeat-x' as const,
-        backgroundPosition: '0 100%' as const,
-        backgroundSize: 'auto 2px',
+        ...underlineStyles
     };
 
     // Split text into individual letters for animation while preserving spaces
@@ -108,9 +136,9 @@ export default function ZigzagButton({
     const commonProps = {
         onClick,
         style: {
-            ...zigzagStyle,
+            ...baseUnderlineContainer,
             border: 'none',
-            padding: '0 0 0.05em 0', // tighter baseline padding
+            padding: '0 0 0.05em 0',
             margin: '0',
             cursor: 'pointer',
             ...styles
