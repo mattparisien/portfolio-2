@@ -92,7 +92,7 @@ export default function Home() {
   const styles = {
     fontFamily: 'Freigeist, sans-serif',
     lineHeight: "1.12",
-    fontSize: "clamp(2.8rem, 5vw, 8rem)"
+    fontSize: "clamp(2.3rem, 5vw, 8rem)"
   };
 
   const stylesButtons = {
@@ -101,7 +101,7 @@ export default function Home() {
 
   return (
     <>
-      <main className="h-screen flex items-start justify-start px-8 py-5">
+      <main className="h-screen flex items-start justify-start sm:px-8 sm:py-5 px-4 py-3">
         <div className="flex flex-col justify-between items-start h-full">
           <h2
             className="text-black leading-none"
