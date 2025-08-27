@@ -10,7 +10,7 @@ interface MediaItem {
 }
 
 // Simple seeded random generator (mulberry32)
-function mulberry32(seed) {
+function mulberry32(seed: number) {
   return function() {
     let t = seed += 0x6D2B79F5;
     t = Math.imul(t ^ (t >>> 15), t | 1);
@@ -20,9 +20,9 @@ function mulberry32(seed) {
 }
 
 // Fisher–Yates shuffle with seed
-function shuffle(array, seed) {
+function shuffle(array: unknown[], seed: number) {
   const random = mulberry32(seed);
-  let arr = array.slice(); // copy so original isn’t mutated
+  const arr = array.slice(); // copy so original isn’t mutated
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
@@ -75,7 +75,7 @@ export default function Home() {
         const mediaItems = data.media || [];
 
         // Set media state first
-        setMedia(shuffle(mediaItems, 125)); // Shuffle with fixed seed for consistent order
+        setMedia(shuffle(mediaItems, 125) as MediaItem[]); // Shuffle with fixed seed for consistent order
 
         // Preload all media in background
         const preloadPromises = mediaItems.map((item: MediaItem) => {
