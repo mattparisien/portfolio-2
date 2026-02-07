@@ -139,26 +139,18 @@ export default function Home() {
           >
             Matthew Parisien is a software developer and creative technologist based in Montreal, working at the intersection of engineering and design. He builds digital systems and tools where creative thinking informs not just aesthetics, but structure, usability, and execution.
 
-With a background that spans data-driven development and years leading a creative studio, Matthew approaches engineering as a creative practice—translating abstract ideas into clear, scalable systems and collaborating seamlessly across technical and creative teams. He is currently working at Innocap, where he builds data-driven platforms and AI-powered tools that improve how teams access, interpret, and act on information.
+            With a background that spans data-driven development and years leading a creative studio, Matthew approaches engineering as a creative practice—translating abstract ideas into clear, scalable systems and collaborating seamlessly across technical and creative teams. He is currently working at Innocap, where he builds data-driven platforms and AI-powered tools.
           </h2>
-          <div>
-            <h3 style={stylesButtons} className="flex md:gap-6 gap-2">
-              <span>
-                <ZigzagButton el="a" href="https://github.com/mattparisien" target="_blank" onClick={() => console.log('Software clicked')}>Software</ZigzagButton>
-                ,
-              </span>
-              <span>
-                <ZigzagButton onClick={() => setIsModalOpen(true)}>
-                  Creative Work
-                </ZigzagButton>
-                ,
-              </span>
-              <span>
-                <ZigzagButton el="a" href="mailto:matthewparisien4@gmail.com" onClick={() => console.log('Contact clicked')}>
-                  Contact
-                </ZigzagButton>
-              </span>
-            </h3>
+          <div className='flex gap-10 [&>*]:cursor-pointer [&>*]:decoration-[2px] [&>*]:decoration-black [&>*]:underline-offset-2 [&>*]:hover:underline' style={{ ...styles }}>
+            <a href="https://github.com/mattparisien" target="_blank" onClick={() => console.log('Software clicked')}>Software</a>
+
+            <a onClick={() => setIsModalOpen(true)}>
+              Creative Work
+            </a>
+
+            <a href="mailto:matthewparisien4@gmail.com" onClick={() => console.log('Contact clicked')}>
+              Contact
+            </a>
           </div>
         </div>
       </main>
@@ -188,7 +180,7 @@ With a background that spans data-driven development and years leading a creativ
             <div className="embla overflow-hidden cursor-grab" ref={emblaRef}>
               <div className="embla__container flex">
                 {media.map((item, index) => (
-                  <div className="embla__slide flex-[0_0_auto] min-w-0 h-[50vh] flex items-center" key={index}>
+                  <div className="embla__slide flex-[0_0_auto] min-w-0 h-[65vh] flex items-center" key={index}>
                     {item.type === 'image' ? (
                       <img
                         src={item.url}
