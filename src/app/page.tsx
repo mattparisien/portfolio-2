@@ -11,7 +11,7 @@ interface MediaItem {
 
 // Simple seeded random generator (mulberry32)
 function mulberry32(seed: number) {
-  return function() {
+  return function () {
     let t = seed += 0x6D2B79F5;
     t = Math.imul(t ^ (t >>> 15), t | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
@@ -114,7 +114,7 @@ export default function Home() {
   const styles = {
     fontFamily: 'Freigeist, sans-serif',
     lineHeight: "1.12",
-    fontSize: "clamp(2.3rem, 5vw, 8rem)"
+    fontSize: "3rem"
   };
 
   const stylesButtons = {
@@ -124,7 +124,7 @@ export default function Home() {
   return (
     <>
       <main
-        className="flex items-start justify-start sm:px-8 sm:py-5 px-4 py-3"
+        className="flex items-start justify-start sm:px-8 sm:py-5 px-4 py-3 bg-[#FC79C8]"
         style={{
           minHeight: '100dvh',
           height: '100dvh',
@@ -137,7 +137,9 @@ export default function Home() {
             className="text-black leading-none"
             style={styles}
           >
-            Software Developer with a background that bridges engineering and design <span aria-hidden="true" className="mx-2 inline-block align-baseline w-8 max-w-[6ch] h-px bg-black translate-y-[-0.2em]"></span><span className="sr-only">—</span> currently at <ZigzagButton el="a" href="https://www.innocap.com/en/" target="_blank" onClick={() => console.log('Innocap clicked')}>Innocap</ZigzagButton>, where I build data intensive systems that process large volumes of hedge fund trading activity.
+            Matthew Parisien is a software developer and creative technologist based in Montreal, working at the intersection of engineering and design. He builds digital systems and tools where creative thinking informs not just aesthetics, but structure, usability, and execution.
+
+With a background that spans data-driven development and years leading a creative studio, Matthew approaches engineering as a creative practice—translating abstract ideas into clear, scalable systems and collaborating seamlessly across technical and creative teams. He is currently working at Innocap, where he builds data-driven platforms and AI-powered tools that improve how teams access, interpret, and act on information.
           </h2>
           <div>
             <h3 style={stylesButtons} className="flex md:gap-6 gap-2">
