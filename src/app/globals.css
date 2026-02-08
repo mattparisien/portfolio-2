@@ -8,6 +8,22 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Freigeist';
+  src: url('/assets/fonts/ItemsTextTrial-Medium.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Freigeist';
+  src: url('/assets/fonts/ItemsTextTrial-Book.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;

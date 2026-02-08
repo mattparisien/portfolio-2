@@ -113,8 +113,7 @@ export default function Home() {
 
   const styles = {
     fontFamily: 'Freigeist, sans-serif',
-    lineHeight: "1.12",
-    fontSize: "3rem"
+    fontWeight: "300",
   };
 
   const stylesButtons = {
@@ -134,15 +133,17 @@ export default function Home() {
       >
         <div className="flex flex-col justify-between items-start h-full w-full">
           <h2
-            className="text-black leading-none"
+            className="text-black leading-[1.12] text-[1.5rem] xs:text-[1.8rem] sm:text-[2rem] md:text-[2.3rem] lg:text-[2.6rem] xl:text-[3rem]"
             style={styles}
           >
             Matthew Parisien is a software developer and creative technologist based in Montreal, working at the intersection of engineering and design. He builds digital systems and tools where creative thinking informs not just aesthetics, but structure, usability, and execution.
 
             With a background that spans data-driven development and years leading a creative studio, Matthew approaches engineering as a creative practice—translating abstract ideas into clear, scalable systems and collaborating seamlessly across technical and creative teams. He is currently working at Innocap, where he builds data-driven platforms and AI-powered tools.
           </h2>
-          <div className='flex gap-10 [&>*]:cursor-pointer [&>*]:decoration-[2px] [&>*]:decoration-black [&>*]:underline-offset-2 [&>*]:hover:underline' style={{ ...styles }}>
-            <a href="https://github.com/mattparisien" target="_blank" onClick={() => console.log('Software clicked')}>Software</a>
+          <div className='flex items-center justify-between w-full mb-5 [&>a]:cursor-pointer [&>a]:decoration-[2px] [&>a]:decoration-black [&>a]:underline-offset-2 [&>a]:hover:underline' style={{ ...styles, fontWeight: 400 }} >
+            <div className='text-sm sm:text-lg md:text-xl'>Matthew Parisien *</div>
+            <a className='text-sm sm:text-lg text-lg md:text-xl' href='mailto:matthewparisien4@gmail.com'>matthewparisien4@gmail.com</a>
+            {/* <a href="https://github.com/mattparisien" target="_blank" onClick={() => console.log('Software clicked')}>Software</a>
 
             <a onClick={() => setIsModalOpen(true)}>
               Creative Work
@@ -150,7 +151,7 @@ export default function Home() {
 
             <a href="mailto:matthewparisien4@gmail.com" onClick={() => console.log('Contact clicked')}>
               Contact
-            </a>
+            </a> */}
           </div>
         </div>
       </main>
