@@ -143,15 +143,6 @@ export default function Home() {
           <div className='flex items-center justify-between w-full mb-5 [&>a]:cursor-pointer [&>a]:decoration-[2px] [&>a]:decoration-black [&>a]:underline-offset-2 [&>a]:hover:underline' style={{ ...styles, fontWeight: 400 }} >
             <div className='text-sm sm:text-lg md:text-xl'>Matthew Parisien *</div>
             <a className='text-sm sm:text-lg text-lg md:text-xl' href='mailto:matthewparisien4@gmail.com'>matthewparisien4@gmail.com</a>
-            {/* <a href="https://github.com/mattparisien" target="_blank" onClick={() => console.log('Software clicked')}>Software</a>
-
-            <a onClick={() => setIsModalOpen(true)}>
-              Creative Work
-            </a>
-
-            <a href="mailto:matthewparisien4@gmail.com" onClick={() => console.log('Contact clicked')}>
-              Contact
-            </a> */}
           </div>
         </div>
       </main>
