@@ -35,6 +35,7 @@ function shuffle(array: unknown[], seed: number) {
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [isGridActive, setIsGridActive] = useState(false);
   const [media, setMedia] = useState<MediaItem[]>([]);
 
   // Embla Carousel setup
@@ -132,13 +133,13 @@ export default function Home() {
           paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.5rem)',
         } as React.CSSProperties}
       >
-        {media.length && <MediaGrid items={media}/>}
+        {media.length && <MediaGrid items={media} isActive={isGridActive}/>}
         <div className="flex flex-col justify-between items-start h-full w-full">
           <h2
             className="text-black leading-[1.12] text-[1.5rem] xs:text-[1.8rem] sm:text-[2rem] md:text-[2.3rem] lg:text-[2.6rem] xl:text-[3rem]"
             style={styles}
           >
-            Matthew Parisien is a software developer and visual artist based in Montreal, working at the intersection of engineering and design. He builds digital systems and tools where creative thinking informs not just aesthetics, but structure, usability, and execution.
+            Matthew Parisien is a software developer and <button className='underline decoration-2 underline-offset-3 cursor-pointer' onClick={() => setIsGridActive(true)}>visual artist</button> based in Montreal, working at the intersection of engineering and design. He builds digital systems and tools where creative thinking informs not just aesthetics, but structure, usability, and execution.
 
             With a background that spans data-driven development and years leading a creative studio, Matthew approaches engineering as a creative practice—translating abstract ideas into clear, scalable systems and collaborating seamlessly across technical and creative teams. He is currently working at Innocap, where he builds data-driven platforms and AI-powered tools.
           </h2>

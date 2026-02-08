@@ -7,6 +7,7 @@ import gsap from "gsap";
 
 interface MediaGridProps {
     items: MediaGridItem[];
+    isActive: boolean;
 }
 
 export type MediaGridItem = MediaItem & {
@@ -29,7 +30,7 @@ const PALETTE = [
     "#CB968E"
 ]
 
-const MediaGrid = ({ items }: MediaGridProps) => {
+const MediaGrid = ({ items, isActive }: MediaGridProps) => {
 
 
     const [isReady, setIsReady] = useState<boolean>(false);
@@ -53,7 +54,7 @@ const MediaGrid = ({ items }: MediaGridProps) => {
     }
 
     useEffect(() => {
-        if (imgRefs.current?.length && imgRefs.current.length === items.length && !hasAnimated.current) {
+        if (isActive && imgRefs.current?.length && imgRefs.current.length === items.length && !hasAnimated.current) {
             hasAnimated.current = true;
             const masterTl = gsap.timeline({ paused: true });
             const introTl = gsap.timeline({ paused: true });
@@ -72,49 +73,55 @@ const MediaGrid = ({ items }: MediaGridProps) => {
                 const overlayHeight = overlayRect?.height || height;
 
                 // Scale x and y of overlay so its a perfect square
+                // We want the larger dimension to determine the square size
                 const maxDimension = Math.max(overlayWidth, overlayHeight);
                 const sX = maxDimension / overlayWidth;
                 const sY = maxDimension / overlayHeight;
 
-
+                console.log('Overlay dimensions:', { overlayWidth, overlayHeight, sX, sY, maxDimension });
 
                 const tlIntro = () => {
-                    return gsap.timeline().fromTo(overlay, {
-                        x: txBottom,
-                        y: tyBottom,
-                        scaleX: sX,
-                        scaleY: sY,
-                    }, {
-                        x: txCenter,
-                        y: tyCenter,
-                        duration: 1,
+                    return gsap.timeline().from(overlay, {
+                        scale: 0,
+                        transformOrigin: "center center",
                         ease: "power3.inOut",
-                        scaleX: sX,
-                        scaleY: sY,
+                        duration: 1,
+                        onComplete: () => {
+                            img?.querySelector("img")?.classList.remove("opacity-0");
+                            gsap.to(overlay, {
+                                opacity: 0,
+                                duration: 0.4,
+                                onComplete: () => {
+                                    gsap.set(overlay, { display: "none" });
+                                }
+                            })
+
+                        }
                     })
+
                 }
 
-                const tlPlacement = () => {
-                    return gsap.timeline().to(overlay, {
-                        x: 0,
-                        y: 0,
-                        scale: 1
-                    })
-                }
 
-                introTl.add(tlIntro(), 0.08 * idx + 1)
-                placementTl.add(tlPlacement(), 0.02 * idx + 1.5)
+
+                introTl.add(tlIntro(), 0.2 * idx + 1)
             })
 
             setIsReady(true);
-            masterTl.add(introTl.play()).add(placementTl.play());
+            // make sure introTl starts at 0
+            masterTl.add(introTl.play(), 0);
+
+            // then placement AFTER intro
+            masterTl.add(placementTl, ">");
+
             masterTl.play();
         }
-    }, [windowWidth])
+    }, [windowWidth, isActive])
 
-    return <div ref={scrollContainerRef} className="absolute top-0 h-full overflow-scroll left-0 w-screen h-screen">
+    return <div ref={scrollContainerRef} className={classNames("fixed top-0 left-0 h-full overflow-scroll left-0 w-screen h-screen", {
+        "pointer-events-none": !isActive,
+    })} >
         <div className={classNames("flex flex-col", {
-            "opacity-0": !isReady
+            "opacity-0 ": !isReady
         })} style={{
             gap: ROW_GAP + "px"
         }} >
@@ -136,7 +143,7 @@ const MediaGrid = ({ items }: MediaGridProps) => {
                                 width: GRID_ITEM_WIDTH + "px",
                                 // backgroundColor: idx % 2 === 0 ? (i % 2 === 0 ? "white" : "black") : (i % 2 === 0 ? "black" : "white")
                             }}>
-                                <div className="w-full h-full flex items-center justify-center" data-img-width={img?.width} data-img-height={img?.height} data-img-aspect={img?.aspectRatio?.toFixed(2)} ref={addToRefs}>
+                                <div className="w-full h-full flex items-center justify-center relative" data-img-width={img?.width} data-img-height={img?.height} data-img-aspect={img?.aspectRatio?.toFixed(2)} ref={addToRefs}>
 
                                     <div className={classNames("object-cover relative", {
                                         "w-full": img?.aspectRatio && img.aspectRatio >= 1,
