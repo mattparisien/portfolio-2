@@ -9,9 +9,11 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "classnames": "^2.5.1",
     "cloudinary": "^2.7.0",
     "embla-carousel-react": "^8.6.0",
     "gsap": "^3.13.0",
+    "image-size": "^2.0.2",
     "next": "15.5.0",
     "react": "19.1.0",
     "react-dom": "19.1.0"
@@ -19,6 +21,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/image-size": "^0.7.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

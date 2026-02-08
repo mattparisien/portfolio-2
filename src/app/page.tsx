@@ -2,8 +2,9 @@
 import { useState, useCallback, useEffect } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import ZigzagButton from '../components/ZigzagButton';
+import MediaGrid from '@/components/MediaGrid/MediaGrid';
 
-interface MediaItem {
+export interface MediaItem {
   url: string;
   type: 'image' | 'video';
   format: string;
@@ -131,12 +132,13 @@ export default function Home() {
           paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.5rem)',
         } as React.CSSProperties}
       >
+        {media.length && <MediaGrid items={media}/>}
         <div className="flex flex-col justify-between items-start h-full w-full">
           <h2
             className="text-black leading-[1.12] text-[1.5rem] xs:text-[1.8rem] sm:text-[2rem] md:text-[2.3rem] lg:text-[2.6rem] xl:text-[3rem]"
             style={styles}
           >
-            Matthew Parisien is a software developer and creative technologist based in Montreal, working at the intersection of engineering and design. He builds digital systems and tools where creative thinking informs not just aesthetics, but structure, usability, and execution.
+            Matthew Parisien is a software developer and visual artist based in Montreal, working at the intersection of engineering and design. He builds digital systems and tools where creative thinking informs not just aesthetics, but structure, usability, and execution.
 
             With a background that spans data-driven development and years leading a creative studio, Matthew approaches engineering as a creative practice—translating abstract ideas into clear, scalable systems and collaborating seamlessly across technical and creative teams. He is currently working at Innocap, where he builds data-driven platforms and AI-powered tools.
           </h2>
