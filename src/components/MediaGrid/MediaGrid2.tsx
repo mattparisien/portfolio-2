@@ -39,16 +39,7 @@ const PALETTE = [
 const MediaGrid2 = ({ items, isActive }: MediaGridProps) => {
 
 
-    const [isReady, setIsReady] = useState<boolean>(false);
-    const windowWidth = useWindowWidth();
     const hasAnimated = useRef<boolean>(false);
-
-
-    const GRID_ITEM_COUNT = 4;
-    const GRID_ITEM_WIDTH = (windowWidth / GRID_ITEM_COUNT).toFixed(2);
-    const ROW_COUNT = Math.ceil((items?.length || 0) / GRID_ITEM_COUNT)
-    const ROW_GAP = 30; // in rem
-    const COL_GAP = 30; // in rem
 
     const sectionRefs = useRef<React.RefObject<HTMLDivElement>[]>([]);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -62,86 +53,88 @@ const MediaGrid2 = ({ items, isActive }: MediaGridProps) => {
         }
     }
 
-    useEffect(() => {
-        if (!hasAnimated.current && sectionRefs.current.length && sectionRefs.current.length === items.length && isActive) {
-            hasAnimated.current = true;
+    // useEffect(() => {
+    //     if (!hasAnimated.current && sectionRefs.current.length && sectionRefs.current.length === items.length && isActive) {
+    //         hasAnimated.current = true;
 
-            gsap.set(scrollContainerRef.current, { opacity: 1 });
-            gsap.set(sectionRefs.current.slice(1).map(x => x.current), { y: "100%" })
-            gsap.set(sectionRefs.current[0].current, { scale: 0 });
-            gsap.set(sectionRefs.current[0].current.querySelector("img"), { opacity: 0 })
+    //         gsap.set(scrollContainerRef.current, { opacity: 1 });
+    //         gsap.set(sectionRefs.current.slice(1).map(x => x.current), { y: "100%" })
+    //         gsap.set(sectionRefs.current[0].current, { scale: 0 });
+    //         gsap.set(sectionRefs.current[0].current.querySelector("img"), { opacity: 0 })
 
-            gsap.timeline().to(sectionRefs.current[0].current, {
-                scale: 1,
-                duration: 1,
-                ease: "expo.inOut",
+    //         gsap.timeline().to(sectionRefs.current[0].current, {
+    //             scale: 1,
+    //             duration: 1,
+    //             ease: "expo.inOut",
 
-            }).to(sectionRefs.current[0].current.querySelector("img"), {
-                opacity: 1,
-                duration: 0.8,
+    //         }).to(sectionRefs.current[0].current.querySelector("img"), {
+    //             opacity: 1,
+    //             duration: 0.8,
 
-            }, "-=0.2");
+    //         }, "-=0.2");
 
-            let ticking = false;
-            const onScroll = () => {
-                if (ticking) return;
-                ticking = true;
+    //         let ticking = false;
+    //         const onScroll = () => {
+    //             if (ticking) return;
+    //             ticking = true;
 
-                requestAnimationFrame(() => {
-                    const vh = window.innerHeight;
-                    const scrollY = window.scrollY;
+    //             requestAnimationFrame(() => {
+    //                 const vh = window.innerHeight;
+    //                 const scrollY = window.scrollY;
 
-                    sectionRefs.current.slice(1).forEach((ref, i) => {
-                        const sectionIndex = i + 1; // Account for skipping first section
-                        const start = vh * sectionIndex;
-                        let scrollProgress = (scrollY - start) / vh;
+    //                 sectionRefs.current.slice(1).forEach((ref, i) => {
+    //                     const sectionIndex = i + 1; // Account for skipping first section
+    //                     const start = vh * sectionIndex;
+    //                     let scrollProgress = (scrollY - start) / vh;
 
-                        if (scrollProgress < 0) scrollProgress = 0;
-                        if (scrollProgress > 1) scrollProgress = 1;
+    //                     if (scrollProgress < 0) scrollProgress = 0;
+    //                     if (scrollProgress > 1) scrollProgress = 1;
 
-                        ref.current.style.transform = `translateY(${100 * (1 - scrollProgress)}%)`;
-                    });
+    //                     ref.current.style.transform = `translateY(${100 * (1 - scrollProgress)}%)`;
+    //                 });
 
-                    ticking = false;
-                });
-            };
+    //                 ticking = false;
+    //             });
+    //         };
 
-            window.addEventListener("scroll", onScroll, { passive: true });
-            onScroll(); // Initial call
+    //         window.addEventListener("scroll", onScroll, { passive: true });
+    //         onScroll(); // Initial call
 
-            return () => {
-                window.removeEventListener("scroll", onScroll);
-            };
-        }
+    //         return () => {
+    //             window.removeEventListener("scroll", onScroll);
+    //         };
+    //     }
 
-        return () => {
-            ScrollTrigger.getAll().forEach(trigger => trigger.kill());
-        };
-    }, [items.length, isActive])
+    //     return () => {
+    //         ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+    //     };
+    // }, [items.length, isActive])
 
 
 
     return <div
-        className={classNames("w-screen min-h-screen absolute top-0 left-0 opacity-0", {
+        className={classNames("w-screen min-h-screen absolute top-0 left-0 ", {
             "pointer-events-none": !isActive
         })}
         ref={scrollContainerRef}
     >
-        <div className="relative top-0 left-0 w-screen h-screen">
+        <div className="relative top-0 left-0 w-screen">
             {items.map((item, index) => (
-                <div key={index} className="fixed left-0 top-0 w-full h-full flex items-center justify-center will-change-transform rounded-t-xl"
+                <div key={index} className="sticky left-0 top-0 w-screen h-screen flex items-center justify-center rounded-t-xl"
                     ref={addToRefs}
                     style={{
                         backgroundColor: PALETTE[index % PALETTE.length],
-                        zIndex: index,
                     }}>
-                    <img src={item.url} alt={item.alt || `Media item ${index}`} className={classNames("rounded-md overflow-hidden will-change-transform w-full h-full", {
-                        "object-contain scale-[0.8]": !item.meta?.isFullScreen || item.meta?.isFullScreen !== "true",
-                        "object-cover": item.meta?.isFullScreen && item.meta?.isFullScreen === "true",
+                    <img src={item.url} alt="" className={classNames("rounded-md overflow-hidden w-full h-full", {
+                        "object-contain scale-[0.8]": !item.meta?.isFullScreen,
+                        "object-cover": item.meta?.isFullScreen,
                     })}
-                        loading="eager"
+                        loading={index < 3 ? "eager" : "lazy"}
                         decoding="async"
-                        style={{ backfaceVisibility: "hidden" }}
+
+                        style={{
+                            backfaceVisibility: "hidden", transform: "translateZ(0)",
+                        }}
                     />
                 </div>
 
