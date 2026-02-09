@@ -82,19 +82,36 @@ const MediaGrid2 = ({ items, isActive }: MediaGridProps) => {
 
             }, "-=0.2");
 
-            window.addEventListener("scroll", () => {
+            let ticking = false;
+            const onScroll = () => {
+                if (ticking) return;
+                ticking = true;
+                
+                requestAnimationFrame(() => {
+                    const vh = window.innerHeight;
+                    const scrollY = window.scrollY;
+                    
+                    sectionRefs.current.slice(1).forEach((ref, i) => {
+                        const sectionIndex = i + 1; // Account for skipping first section
+                        const start = vh * sectionIndex;
+                        let scrollProgress = (scrollY - start) / vh;
 
-                sectionRefs.current.slice(1).forEach((ref, i) => {
-                    const start = window.innerHeight * i;
-                    let scrollProgress = (window.scrollY - start) / window.innerHeight;
+                        if (scrollProgress < 0) scrollProgress = 0;
+                        if (scrollProgress > 1) scrollProgress = 1;
 
-                    if (scrollProgress < 0) scrollProgress = 0; // prevents full pop-out
-                    if (scrollProgress > 1) scrollProgress = 1; // optional, caps at 0 → 1
-
-                    ref.current.style.transform = `translateY(${100 * (1 - scrollProgress)}%)`;
+                        ref.current.style.transform = `translateY(${100 * (1 - scrollProgress)}%)`;
+                    });
+                    
+                    ticking = false;
                 });
-            })
+            };
 
+            window.addEventListener("scroll", onScroll, { passive: true });
+            onScroll(); // Initial call
+
+            return () => {
+                window.removeEventListener("scroll", onScroll);
+            };
         }
 
         return () => {
@@ -119,9 +136,11 @@ const MediaGrid2 = ({ items, isActive }: MediaGridProps) => {
                         zIndex: index,
                     }}>
                     <img src={item.url} alt={item.alt || `Media item ${index}`} className={classNames("rounded-md overflow-hidden will-change-transform w-full h-full scale-[0.8]", {
-                        "object-contain": !item.meta?.isFullScreen,
-                        "object-cover": item.meta?.isFullScreen,
-                    })} />
+                        "object-contain": !item.meta?.isFullScreen || item.meta?.isFullScreen !== "true",
+                        "object-cover": item.meta?.isFullScreen && item.meta?.isFullScreen === "true",
+                    })} style={{
+                        rotate: `${item.meta?.rotate ? item.meta?.rotate : "0deg"}`
+                    }}/>
                 </div>
 
             ))}
