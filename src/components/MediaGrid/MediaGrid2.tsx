@@ -82,19 +82,7 @@ const MediaGrid2 = ({ items, isActive }: MediaGridProps) => {
                     ref.current.style.transform = `translateY(${Math.max(100 - scrollProgress * 100, 0)}%)`
                 })
             })
-            // sectionRefs.current.forEach((section, i) => {
-            //     ScrollTrigger.create({
-            //         trigger: section.current,
-            //         start: "top top",
-            //         end: "+=100%",
-            //         pin: true,
-            //         pinSpacing: true,
-            //         markers: true,
-            //         onUpdate: (self) => {
-            //             console.log('updating section', i, self.progress)
-            //         }
-            //     });
-            // });
+            
         }
 
         return () => {
