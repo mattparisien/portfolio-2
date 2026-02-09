@@ -126,16 +126,12 @@ export default function Home() {
   return (
     <>
       <main
-        className="flex items-start justify-start sm:px-8 sm:py-5 px-4 py-3 bg-[#FC79C8]"
         style={{
           minHeight: '100dvh',
-          height: '100dvh',
           WebkitMinHeight: '-webkit-fill-available',
-          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.5rem)',
         } as React.CSSProperties}
       >
-        {media.length && <MediaGrid2 items={media} isActive={isGridActive}/>}
-        <div className="flex flex-col justify-between items-start h-full w-full">
+        <div className="flex flex-col justify-between items-start w-full h-screen sm:px-8 sm:py-5 px-4 py-3 bg-[#FC79C8]">
           <h2
             className="text-black leading-[1.12] text-[1.5rem] xs:text-[1.8rem] sm:text-[2rem] md:text-[2.3rem] lg:text-[2.6rem] xl:text-[3rem]"
             style={styles}
@@ -149,6 +145,8 @@ export default function Home() {
             <a className='text-sm sm:text-lg text-lg md:text-xl' href='mailto:matthewparisien4@gmail.com'>matthewparisien4@gmail.com</a>
           </div>
         </div>
+        {media.length && <MediaGrid2 items={media} isActive={isGridActive} />}
+
       </main>
 
       {/* Modal Slideshow */}

@@ -32,10 +32,10 @@
 body {
   background: #ffffff;
   color: #000000;
+  position: relative;
   margin: 0;
   padding: 0;
   height: 100vh;
-  overflow: hidden;
 }
 
 @keyframes fadeInSlide {

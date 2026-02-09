@@ -50,7 +50,7 @@ const MediaGrid2 = ({ items, isActive }: MediaGridProps) => {
     const COL_GAP = 30; // in rem
 
     const sectionRefs = useRef<React.RefObject<HTMLDivElement>[]>([]);
-
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     const addToRefs = (el: HTMLDivElement | null) => {
         if (el) {
@@ -62,45 +62,55 @@ const MediaGrid2 = ({ items, isActive }: MediaGridProps) => {
     }
 
     useEffect(() => {
-        if (!hasAnimated.current && sectionRefs.current.length && sectionRefs
-            .current.length === items.length) {
-            sectionRefs.current.forEach(section => {
-                gsap.fromTo(section.current, {
-                    y: "100%",
+        if (!hasAnimated.current && sectionRefs.current.length && sectionRefs.current.length === items.length && scrollContainerRef.current) {
+            hasAnimated.current = true;
 
-                    // scrollTrigger: {
-                    //     trigger: section.current,
-                    //     start: "top 80%",
-                    // }
-                }, {
-                    y: 0,
-                    duration: 1,
-                    ease: "power2.out",
-                    scrollTrigger: {
-                        trigger: section.current,
-                        start: "top 80%",
+            sectionRefs.current.forEach((section, i) => {
+                
+                ScrollTrigger.create({
+                    trigger: section.current,
+                    scroller: "body",
+                    start: "top top",
+                    end: "max", // Pin forever
+                    pin: true,
+                    pinSpacing: true, // Keep spacing so sections flow normally
+                    markers: true,
+                    onUpdate: (self) => {
+                        console.log('updating!', self.progress)
                     }
-                })
-            })
+                });
+            });
+
+
         }
-    }, [])
 
 
 
-    return <div className={classNames("fixed top-0 left-0 w-screen h-screen overflow-scroll", {
-        "pointer-events-none": !isActive,
-    })} >
-        <div className="relative w-full h-full">
-            {items.map((item, index) => (
-                <div key={index} className="absolute top-0 left-0 w-full h-full flex items-center justify-center"
-                    ref={addToRefs}
-                    style={{
-                        backgroundColor: PALETTE[index % PALETTE.length],
-                    }}>
-                    <img src={item.url} alt={item.alt || `Media item ${index}`} className="max-w-screen max-h-screen scale-[0.7]" />
-                </div>
-            ))}
-        </div>
+
+        return () => {
+            ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+        };
+    }, [items.length, isActive])
+
+
+
+    return <div 
+        ref={scrollContainerRef}
+        className={classNames("w-screen min-h-screen overflow-y-scroll", {
+            "pointer-events-none": !isActive
+        })
+    }>
+        {items.map((item, index) => (
+            <div key={index} className="w-full h-screen flex items-center justify-center"
+                ref={addToRefs}
+                style={{
+                    backgroundColor: PALETTE[index % PALETTE.length],
+                    zIndex: index,
+                }}>
+                <img src={item.url} alt={item.alt || `Media item ${index}`} className="max-w-screen max-h-screen scale-[0.7]" />
+            </div>
+        ))}
+        <div style={{ height: `${items.length * 100}vh` }}></div>
     </div>;
 }
 
