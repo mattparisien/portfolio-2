@@ -87,40 +87,40 @@ const MediaGrid2 = ({ items, isActive }: MediaGridProps) => {
 
     const visibleItems = items.slice(visibleRange.start, visibleRange.end);
 
-    useEffect(() => {
-        if (isActive && !hasAnimated.current && sectionRefs.current.length > 0) {
-            hasAnimated.current = true;
+    // useEffect(() => {
+    //     if (isActive && !hasAnimated.current && sectionRefs.current.length > 0) {
+    //         hasAnimated.current = true;
             
-            const firstSection = sectionRefs.current[0]?.current;
-            if (firstSection) {
-                // Set initial state immediately
-                gsap.set(firstSection, { y: "100%" });
-                gsap.set(firstSection.querySelector("img"), { opacity: 0 });
-                gsap.set(scrollContainerRef.current, { opacity: 1 });
+    //         const firstSection = sectionRefs.current[0]?.current;
+    //         if (firstSection) {
+    //             // Set initial state immediately
+    //             gsap.set(firstSection, { y: "100%" });
+    //             gsap.set(firstSection.querySelector("img"), { opacity: 0 });
+    //             gsap.set(scrollContainerRef.current, { opacity: 1 });
                 
-                // Animate in
-                gsap.timeline().to(firstSection, { 
-                    y: "0%",
-                    opacity: 1,
-                    duration: 1, 
-                    ease: "circ.out" 
-                })
-                .to(firstSection.querySelector("img"), { 
-                    opacity: 1, 
-                    duration: 0.8, 
-                    ease: "circ.out" 
-                }), "-=0.5");
-            }
-        }
-    }, [isActive, sectionRefs.current.length]);
+    //             // Animate in
+    //             gsap.timeline().to(firstSection, { 
+    //                 y: "0%",
+    //                 opacity: 1,
+    //                 duration: 0.5, 
+    //                 ease: "circ.out" 
+    //             })
+    //             .to(firstSection.querySelector("img"), { 
+    //                 opacity: 1, 
+    //                 duration: 0.3, 
+    //                 ease: "power3.out" 
+    //             }, "-=0.5");
+    //         }
+    //     }
+    // }, [isActive, sectionRefs.current.length]);
 
     return <div
-        className={classNames("w-screen min-h-screen absolute top-0 left-0 opacity-0", {
+        className={classNames("w-screen min-h-screen absolute top-0 left-0", {
             "pointer-events-none": !isActive
         })}
         ref={scrollContainerRef}
     >
-        <div className="relative top-0 left-0 w-screen">
+        <div className="relative top-0 left-0 w-screen pt-screen">
             {/* Spacer for sections before visible range */}
             {visibleRange.start > 0 && (
                 <div style={{ height: `${visibleRange.start * 100}vh` }} />
@@ -135,7 +135,8 @@ const MediaGrid2 = ({ items, isActive }: MediaGridProps) => {
                         ref={addToRefs}
                         style={{
                             backgroundColor: PALETTE[actualIndex % PALETTE.length],
-                            zIndex: actualIndex
+                            zIndex: actualIndex,
+                            
                         }}
                     >
                         <img 
