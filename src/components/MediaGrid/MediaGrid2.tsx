@@ -1,12 +1,10 @@
 'use client';
-import { MediaItem } from "@/app/page";
 import { useWindowWidth } from "@/app/hooks/useWindowWidth";
+import { MediaItem } from "@/app/page";
 import classNames from "classnames";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { shuffle } from "lodash";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useInView } from "@/app/hooks/useInView";
+import { useEffect, useRef, useState } from "react";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -19,6 +17,9 @@ export type MediaGridItem = MediaItem & {
     width: number | null;
     height: number | null;
     aspectRatio: number | null;
+    meta?: {
+        isFullScreen?: boolean;
+    }
 };
 
 const PALETTE = [
@@ -67,12 +68,12 @@ const MediaGrid2 = ({ items, isActive }: MediaGridProps) => {
 
             gsap.set(scrollContainerRef.current, { opacity: 1 });
             gsap.set(sectionRefs.current.slice(1).map(x => x.current), { y: "100%" })
-            gsap.set(sectionRefs.current[0].current, { y: "100%" });
+            gsap.set(sectionRefs.current[0].current, { scale: 0 });
             gsap.set(sectionRefs.current[0].current.querySelector("img"), { opacity: 0 })
 
             gsap.timeline().to(sectionRefs.current[0].current, {
-                y: "0%",
-                duration: 0.6,
+                scale: 1,
+                duration: 0.4,
                 ease: "expo.out",
 
             }).to(sectionRefs.current[0].current.querySelector("img"), {
@@ -120,7 +121,10 @@ const MediaGrid2 = ({ items, isActive }: MediaGridProps) => {
                         backgroundColor: PALETTE[index % PALETTE.length],
                         zIndex: index,
                     }}>
-                    <img src={item.url} alt={item.alt || `Media item ${index}`} className="rounded-md max-w-screen max-h-screen scale-[0.7] will-change-transform" />
+                    <img src={item.url} alt={item.alt || `Media item ${index}`} className={classNames("rounded-md will-change-transform", {
+                        "max-w-screen max-h-screen scale-[0.7]": !item.meta?.isFullScreen,
+                        "w-screen h-screen object-cover": item.meta?.isFullScreen,
+                    })} />
                 </div>
 
             ))}

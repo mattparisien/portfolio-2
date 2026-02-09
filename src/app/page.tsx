@@ -4,6 +4,7 @@ import useEmblaCarousel from 'embla-carousel-react';
 import ZigzagButton from '../components/ZigzagButton';
 import MediaGrid from '@/components/MediaGrid/MediaGrid';
 import MediaGrid2 from '@/components/MediaGrid/MediaGrid2';
+import classNames from 'classnames';
 
 export interface MediaItem {
   url: string;
@@ -136,90 +137,92 @@ export default function Home() {
             className="text-black leading-[1.12] text-[1.5rem] xs:text-[1.8rem] sm:text-[2rem] md:text-[2.3rem] lg:text-[2.6rem] xl:text-[3rem]"
             style={styles}
           >
-            Matthew Parisien is a software developer and <button className='underline decoration-1sm:decoration-2 underline-offset-3 cursor-pointer' onClick={() => setIsGridActive(true)}>visual artist</button> based in Montreal, working at the intersection of engineering and design. He builds digital systems and tools where creative thinking informs not just aesthetics, but structure, usability, and execution.
+            Matthew Parisien is a software developer and <button className='underline decoration-1 sm:decoration-2 underline-offset-3 cursor-pointer' onClick={() => setIsGridActive(true)}>visual artist</button> based in Montreal, working at the intersection of engineering and design. He builds digital systems and tools where creative thinking informs not just aesthetics, but structure, usability, and execution.
 
             With a background that spans data-driven development and years leading a creative studio, Matthew approaches engineering as a creative practice—translating abstract ideas into clear, scalable systems and collaborating seamlessly across technical and creative teams. He is currently working at Innocap, where he builds data-driven platforms and AI-powered tools.
           </h2>
-          <div className='flex items-center justify-between w-full mb-5 [&>a]:cursor-pointer [&>a]:decoration-[2px] [&>a]:decoration-black [&>a]:underline-offset-2 [&>a]:hover:underline' style={{ ...styles, fontWeight: 400 }} >
+          <div className='flex items-center justify-between w-full [&>a]:cursor-pointer [&>a]:decoration-[2px] [&>a]:decoration-black [&>a]:underline-offset-2 [&>a]:hover:underline' style={{ ...styles, fontWeight: 400 }} >
             <div className='text-sm sm:text-lg md:text-xl'>Matthew Parisien *</div>
             <a className='text-sm sm:text-lg text-lg md:text-xl' href='mailto:matthewparisien4@gmail.com'>matthewparisien4@gmail.com</a>
           </div>
         </div>
         {media.length && <MediaGrid2 items={media} isActive={isGridActive} />}
 
-      </main>
+      </main >
 
       {/* Modal Slideshow */}
-      {isModalOpen && (
-        <div
-          className="fixed inset-0 bg-white flex items-center justify-center z-50"
-          onClick={() => setIsModalOpen(false)}
-        >
-          {/* Close button positioned at top right of screen */}
-          <button
-            onClick={() => setIsModalOpen(false)}
-            className="fixed top-4 right-4 sm:right-14 sm:top-10 text-black hover:opacity-70 z-20 w-8 h-8 cursor-pointer"
-          >
-            <svg width="100%" height="100%" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M24 8L8 24M8 8L24 24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-
+      {
+        isModalOpen && (
           <div
-            className="relative max-h-full sm:p-14 w-full overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 bg-white flex items-center justify-center z-50"
+            onClick={() => setIsModalOpen(false)}
           >
+            {/* Close button positioned at top right of screen */}
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="fixed top-4 right-4 sm:right-14 sm:top-10 text-black hover:opacity-70 z-20 w-8 h-8 cursor-pointer"
+            >
+              <svg width="100%" height="100%" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M24 8L8 24M8 8L24 24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
 
-            {/* Image Display */}
-            <div className="embla overflow-hidden cursor-grab" ref={emblaRef}>
-              <div className="embla__container flex">
-                {media.map((item, index) => (
-                  <div className="embla__slide flex-[0_0_auto] min-w-0 h-[65vh] flex items-center" key={index}>
-                    {item.type === 'image' ? (
-                      <img
-                        src={item.url}
-                        alt={`Creative work ${index + 1}`}
-                        className="h-full w-auto object-contain"
-                      />
-                    ) : (
-                      <video
-                        src={item.url}
-                        className="h-full w-auto object-contain"
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                      />
-                    )}
-                  </div>
-                ))}
+            <div
+              className="relative max-h-full sm:p-14 w-full overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+
+              {/* Image Display */}
+              <div className="embla overflow-hidden cursor-grab" ref={emblaRef}>
+                <div className="embla__container flex">
+                  {media.map((item, index) => (
+                    <div className="embla__slide flex-[0_0_auto] min-w-0 h-[65vh] flex items-center" key={index}>
+                      {item.type === 'image' ? (
+                        <img
+                          src={item.url}
+                          alt={`Creative work ${index + 1}`}
+                          className="h-full w-auto object-contain"
+                        />
+                      ) : (
+                        <video
+                          src={item.url}
+                          className="h-full w-auto object-contain"
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* Navigation Arrows - Below the carousel */}
-            <div className="flex justify-center gap-4 mt-6">
-              <button
-                onClick={scrollPrev}
-                className="text-black text-3xl hover:opacity-70 transition-opacity cursor-pointer"
-                style={{ fontFamily: 'Freigeist, sans-serif' }}
-              >
-                ←
-              </button>
-              <button
-                onClick={scrollNext}
-                className="text-black text-3xl hover:opacity-70 transition-opacity cursor-pointer"
-                style={{ fontFamily: 'Freigeist, sans-serif' }}
-              >
-                →
-              </button>
-            </div>
+              {/* Navigation Arrows - Below the carousel */}
+              <div className="flex justify-center gap-4 mt-6">
+                <button
+                  onClick={scrollPrev}
+                  className="text-black text-3xl hover:opacity-70 transition-opacity cursor-pointer"
+                  style={{ fontFamily: 'Freigeist, sans-serif' }}
+                >
+                  ←
+                </button>
+                <button
+                  onClick={scrollNext}
+                  className="text-black text-3xl hover:opacity-70 transition-opacity cursor-pointer"
+                  style={{ fontFamily: 'Freigeist, sans-serif' }}
+                >
+                  →
+                </button>
+              </div>
 
+            </div>
+            <div className="absolute bottom-0 left-0 pl-10 pb-10 max-w-md">
+              Selected Clients include: Lush Cosmetics, Rudsak, Incredible Cosmetics, and more.
+            </div>
           </div>
-          <div className="absolute bottom-0 left-0 pl-10 pb-10 max-w-md">
-            Selected Clients include: Lush Cosmetics, Rudsak, Incredible Cosmetics, and more.
-          </div>
-        </div>
-      )}
+        )
+      }
     </>
   );
 }

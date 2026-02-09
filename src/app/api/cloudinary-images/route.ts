@@ -31,6 +31,8 @@ export async function GET() {
     // Fetch image dimensions by downloading the image
     const imagesWithMetadata = await Promise.all(
       images.map(async (image: any) => {
+        if (image.meta) {
+        }
         try {
           const imageUrl = image.variants[0];
           const imageResponse = await fetch(imageUrl);
@@ -42,6 +44,7 @@ export async function GET() {
 
           return {
             url: imageUrl,
+            meta: image.meta,
             type: 'image',
             width: dimensions.width,
             height: dimensions.height,
@@ -53,6 +56,7 @@ export async function GET() {
           console.error(`Error fetching image dimensions for ${image.id}:`, error);
           return {
             url: image.variants[0],
+            meta: image.meta,
             type: 'image',
             width: null,
             height: null,
