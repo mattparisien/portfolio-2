@@ -73,8 +73,8 @@ const MediaGrid2 = ({ items, isActive }: MediaGridProps) => {
 
             gsap.timeline().to(sectionRefs.current[0].current, {
                 scale: 1,
-                duration: 0.4,
-                ease: "expo.out",
+                duration: 1,
+                ease: "expo.inOut",
 
             }).to(sectionRefs.current[0].current.querySelector("img"), {
                 opacity: 1,
@@ -83,9 +83,6 @@ const MediaGrid2 = ({ items, isActive }: MediaGridProps) => {
             }, "-=0.2");
 
             window.addEventListener("scroll", () => {
-
-
-
 
                 sectionRefs.current.slice(1).forEach((ref, i) => {
                     const start = window.innerHeight * i;
@@ -115,15 +112,15 @@ const MediaGrid2 = ({ items, isActive }: MediaGridProps) => {
     >
         <div className="relative top-0 left-0 w-screen h-screen">
             {items.map((item, index) => (
-                <div key={index} className="fixed left-0 top-0 w-full h-full flex items-center justify-center will-change-transform"
+                <div key={index} className="fixed left-0 top-0 w-full h-full flex items-center justify-center will-change-transform rounded-t-xl"
                     ref={addToRefs}
                     style={{
                         backgroundColor: PALETTE[index % PALETTE.length],
                         zIndex: index,
                     }}>
-                    <img src={item.url} alt={item.alt || `Media item ${index}`} className={classNames("rounded-md will-change-transform", {
-                        "max-w-screen max-h-screen scale-[0.7]": !item.meta?.isFullScreen,
-                        "w-screen h-screen object-cover": item.meta?.isFullScreen,
+                    <img src={item.url} alt={item.alt || `Media item ${index}`} className={classNames("rounded-md overflow-hidden will-change-transform w-full h-full scale-[0.8]", {
+                        "object-contain": !item.meta?.isFullScreen,
+                        "object-cover": item.meta?.isFullScreen,
                     })} />
                 </div>
 
