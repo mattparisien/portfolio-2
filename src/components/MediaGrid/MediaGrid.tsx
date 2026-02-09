@@ -3,7 +3,9 @@ import { MediaItem } from "@/app/page";
 import { useWindowWidth } from "@/app/hooks/useWindowWidth";
 import classNames from "classnames";
 import { useEffect, useRef, useState } from "react";
+import { shuffle } from "lodash";
 import gsap from "gsap";
+import { useInView } from "@/app/hooks/useInView";
 
 interface MediaGridProps {
     items: MediaGridItem[];
@@ -43,15 +45,24 @@ const MediaGrid = ({ items, isActive }: MediaGridProps) => {
     const ROW_GAP = 30; // in rem
     const COL_GAP = 30; // in rem
 
-    const imgRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const imgRefs = useRef<React.RefObject<HTMLDivElement>[]>([]);
     const hasAnimated = useRef<boolean>(false);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-    const addToRefs = (el: HTMLDivElement) => {
-        if (el && !imgRefs.current.includes(el)) {
-            imgRefs.current.push(el);
+    const inViewStates = useInView(imgRefs.current, {
+        threshold: 0.5,
+        triggerOnce: true,
+    })
+
+    const addToRefs = (el: HTMLDivElement | null) => {
+        if (el) {
+            const ref = { current: el };
+            if (!imgRefs.current.find(r => r.current === el)) {
+                imgRefs.current.push(ref);
+            }
         }
     }
+
 
     useEffect(() => {
         if (isActive && imgRefs.current?.length && imgRefs.current.length === items.length && !hasAnimated.current) {
@@ -59,15 +70,16 @@ const MediaGrid = ({ items, isActive }: MediaGridProps) => {
             const masterTl = gsap.timeline({ paused: true });
             const introTl = gsap.timeline({ paused: true });
             const placementTl = gsap.timeline({ paused: true });
-            imgRefs.current.forEach((img, idx) => {
-                const { height, width, top, left } = img?.getBoundingClientRect();
+            const inViewItems = imgRefs.current.filter((x, i) => inViewStates[i]);
 
-                const txCenter = windowWidth / 2 - width / 2 - left;
-                const tyCenter = window.innerHeight / 2 - height / 2 - top;
-                const txBottom = txCenter;
-                const tyBottom = tyCenter + window.innerHeight / 2 + height / 2;
+            [...shuffle(inViewItems)].forEach((ref, idx) => {
+                const img = ref.current;
+                if (!img) return;
+                
+                const rect = img.getBoundingClientRect();
+                const { height, width, top, left } = rect;
 
-                const overlay = img?.querySelector(".overlay") as HTMLDivElement;
+                const overlay = img.querySelector(".overlay") as HTMLDivElement;
                 const overlayRect = overlay?.getBoundingClientRect();
                 const overlayWidth = overlayRect?.width || width;
                 const overlayHeight = overlayRect?.height || height;
@@ -78,16 +90,14 @@ const MediaGrid = ({ items, isActive }: MediaGridProps) => {
                 const sX = maxDimension / overlayWidth;
                 const sY = maxDimension / overlayHeight;
 
-                console.log('Overlay dimensions:', { overlayWidth, overlayHeight, sX, sY, maxDimension });
-
                 const tlIntro = () => {
                     return gsap.timeline().from(overlay, {
                         scale: 0,
                         transformOrigin: "center center",
-                        ease: "power3.inOut",
-                        duration: 1,
+                        ease: "expo.inOut",
+                        duration: 0.7,
                         onComplete: () => {
-                            img?.querySelector("img")?.classList.remove("opacity-0");
+                            img.querySelector("img")?.classList.remove("opacity-0");
                             gsap.to(overlay, {
                                 opacity: 0,
                                 duration: 0.4,
@@ -103,7 +113,7 @@ const MediaGrid = ({ items, isActive }: MediaGridProps) => {
 
 
 
-                introTl.add(tlIntro(), 0.2 * idx + 1)
+                introTl.add(tlIntro(), 0.04 * idx)
             })
 
             setIsReady(true);
@@ -115,7 +125,7 @@ const MediaGrid = ({ items, isActive }: MediaGridProps) => {
 
             masterTl.play();
         }
-    }, [windowWidth, isActive])
+    }, [windowWidth, isActive, items.length, inViewStates])
 
     return <div ref={scrollContainerRef} className={classNames("fixed top-0 left-0 h-full overflow-scroll left-0 w-screen h-screen", {
         "pointer-events-none": !isActive,
