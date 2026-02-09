@@ -62,30 +62,40 @@ const MediaGrid2 = ({ items, isActive }: MediaGridProps) => {
     }
 
     useEffect(() => {
-        if (!hasAnimated.current && sectionRefs.current.length && sectionRefs.current.length === items.length && scrollContainerRef.current) {
+        if (!hasAnimated.current && sectionRefs.current.length && sectionRefs.current.length === items.length) {
             hasAnimated.current = true;
 
-            sectionRefs.current.forEach((section, i) => {
-                
-                ScrollTrigger.create({
-                    trigger: section.current,
-                    scroller: "body",
-                    start: "top top",
-                    end: "max", // Pin forever
-                    pin: true,
-                    pinSpacing: true, // Keep spacing so sections flow normally
-                    markers: true,
-                    onUpdate: (self) => {
-                        console.log('updating!', self.progress)
-                    }
-                });
-            });
+            gsap.set(sectionRefs.current.map(x => x.current), { y: "100%" })
+
+            window.addEventListener("scroll", () => {
+            
 
 
+
+                sectionRefs.current.forEach((ref, i) => {
+
+                    const start = window.innerHeight * i;
+                    if (window.scrollY < start) return;
+
+
+                        const scrollProgress = ((window.scrollY - (window.innerHeight * i))/ window.innerHeight).toFixed(2);
+                    ref.current.style.transform = `translateY(${Math.max(100 - scrollProgress * 100, 0)}%)`
+                })
+            })
+            // sectionRefs.current.forEach((section, i) => {
+            //     ScrollTrigger.create({
+            //         trigger: section.current,
+            //         start: "top top",
+            //         end: "+=100%",
+            //         pin: true,
+            //         pinSpacing: true,
+            //         markers: true,
+            //         onUpdate: (self) => {
+            //             console.log('updating section', i, self.progress)
+            //         }
+            //     });
+            // });
         }
-
-
-
 
         return () => {
             ScrollTrigger.getAll().forEach(trigger => trigger.kill());
@@ -94,23 +104,28 @@ const MediaGrid2 = ({ items, isActive }: MediaGridProps) => {
 
 
 
-    return <div 
-        ref={scrollContainerRef}
-        className={classNames("w-screen min-h-screen overflow-y-scroll", {
+    return <div
+        className={classNames("w-screen min-h-screen absolute top-0 left-0", {
             "pointer-events-none": !isActive
-        })
-    }>
-        {items.map((item, index) => (
-            <div key={index} className="w-full h-screen flex items-center justify-center"
-                ref={addToRefs}
-                style={{
-                    backgroundColor: PALETTE[index % PALETTE.length],
-                    zIndex: index,
-                }}>
-                <img src={item.url} alt={item.alt || `Media item ${index}`} className="max-w-screen max-h-screen scale-[0.7]" />
-            </div>
-        ))}
-        <div style={{ height: `${items.length * 100}vh` }}></div>
+        })}
+        ref={scrollContainerRef}
+    >
+        <div className="relative top-0 left-0 w-screen h-screen">
+            {items.map((item, index) => (
+                <div key={index} className="fixed left-0 top-0 w-full h-full flex items-center justify-center will-change-transform rounded-xl"
+                    ref={addToRefs}
+                    style={{
+                        backgroundColor: PALETTE[index % PALETTE.length],
+                        zIndex: index,
+                    }}>
+                    <img src={item.url} alt={item.alt || `Media item ${index}`} className="rounded-md max-w-screen max-h-screen scale-[0.7]" />
+                </div>
+
+            ))}
+            <div className="spacer" style={{
+                height: 100 * items.length + "vh",
+            }}></div>
+        </div>
     </div>;
 }
 
