@@ -68,21 +68,21 @@ const MediaGrid2 = ({ items, isActive }: MediaGridProps) => {
             gsap.set(sectionRefs.current.map(x => x.current), { y: "100%" })
 
             window.addEventListener("scroll", () => {
-            
+
 
 
 
                 sectionRefs.current.forEach((ref, i) => {
-
                     const start = window.innerHeight * i;
-                    if (window.scrollY < start) return;
+                    let scrollProgress = (window.scrollY - start) / window.innerHeight;
 
+                    if (scrollProgress < 0) scrollProgress = 0; // prevents full pop-out
+                    if (scrollProgress > 1) scrollProgress = 1; // optional, caps at 0 → 1
 
-                        const scrollProgress = ((window.scrollY - (window.innerHeight * i))/ window.innerHeight).toFixed(2);
-                    ref.current.style.transform = `translateY(${Math.max(100 - scrollProgress * 100, 0)}%)`
-                })
+                    ref.current.style.transform = `translateY(${100 * (1 - scrollProgress)}%)`;
+                });
             })
-            
+
         }
 
         return () => {

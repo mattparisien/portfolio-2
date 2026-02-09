@@ -131,7 +131,7 @@ export default function Home() {
           WebkitMinHeight: '-webkit-fill-available',
         } as React.CSSProperties}
       >
-        <div className="flex flex-col justify-between items-start w-full h-screen sm:px-8 sm:py-5 px-4 py-3 bg-[#FC79C8]">
+        <div className="flex flex-col justify-between items-start w-screen h-screen fixed top-0 left-0 sm:px-8 sm:py-5 px-4 py-3 bg-[#FC79C8]">
           <h2
             className="text-black leading-[1.12] text-[1.5rem] xs:text-[1.8rem] sm:text-[2rem] md:text-[2.3rem] lg:text-[2.6rem] xl:text-[3rem]"
             style={styles}
