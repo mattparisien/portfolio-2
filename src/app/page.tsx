@@ -3,6 +3,7 @@ import { useState, useCallback, useEffect } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import ZigzagButton from '../components/ZigzagButton';
 import MediaGrid from '@/components/MediaGrid/MediaGrid';
+import MediaGrid2 from '@/components/MediaGrid/MediaGrid2';
 
 export interface MediaItem {
   url: string;
@@ -133,7 +134,7 @@ export default function Home() {
           paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.5rem)',
         } as React.CSSProperties}
       >
-        {media.length && <MediaGrid items={media} isActive={isGridActive}/>}
+        {media.length && <MediaGrid2 items={media} isActive={isGridActive}/>}
         <div className="flex flex-col justify-between items-start h-full w-full">
           <h2
             className="text-black leading-[1.12] text-[1.5rem] xs:text-[1.8rem] sm:text-[2rem] md:text-[2.3rem] lg:text-[2.6rem] xl:text-[3rem]"

@@ -2,7 +2,7 @@
 import { MediaItem } from "@/app/page";
 import { useWindowWidth } from "@/app/hooks/useWindowWidth";
 import classNames from "classnames";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { shuffle } from "lodash";
 import gsap from "gsap";
 import { useInView } from "@/app/hooks/useInView";
@@ -47,12 +47,17 @@ const MediaGrid = ({ items, isActive }: MediaGridProps) => {
 
     const imgRefs = useRef<React.RefObject<HTMLDivElement>[]>([]);
     const hasAnimated = useRef<boolean>(false);
+    const isIntroComplete = useRef<boolean>(false);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     const inViewStates = useInView(imgRefs.current, {
         threshold: 0.5,
         triggerOnce: true,
     })
+
+    const inViewItems = useMemo(() => {
+        return imgRefs.current.filter((x, i) => inViewStates[i]);
+    }, [inViewStates])
 
     const addToRefs = (el: HTMLDivElement | null) => {
         if (el) {
@@ -75,7 +80,7 @@ const MediaGrid = ({ items, isActive }: MediaGridProps) => {
             [...shuffle(inViewItems)].forEach((ref, idx) => {
                 const img = ref.current;
                 if (!img) return;
-                
+
                 const rect = img.getBoundingClientRect();
                 const { height, width, top, left } = rect;
 
@@ -124,8 +129,31 @@ const MediaGrid = ({ items, isActive }: MediaGridProps) => {
             masterTl.add(placementTl, ">");
 
             masterTl.play();
+            isIntroComplete.current = true;
         }
     }, [windowWidth, isActive, items.length, inViewStates])
+
+    useEffect(() => {
+        if (isIntroComplete.current && inViewItems.length) {
+            inViewItems.forEach((ref) => {
+                const img = ref.current;
+                if (!img) return;
+
+                const overlay = img.querySelector(".overlay") as HTMLDivElement;
+                if (!overlay) return;
+                img.querySelector("img")?.classList.remove("opacity-0");
+                gsap.to(overlay, {
+                    opacity: 0,
+                    duration: 0.4,
+                    delay: 0.2,
+                    onComplete: () => {
+                        gsap.set(overlay, { display: "none" });
+                    }
+                })
+            })
+        }
+    }, [inViewItems])
+
 
     return <div ref={scrollContainerRef} className={classNames("fixed top-0 left-0 h-full overflow-scroll left-0 w-screen h-screen", {
         "pointer-events-none": !isActive,
