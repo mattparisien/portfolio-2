@@ -140,15 +140,15 @@ function Grid({ textures, scale = 1 }: GridProps) {
                 if (mat.map !== tex) {
                     mat.map = tex;
                     mat.needsUpdate = true;
-                    
+
                     // Update geometry to match new texture's aspect ratio
                     if (tex && tex.image) {
                         const imgAspect = tex.image.width / tex.image.height;
                         const maxSize = 3;
-                        
+
                         let planeWidth = 3;
                         let planeHeight = 3;
-                        
+
                         if (imgAspect > 1) {
                             planeWidth = maxSize;
                             planeHeight = maxSize / imgAspect;
@@ -156,10 +156,12 @@ function Grid({ textures, scale = 1 }: GridProps) {
                             planeHeight = maxSize;
                             planeWidth = maxSize * imgAspect;
                         }
-                        
+
                         mesh.geometry.dispose();
                         mesh.geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
                     }
+
+                
                 }
             }
         }
@@ -181,16 +183,16 @@ function Grid({ textures, scale = 1 }: GridProps) {
                 let tex: THREE.Texture | null = null;
                 let planeWidth = 3;
                 let planeHeight = 3;
-                
+
                 if (textures.length) {
                     const hash = Math.abs(Math.imul(centeredCol, 73856093) ^ Math.imul(centeredRow, 19349663));
                     tex = textures[hash % textures.length];
-                    
+
                     // Calculate plane dimensions to maintain aspect ratio
                     if (tex && tex.image) {
                         const imgAspect = tex.image.width / tex.image.height;
                         const maxSize = 3; // Maximum dimension
-                        
+
                         if (imgAspect > 1) {
                             // Wider image
                             planeWidth = maxSize;
@@ -210,8 +212,10 @@ function Grid({ textures, scale = 1 }: GridProps) {
                         userData={{ baseCol: centeredCol, baseRow: centeredRow }}
                     >
                         <planeGeometry args={[planeWidth, planeHeight]} />
-                        <meshBasicMaterial map={tex} />
-                    </mesh>
+                        <meshBasicMaterial
+                            map={tex}
+                            toneMapped={false}
+                        />                    </mesh>
 
 
                 );
@@ -252,9 +256,13 @@ export default function Scene({ media }: SceneProps) {
         <div className="fixed top-0 left-0 w-screen h-screen z-[9999] cursor-grab">
             <Canvas
                 camera={{ position: [0, 0, 5], fov: 75 }}
-                gl={{ outputColorSpace: THREE.SRGBColorSpace }}
-            >
-                <ambientLight intensity={1} />
+                gl={{
+                    outputColorSpace: THREE.SRGBColorSpace,
+                    toneMapping: THREE.ACESFilmicToneMapping,
+                    toneMappingExposure: 1.2,
+                }}            >
+                {/* <ambientLight intensity={1.0} /> */}
+                {/* <directionalLight position={[5, 5, 5]} intensity={1.0} /> */}
                 <Grid textures={validTextures} scale={1} />
             </Canvas>
         </div>
