@@ -24,7 +24,11 @@ type MediaItem = {
   width: number | null;
   height: number | null;
   aspectRatio: number | null;
-  meta?: any;
+  meta?: {
+    isFullScreen?: "true" | "false";
+    removeBackground?: "true" | "false";
+    rotate?: string;
+  };
 };
 
 /* -----------------------------
@@ -53,7 +57,16 @@ export async function GET() {
     const images = imagesJson?.result?.images ?? [];
 
     const imagesWithMetadata: MediaItem[] = await Promise.all(
-      images.map(async (image: any) => {
+      images.map(async (image: {
+        variants: string[];
+        meta?: {
+          width?: number;
+          height?: number;
+          isFullScreen?: "true" | "false";
+          removeBackground?: "true" | "false";
+          rotate?: string;
+        };
+      }) => {
         const url = image?.variants?.[0];
         if (!url) return null;
 
