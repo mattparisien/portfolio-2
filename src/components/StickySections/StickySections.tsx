@@ -27,7 +27,7 @@ export type MediaGridItem = MediaItem & {
 
 
 const StickySections = ({ items }: MediaGridProps) => {
-    const [visibleRange, setVisibleRange] = useState({ start: 0, end: 5 });
+    const [visibleRange, setVisibleRange] = useState({ start: 0, end: 6 });
 
     const sectionRefs = useRef<React.RefObject<HTMLDivElement>[]>([]);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
