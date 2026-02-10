@@ -5,6 +5,7 @@ import classNames from "classnames";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { use, useEffect, useRef, useState } from "react";
+import { PALETTE } from "@/app/constants";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -18,23 +19,13 @@ export type MediaGridItem = MediaItem & {
     height: number | null;
     aspectRatio: number | null;
     meta?: {
-        isFullScreen?: boolean;
+        isFullScreen?: "true" | "false";
+        removeBackground?: "true" | "false";
+        rotate?: string;
+
     }
 };
 
-const PALETTE = [
-    "#A0C1B5",
-    "#AF3C3F",
-    "#B597B0",
-    "#198948",
-    "#E2CEBB",
-    "#AF9786",
-    "#0281AD",
-    "#B77F3E",
-    "#CFC47B",
-    "#7E6259",
-    "#CB968E"
-]
 
 const StickySections = ({ items, isActive }: MediaGridProps) => {
 
@@ -107,14 +98,16 @@ const StickySections = ({ items, isActive }: MediaGridProps) => {
                         className="sticky left-0 top-0 w-screen h-screen flex items-center justify-center rounded-t-xl pointer-events-all"
                         ref={addToRefs}
                         style={{
-                            backgroundColor: PALETTE[actualIndex % PALETTE.length],
+                            backgroundColor: item.meta?.removeBackground === "true" ? "transparent" : PALETTE[actualIndex % PALETTE.length],
                             zIndex: actualIndex,
 
                         }}
                     >
                         <div className={classNames("rounded-md overflow-hidden inline-flex", {
                             "w-full h-full": item.meta?.isFullScreen == "true",
-                        })}>
+                        })} style={{
+                            transform: `rotate(${item.meta?.rotate ? item.meta.rotate : 0}deg)`,
+                        }}>
                             <img
                                 src={item.url}
                                 className={classNames("", {

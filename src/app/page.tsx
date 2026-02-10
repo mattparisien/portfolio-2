@@ -1,4 +1,5 @@
 "use client"
+import Intro from '@/components/Intro';
 import StickySections from '@/components/StickySections/StickySections';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useCallback, useEffect, useState } from 'react';
@@ -146,7 +147,8 @@ export default function Home() {
             <a className='text-sm sm:text-lg text-lg md:text-xl font-sans' href='mailto:matthewparisien4@gmail.com'>matthewparisien4@gmail.com</a>
           </div>
         </div>
-        {media.length && <StickySections items={media} isActive={isGridActive} />}
+        <Intro items={media} />
+        {/* {media.length && <StickySections items={media} isActive={isGridActive} />} */}
 
       </main >
 
