@@ -1,11 +1,7 @@
 "use client"
-import { useState, useCallback, useEffect } from 'react';
+import StickySections from '@/components/StickySections/StickySections';
 import useEmblaCarousel from 'embla-carousel-react';
-import ZigzagButton from '../components/ZigzagButton';
-import MediaGrid from '@/components/MediaGrid/MediaGrid';
-import MediaGrid2 from '@/components/MediaGrid/MediaGrid2';
-import classNames from 'classnames';
-import Scene from '@/Scene';
+import { useCallback, useEffect, useState } from 'react';
 
 export interface MediaItem {
   url: string;
@@ -133,7 +129,6 @@ export default function Home() {
           WebkitMinHeight: '-webkit-fill-available',
         } as React.CSSProperties}
       >
-        <Scene media={media} />
         <div className="flex flex-col justify-between items-start w-screen h-screen fixed top-0 left-0 sm:px-8 sm:py-5 px-4 py-3 bg-[#FC79C8]">
           <h2
             className="text-black leading-[1.12] text-[1.5rem] sm:text-[clamp(2rem,3vw,8rem)]"
@@ -141,14 +136,17 @@ export default function Home() {
           >
             Matthew Parisien is a software developer and visual artist based in Montreal, working at the intersection of engineering and design. He builds digital systems and tools where creative thinking informs not just aesthetics, but structure, usability, and execution.
 
-            With a background that spans data-driven development and years leading a <button className='underline decoration-1 sm:decoration-2 underline-offset-3 cursor-pointer' onClick={() => setIsGridActive(true)}>creative studio</button>, Matthew approaches engineering as a creative practice—translating abstract ideas into clear, scalable systems and collaborating seamlessly across technical and creative teams. He is currently working at Innocap, where he builds data-driven platforms and AI-powered tools.
+            With a background that spans data-driven development and years leading a
+            {/* <button className='underline decoration-1 sm:decoration-2 underline-offset-3 cursor-pointer' onClick={() => setIsGridActive(true)}>creative studio</button> */}
+            creative studio,
+            Matthew approaches engineering as a creative practice—translating abstract ideas into clear, scalable systems and collaborating seamlessly across technical and creative teams. He is currently working at Innocap, where he builds data-driven platforms and AI-powered tools. Scroll to see creative work.
           </h2>
           <div className='flex items-center justify-between w-full [&>a]:cursor-pointer [&>a]:decoration-[2px] [&>a]:decoration-black [&>a]:underline-offset-2 [&>a]:hover:underline' style={{ ...styles, fontWeight: 400 }} >
             <div className='text-sm sm:text-lg md:text-xl font-sans'>Matthew Parisien *</div>
             <a className='text-sm sm:text-lg text-lg md:text-xl font-sans' href='mailto:matthewparisien4@gmail.com'>matthewparisien4@gmail.com</a>
           </div>
         </div>
-        {/* {media.length && <MediaGrid2 items={media} isActive={isGridActive} />} */}
+        {media.length && <StickySections items={media} isActive={isGridActive} />}
 
       </main >
 

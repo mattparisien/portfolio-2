@@ -36,9 +36,8 @@ const PALETTE = [
     "#CB968E"
 ]
 
-const MediaGrid2 = ({ items, isActive }: MediaGridProps) => {
+const StickySections = ({ items, isActive }: MediaGridProps) => {
 
-    const hasAnimated = useRef<boolean>(false);
     const [visibleRange, setVisibleRange] = useState({ start: 0, end: 5 });
 
     const sectionRefs = useRef<React.RefObject<HTMLDivElement>[]>([]);
@@ -87,45 +86,14 @@ const MediaGrid2 = ({ items, isActive }: MediaGridProps) => {
 
     const visibleItems = items.slice(visibleRange.start, visibleRange.end);
 
-    useEffect(() => {
-        if (isActive && !hasAnimated.current && sectionRefs.current.length > 0) {
-            hasAnimated.current = true;
-
-            const firstSection = sectionRefs.current[0]?.current;
-            if (firstSection) {
-                // Set initial state immediately
-                gsap.set(firstSection, { scale: 0 });
-                gsap.set(firstSection.querySelector("img"), { opacity: 0 });
-                gsap.set(scrollContainerRef.current, { opacity: 1 });
-
-                // Animate in
-                gsap.timeline().to(firstSection, {
-                    scaleY: 0.5,
-                    duration: 1,
-                    ease: "expo.inOut"
-                })
-                gsap.timeline().to(firstSection, {
-                    scale: 1,
-                    duration: 0.8,
-                    ease: "expo.inOut",
-                    delay: 0.2
-                })
-                .to(firstSection.querySelector("img"), {
-                    opacity: 1,
-                    duration: 0.3,
-                    ease: "power3.out"
-                }, "-=0.2");
-            }
-        }
-    }, [isActive, sectionRefs.current.length]);
-
     return <div
-        className={classNames("w-screen min-h-screen absolute top-0 left-0 opacity-0", {
-            "pointer-events-none": !isActive
-        })}
+        className="w-screen min-h-screen absolute top-0 left-0"
         ref={scrollContainerRef}
     >
-        <div className="relative top-0 left-0 w-screen pt-screen">
+        <div className="relative top-0 left-0 w-screen">
+            {/* Initial spacer to push first section below viewport */}
+            <div className="h-screen" />
+            
             {/* Spacer for sections before visible range */}
             {visibleRange.start > 0 && (
                 <div style={{ height: `${visibleRange.start * 100}vh` }} />
@@ -136,7 +104,7 @@ const MediaGrid2 = ({ items, isActive }: MediaGridProps) => {
                 return (
                     <div
                         key={actualIndex}
-                        className="sticky left-0 top-0 w-screen h-screen flex items-center justify-center rounded-t-xl"
+                        className="sticky left-0 top-0 w-screen h-screen flex items-center justify-center rounded-t-xl pointer-events-all"
                         ref={addToRefs}
                         style={{
                             backgroundColor: PALETTE[actualIndex % PALETTE.length],
@@ -145,13 +113,13 @@ const MediaGrid2 = ({ items, isActive }: MediaGridProps) => {
                         }}
                     >
                         <div className={classNames("rounded-md overflow-hidden inline-flex", {
-                            "w-full h-full": item.meta?.isFullScreen,
+                            "w-full h-full": item.meta?.isFullScreen == "true",
                         })}>
                             <img
                                 src={item.url}
                                 className={classNames("", {
-                                    "max-w-[90vw] max-h-[90vh] object-contain": !item.meta?.isFullScreen,
-                                    "w-full h-full object-cover": item.meta?.isFullScreen,
+                                    "max-w-[90vw] max-h-[90vh] object-contain": !item.meta?.isFullScreen || item.meta?.isFullScreen == "false",
+                                    "w-full h-full object-cover": item.meta?.isFullScreen == "true",
                                 })}
                                 alt=""
                                 loading={actualIndex < 3 ? "eager" : "lazy"}
@@ -174,4 +142,4 @@ const MediaGrid2 = ({ items, isActive }: MediaGridProps) => {
     </div>;
 }
 
-export default MediaGrid2;
+export default StickySections;
