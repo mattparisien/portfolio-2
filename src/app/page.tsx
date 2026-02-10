@@ -5,6 +5,7 @@ import ZigzagButton from '../components/ZigzagButton';
 import MediaGrid from '@/components/MediaGrid/MediaGrid';
 import MediaGrid2 from '@/components/MediaGrid/MediaGrid2';
 import classNames from 'classnames';
+import Scene from '@/Scene';
 
 export interface MediaItem {
   url: string;
@@ -132,6 +133,7 @@ export default function Home() {
           WebkitMinHeight: '-webkit-fill-available',
         } as React.CSSProperties}
       >
+        <Scene media={media} />
         <div className="flex flex-col justify-between items-start w-screen h-screen fixed top-0 left-0 sm:px-8 sm:py-5 px-4 py-3 bg-[#FC79C8]">
           <h2
             className="text-black leading-[1.12] text-[1.5rem] sm:text-[clamp(2rem,3vw,8rem)]"
@@ -146,83 +148,11 @@ export default function Home() {
             <a className='text-sm sm:text-lg text-lg md:text-xl font-sans' href='mailto:matthewparisien4@gmail.com'>matthewparisien4@gmail.com</a>
           </div>
         </div>
-        {media.length && <MediaGrid2 items={media} isActive={isGridActive} />}
+        {/* {media.length && <MediaGrid2 items={media} isActive={isGridActive} />} */}
 
       </main >
 
-      {/* Modal Slideshow */}
-      {
-        isModalOpen && (
-          <div
-            className="fixed inset-0 bg-white flex items-center justify-center z-50"
-            onClick={() => setIsModalOpen(false)}
-          >
-            {/* Close button positioned at top right of screen */}
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="fixed top-4 right-4 sm:right-14 sm:top-10 text-black hover:opacity-70 z-20 w-8 h-8 cursor-pointer"
-            >
-              <svg width="100%" height="100%" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M24 8L8 24M8 8L24 24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
 
-            <div
-              className="relative max-h-full sm:p-14 w-full overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-
-              {/* Image Display */}
-              <div className="embla overflow-hidden cursor-grab" ref={emblaRef}>
-                <div className="embla__container flex">
-                  {media.map((item, index) => (
-                    <div className="embla__slide flex-[0_0_auto] min-w-0 h-[65vh] flex items-center" key={index}>
-                      {item.type === 'image' ? (
-                        <img
-                          src={item.url}
-                          alt={`Creative work ${index + 1}`}
-                          className="h-full w-auto object-contain"
-                        />
-                      ) : (
-                        <video
-                          src={item.url}
-                          className="h-full w-auto object-contain"
-                          autoPlay
-                          muted
-                          loop
-                          playsInline
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Navigation Arrows - Below the carousel */}
-              <div className="flex justify-center gap-4 mt-6">
-                <button
-                  onClick={scrollPrev}
-                  className="text-black text-3xl hover:opacity-70 transition-opacity cursor-pointer"
-                  style={{ fontFamily: 'Freigeist, sans-serif' }}
-                >
-                  ←
-                </button>
-                <button
-                  onClick={scrollNext}
-                  className="text-black text-3xl hover:opacity-70 transition-opacity cursor-pointer"
-                  style={{ fontFamily: 'Freigeist, sans-serif' }}
-                >
-                  →
-                </button>
-              </div>
-
-            </div>
-            <div className="absolute bottom-0 left-0 pl-10 pb-10 max-w-md">
-              Selected Clients include: Lush Cosmetics, Rudsak, Incredible Cosmetics, and more.
-            </div>
-          </div>
-        )
-      }
     </>
   );
 }
