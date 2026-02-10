@@ -37,12 +37,9 @@ const Intro = ({ items }: IntroProps) => {
                 scale: 1,
                 activeIdx: 0,
                 color: PALETTE[0],
-                colorOpacity: 1,
-                scaleX: 1,
-                scaleY: 1
+                scaleX: 0,
+                scaleY: 0
             }
-
-            const intervalDuration = 2000; // 2 seconds
 
             cnv.width = window.innerWidth;
             cnv.height = window.innerHeight;
@@ -61,37 +58,28 @@ const Intro = ({ items }: IntroProps) => {
 
                 const x = window.innerWidth / 2 - width / 2;
                 const y = window.innerHeight / 2 - height / 2;
-                
-                // Draw debug background
-                ctx.fillStyle = "red";
-                ctx.fillRect(x, y, width, height);
-                
-                const image = loadedImages[params.activeIdx];
-                const item = introItems[params.activeIdx];
-                
-                // Calculate image dimensions to fit inside container (contain behavior)
-                let imageWidth, imageHeight;
-                const containerAspect = width / height;
-                
-                if (item.aspectRatio > containerAspect) {
-                    // Image is wider than container - fit to width
-                    imageWidth = width;
-                    imageHeight = imageWidth / item.aspectRatio;
-                } else {
-                    // Image is taller than container - fit to height
-                    imageHeight = height;
-                    imageWidth = imageHeight * item.aspectRatio;
-                }
-                
-                const imageX = window.innerWidth / 2 - imageWidth / 2;
-                const imageY = window.innerHeight / 2 - imageHeight / 2;
-                ctx.drawImage(image, imageX, imageY, imageWidth, imageHeight);
-                
-                // Draw color overlay
                 ctx.fillStyle = params.color;
-                ctx.globalAlpha = params.colorOpacity;
-                ctx.fillRect(imageX, imageY, imageWidth, imageHeight);
-                ctx.globalAlpha = 1; // Reset alpha
+                ctx.fillRect(x, y, width, height);
+                //ctx.drawImage(image, x, y, width, height);
+                // introItems.forEach((item, idx) => {
+                //     let imgWidth;
+                //     let imgHeight;
+
+                //     // Is portrait
+                //     if (item.aspectRatio <= 1) {
+                //         imgHeight = containerHeight;
+                //         imgWidth = containerHeight * item.aspectRatio;
+                //     } else {
+                //         // Is landscape
+                //         imgWidth = containerWidth;
+                //         imgHeight = containerWidth / item.aspectRatio;
+                //     }
+
+                //     const image = loadedImages[idx];
+                //     const x = window.innerWidth / 2 - imgWidth / 2;
+                //     const y = window.innerHeight / 2 - imgHeight / 2;
+                //     ctx.drawImage(image, x, y, imgWidth, imgHeight);
+                // });
 
                 animationId = requestAnimationFrame(() => animate(loadedImages));
             }
@@ -119,7 +107,7 @@ const Intro = ({ items }: IntroProps) => {
                     scaleY: scaleY,
                     color: PALETTE[params.activeIdx],
                     duration: 1,
-                    ease: "power3.inOut",
+                    ease: "expo.inOut",
                     onComplete: () => {
                         params.activeIdx = params.activeIdx + 1;
 
@@ -133,46 +121,39 @@ const Intro = ({ items }: IntroProps) => {
                                 scaleX: window.innerWidth / (200 * params.scale),
                                 scaleY: window.innerHeight / (200 * params.scale),
                                 duration: 1,
-                                ease: "power3.inOut",
+                                ease: "expo.inOut",
                             })
                         }
                     }
                 })
             }
 
-            // const setInitialScale = () => {
-            //     const { scaleX, scaleY } = getScale(introItems[params.activeIdx]);
+            const setInitialScale = () => {
+                const { scaleX, scaleY } = getScale(introItems[params.activeIdx]);
 
-            //     gsap.to(params, {
-            //         scaleX: scaleX,
-            //         scaleY: scaleY,
-            //         duration: 1,
-            //         ease: "expo.inOut",
-            //     })
-            //     params.activeIdx = params.activeIdx + 1;
-            // }
+                gsap.to(params, {
+                    scaleX: scaleX,
+                    scaleY: scaleY,
+                    duration: 1,
+                    ease: "expo.inOut",
+
+                })
+                params.scaleX = scaleX;
+                params.scaleY = scaleY;
+                params.activeIdx = params.activeIdx + 1;
+            }
 
 
             loadImages(introItems).then((loadedImages) => {
                 animate(loadedImages);
 
-                setInterval(() => {
-                        params.colorOpacity = 1;
-                        params.activeIdx = (params.activeIdx + 1) % introItems.length;
-                        params.color = PALETTE[params.activeIdx];
-                        gsap.to(params, {
-                            colorOpacity: 0,
-                            duration: 2,
-                            ease: "power3.out"
-                        })
-                }, intervalDuration);
-                // setInitialScale();
+                setInitialScale();
 
 
-                // setTimeout(() => {
-                //     animateScale();
+                setTimeout(() => {
+                    animateScale();
 
-                // }, 3000);
+                }, 3000);
 
 
                 // gsap.to(params, {
