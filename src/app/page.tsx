@@ -1,9 +1,6 @@
 "use client"
-import Grid from '@/components/Grid';
-import Intro from '@/components/Intro';
-import StickySections from '@/components/StickySections/StickySections';
-import useEmblaCarousel from 'embla-carousel-react';
-import { useCallback, useEffect, useState } from 'react';
+import StickySections, { MediaGridItem } from '@/components/StickySections/StickySections';
+import { useEffect, useState } from 'react';
 
 export interface MediaItem {
   url: string;
@@ -34,40 +31,7 @@ function shuffle(array: unknown[], seed: number) {
 
 
 export default function Home() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const [isGridActive, setIsGridActive] = useState(false);
-  const [media, setMedia] = useState<MediaItem[]>([]);
-
-  // Embla Carousel setup
-  const [emblaRef, emblaApi] = useEmblaCarousel({
-    loop: true,
-    slidesToScroll: 1,
-    containScroll: 'trimSnaps'
-  });
-
-  const scrollPrev = useCallback(() => {
-    if (emblaApi) emblaApi.scrollPrev();
-  }, [emblaApi]);
-
-  const scrollNext = useCallback(() => {
-    if (emblaApi) emblaApi.scrollNext();
-  }, [emblaApi]);
-
-  useEffect(() => {
-    if (!emblaApi) return;
-
-    const onScroll = () => {
-      setScrollProgress(emblaApi.scrollProgress());
-    };
-
-    emblaApi.on('scroll', onScroll);
-    onScroll();
-
-    return () => {
-      emblaApi.off('scroll', onScroll);
-    };
-  }, [emblaApi, setScrollProgress]);
+  const [media, setMedia] = useState<MediaGridItem[]>([]);
 
   // Fetch and preload media from Cloudinary folder
   useEffect(() => {
@@ -78,10 +42,10 @@ export default function Home() {
         const mediaItems = data.media || [];
 
         // Set media state first
-        setMedia(shuffle(mediaItems, 125) as MediaItem[]); // Shuffle with fixed seed for consistent order
+        setMedia(shuffle(mediaItems, 125) as MediaGridItem[]); // Shuffle with fixed seed for consistent order
 
         // Preload all media in background
-        const preloadPromises = mediaItems.map((item: MediaItem) => {
+        const preloadPromises = mediaItems.map((item: MediaGridItem) => {
           return new Promise((resolve, reject) => {
             if (item.type === 'image') {
               const img = new Image();
@@ -119,10 +83,6 @@ export default function Home() {
     fontWeight: "300",
   };
 
-  const stylesButtons = {
-    fontSize: "clamp(1.2rem, 5vw, 8rem)"
-  }
-
   return (
     <>
       <main
@@ -149,7 +109,7 @@ export default function Home() {
           </div>
         </div>
         {/* <Intro items={media} /> */}
-        {media.length && <StickySections items={media} isActive={isGridActive} />}
+        {media.length > 0 && <StickySections items={media} isActive={false} />}
       </main >
 
 

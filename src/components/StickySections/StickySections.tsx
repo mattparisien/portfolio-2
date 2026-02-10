@@ -1,10 +1,9 @@
 'use client';
-import { useWindowWidth } from "@/app/hooks/useWindowWidth";
 import { MediaItem } from "@/app/page";
 import classNames from "classnames";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { use, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PALETTE } from "@/app/constants";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -27,7 +26,7 @@ export type MediaGridItem = MediaItem & {
 };
 
 
-const StickySections = ({ items, isActive }: MediaGridProps) => {
+const StickySections = ({ items }: MediaGridProps) => {
     const [visibleRange, setVisibleRange] = useState({ start: 0, end: 5 });
 
     const sectionRefs = useRef<React.RefObject<HTMLDivElement>[]>([]);
