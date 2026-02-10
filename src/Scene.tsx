@@ -28,6 +28,8 @@ function Grid({ textures, scale = 1 }: GridProps) {
     const targetOffset = useRef(new THREE.Vector2()); // fractional offset (wrapped)
     const currentOffset = useRef(new THREE.Vector2()); // fractional offset (wrapped)
     const tileShift = useRef({ x: 0, y: 0 }); // integer tile offsets for stable texture assignment
+    const velocity = useRef(new THREE.Vector2()); // velocity for momentum
+    const lastDragTime = useRef(Date.now());
 
     // Converts screen px delta → world delta at Z=0
     const screenDeltaToWorld = (dx: number, dy: number) => {
@@ -58,6 +60,14 @@ function Grid({ textures, scale = 1 }: GridProps) {
 
             targetOffset.current.x += delta.x;
             targetOffset.current.y += delta.y;
+            
+            // Calculate velocity for momentum
+            const now = Date.now();
+            const dt = (now - lastDragTime.current) / 1000; // in seconds
+            if (dt > 0) {
+                velocity.current.set(delta.x / dt, delta.y / dt);
+            }
+            lastDragTime.current = now;
 
             lastMouse.current.set(e.clientX, e.clientY);
         };
@@ -80,12 +90,27 @@ function Grid({ textures, scale = 1 }: GridProps) {
     }, [gl]);
 
     // WRAP THE GRID (infinite scroll) while keeping tile identity stable
-    useFrame(() => {
+    useFrame((state, delta) => {
         const g = groupRef.current;
         if (!g) return;
 
         // Apply uniform scale to the entire grid
         g.scale.set(scale, scale, 1);
+        
+        // Apply momentum when not dragging
+        if (!isDragging.current) {
+            const friction = 0.92; // 0.95 = less friction, slides longer; 0.85 = more friction, stops faster
+            velocity.current.multiplyScalar(friction);
+            
+            // Apply velocity to target offset
+            targetOffset.current.x += velocity.current.x * delta;
+            targetOffset.current.y += velocity.current.y * delta;
+            
+            // Stop if velocity is very small
+            if (velocity.current.length() < 0.01) {
+                velocity.current.set(0, 0);
+            }
+        }
 
         // Smoothly interpolate toward the target offset
         currentOffset.current.lerp(targetOffset.current, 0.2);
