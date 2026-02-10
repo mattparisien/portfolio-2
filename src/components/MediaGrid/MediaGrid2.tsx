@@ -58,21 +58,21 @@ const MediaGrid2 = ({ items, isActive }: MediaGridProps) => {
         const onScroll = () => {
             if (ticking) return;
             ticking = true;
-            
+
             requestAnimationFrame(() => {
                 const vh = window.innerHeight;
                 const scrollY = window.scrollY;
-                
+
                 // Calculate which sections should be visible
                 const currentSection = Math.floor(scrollY / vh);
                 const bufferBefore = 2; // Render 2 sections before
                 const bufferAfter = 3; // Render 3 sections after
-                
+
                 const start = Math.max(0, currentSection - bufferBefore);
                 const end = Math.min(items.length, currentSection + bufferAfter + 1);
-                
+
                 setVisibleRange({ start, end });
-                
+
                 ticking = false;
             });
         };
@@ -87,35 +87,40 @@ const MediaGrid2 = ({ items, isActive }: MediaGridProps) => {
 
     const visibleItems = items.slice(visibleRange.start, visibleRange.end);
 
-    // useEffect(() => {
-    //     if (isActive && !hasAnimated.current && sectionRefs.current.length > 0) {
-    //         hasAnimated.current = true;
-            
-    //         const firstSection = sectionRefs.current[0]?.current;
-    //         if (firstSection) {
-    //             // Set initial state immediately
-    //             gsap.set(firstSection, { y: "100%" });
-    //             gsap.set(firstSection.querySelector("img"), { opacity: 0 });
-    //             gsap.set(scrollContainerRef.current, { opacity: 1 });
-                
-    //             // Animate in
-    //             gsap.timeline().to(firstSection, { 
-    //                 y: "0%",
-    //                 opacity: 1,
-    //                 duration: 0.5, 
-    //                 ease: "circ.out" 
-    //             })
-    //             .to(firstSection.querySelector("img"), { 
-    //                 opacity: 1, 
-    //                 duration: 0.3, 
-    //                 ease: "power3.out" 
-    //             }, "-=0.5");
-    //         }
-    //     }
-    // }, [isActive, sectionRefs.current.length]);
+    useEffect(() => {
+        if (isActive && !hasAnimated.current && sectionRefs.current.length > 0) {
+            hasAnimated.current = true;
+
+            const firstSection = sectionRefs.current[0]?.current;
+            if (firstSection) {
+                // Set initial state immediately
+                gsap.set(firstSection, { scale: 0 });
+                gsap.set(firstSection.querySelector("img"), { opacity: 0 });
+                gsap.set(scrollContainerRef.current, { opacity: 1 });
+
+                // Animate in
+                gsap.timeline().to(firstSection, {
+                    scaleY: 0.5,
+                    duration: 1,
+                    ease: "expo.inOut"
+                })
+                gsap.timeline().to(firstSection, {
+                    scale: 1,
+                    duration: 0.8,
+                    ease: "expo.inOut",
+                    delay: 0.2
+                })
+                .to(firstSection.querySelector("img"), {
+                    opacity: 1,
+                    duration: 0.3,
+                    ease: "power3.out"
+                }, "-=0.2");
+            }
+        }
+    }, [isActive, sectionRefs.current.length]);
 
     return <div
-        className={classNames("w-screen min-h-screen absolute top-0 left-0", {
+        className={classNames("w-screen min-h-screen absolute top-0 left-0 opacity-0", {
             "pointer-events-none": !isActive
         })}
         ref={scrollContainerRef}
@@ -125,38 +130,42 @@ const MediaGrid2 = ({ items, isActive }: MediaGridProps) => {
             {visibleRange.start > 0 && (
                 <div style={{ height: `${visibleRange.start * 100}vh` }} />
             )}
-            
+
             {visibleItems.map((item, i) => {
                 const actualIndex = visibleRange.start + i;
                 return (
-                    <div 
-                        key={actualIndex} 
+                    <div
+                        key={actualIndex}
                         className="sticky left-0 top-0 w-screen h-screen flex items-center justify-center rounded-t-xl"
                         ref={addToRefs}
                         style={{
                             backgroundColor: PALETTE[actualIndex % PALETTE.length],
                             zIndex: actualIndex,
-                            
+
                         }}
                     >
-                        <img 
-                            src={item.url} 
-                            alt="" 
-                            className={classNames("rounded-md overflow-hidden w-full h-full", {
-                                "object-contain scale-[0.8]": !item.meta?.isFullScreen,
-                                "object-cover": item.meta?.isFullScreen,
-                            })}
-                            loading={actualIndex < 3 ? "eager" : "lazy"}
-                            decoding="async"
-                            style={{
-                                backfaceVisibility: "hidden", 
-                                transform: "translateZ(0)",
-                            }}
-                        />
+                        <div className={classNames("rounded-md overflow-hidden inline-flex", {
+                            "w-full h-full": item.meta?.isFullScreen,
+                        })}>
+                            <img
+                                src={item.url}
+                                className={classNames("", {
+                                    "max-w-[90vw] max-h-[90vh] object-contain": !item.meta?.isFullScreen,
+                                    "w-full h-full object-cover": item.meta?.isFullScreen,
+                                })}
+                                alt=""
+                                loading={actualIndex < 3 ? "eager" : "lazy"}
+                                decoding="async"
+                                style={{
+                                    backfaceVisibility: "hidden",
+                                    transform: "translateZ(0)",
+                                }}
+                            />
+                        </div>
                     </div>
                 );
             })}
-            
+
             {/* Spacer for sections after visible range */}
             {visibleRange.end < items.length && (
                 <div style={{ height: `${(items.length - visibleRange.end) * 100}vh` }} />
