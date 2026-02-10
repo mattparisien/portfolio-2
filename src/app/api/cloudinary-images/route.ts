@@ -1,74 +1,137 @@
-import { NextResponse } from 'next/server';
-import { v2 as cloudinary } from 'cloudinary';
-import sizeOf from 'image-size';
+import { NextResponse } from "next/server";
+import sizeOf from "image-size";
+import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
 
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+/* -----------------------------
+   Cloudflare R2 (S3-compatible)
+-------------------------------- */
+
+const r2 = new S3Client({
+  region: "auto",
+  endpoint: `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY!,
+  },
 });
 
+/* -----------------------------
+   Types
+-------------------------------- */
+type MediaItem = {
+  url: string;
+  type: "image" | "video";
+  width: number | null;
+  height: number | null;
+  aspectRatio: number | null;
+  meta?: any;
+};
 
+/* -----------------------------
+   Route
+-------------------------------- */
 export async function GET() {
   try {
-    const ACCOUNT_ID = process.env.CLOUDFLARE_IMAGES_ACCOUNT_ID;
-    const API_TOKEN = process.env.CLOUDFLARE_IMAGES_API_TOKEN;
-
-    const response = await fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/images/v1`,
+    /* -----------------------------
+       Fetch Cloudflare Images
+    -------------------------------- */
+    const imagesRes = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_IMAGES_ACCOUNT_ID}/images/v1`,
       {
         headers: {
-          Authorization: `Bearer ${API_TOKEN}`,
-          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.CLOUDFLARE_IMAGES_API_TOKEN}`,
         },
+        cache: "no-store",
       }
     );
 
-    const data = await response.json();
-    const { images } = data.result;
+    if (!imagesRes.ok) {
+      throw new Error("Failed to fetch Cloudflare Images");
+    }
 
-    // Fetch image dimensions by downloading the image
-    const imagesWithMetadata = await Promise.all(
+    const imagesJson = await imagesRes.json();
+    const images = imagesJson?.result?.images ?? [];
+
+    const imagesWithMetadata: MediaItem[] = await Promise.all(
       images.map(async (image: any) => {
-        if (image.meta) {
+        const url = image?.variants?.[0];
+        if (!url) return null;
+
+        // Prefer metadata if available
+        if (image.meta?.width && image.meta?.height) {
+          return {
+            url,
+            type: "image",
+            width: image.meta.width,
+            height: image.meta.height,
+            aspectRatio: image.meta.width / image.meta.height,
+            meta: image.meta,
+          };
         }
+
+        // Fallback: fetch image to get dimensions
         try {
-          const imageUrl = image.variants[0];
-          const imageResponse = await fetch(imageUrl);
-          const arrayBuffer = await imageResponse.arrayBuffer();
-          const buffer = Buffer.from(arrayBuffer);
+          const res = await fetch(url);
+          const buffer = Buffer.from(await res.arrayBuffer());
           const dimensions = sizeOf(buffer);
 
-          console.log(`Fetched dimensions for ${image.id}:`, dimensions);
-
           return {
-            url: imageUrl,
+            url,
+            type: "image",
+            width: dimensions.width ?? null,
+            height: dimensions.height ?? null,
+            aspectRatio:
+              dimensions.width && dimensions.height
+                ? dimensions.width / dimensions.height
+                : null,
             meta: image.meta,
-            type: 'image',
-            width: dimensions.width,
-            height: dimensions.height,
-            aspectRatio: dimensions.width && dimensions.height 
-              ? dimensions.width / dimensions.height 
-              : null,
           };
-        } catch (error) {
-          console.error(`Error fetching image dimensions for ${image.id}:`, error);
+        } catch {
           return {
-            url: image.variants[0],
-            meta: image.meta,
-            type: 'image',
+            url,
+            type: "image",
             width: null,
             height: null,
             aspectRatio: null,
+            meta: image.meta,
           };
         }
       })
     );
 
-    return NextResponse.json({ media: imagesWithMetadata });
+    /* -----------------------------
+       Fetch R2 Videos
+    -------------------------------- */
+    const listCommand = new ListObjectsV2Command({
+      Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME!,
+    });
+
+    const listResult = await r2.send(listCommand);
+
+    const videosWithMetadata: MediaItem[] = (listResult.Contents ?? [])
+      .filter(obj => obj.Key?.match(/\.(mp4|webm|mov)$/i))
+      .map(obj => ({
+        url: `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${obj.Key}`,
+        type: "video",
+        width: 1920, // placeholder — store real values at upload time
+        height: 1080,
+        aspectRatio: 16 / 9,
+      }));
+
+    /* -----------------------------
+       Combine & Respond
+    -------------------------------- */
+    const media = [
+      ...imagesWithMetadata.filter(Boolean),
+      ...videosWithMetadata,
+    ];
+
+    return NextResponse.json({ media });
   } catch (error) {
-    console.error('Error fetching Cloudinary media:', error);
-    return NextResponse.json({ media: [], error: 'Failed to fetch media' }, { status: 500 });
+    console.error("Media API error:", error);
+    return NextResponse.json(
+      { media: [], error: "Failed to fetch media" },
+      { status: 500 }
+    );
   }
 }

@@ -28,7 +28,6 @@ export type MediaGridItem = MediaItem & {
 
 
 const StickySections = ({ items, isActive }: MediaGridProps) => {
-
     const [visibleRange, setVisibleRange] = useState({ start: 0, end: 5 });
 
     const sectionRefs = useRef<React.RefObject<HTMLDivElement>[]>([]);
@@ -108,20 +107,38 @@ const StickySections = ({ items, isActive }: MediaGridProps) => {
                         })} style={{
                             transform: `rotate(${item.meta?.rotate ? item.meta.rotate : 0}deg)`,
                         }}>
-                            <img
-                                src={item.url}
-                                className={classNames("", {
-                                    "max-w-[90vw] max-h-[90vh] object-contain": !item.meta?.isFullScreen || item.meta?.isFullScreen == "false",
-                                    "w-full h-full object-cover": item.meta?.isFullScreen == "true",
-                                })}
-                                alt=""
-                                loading={actualIndex < 3 ? "eager" : "lazy"}
-                                decoding="async"
-                                style={{
-                                    backfaceVisibility: "hidden",
-                                    transform: "translateZ(0)",
-                                }}
-                            />
+                            {item.type === 'video' ? (
+                                <video
+                                    src={item.url}
+                                    className={classNames("", {
+                                        "max-w-[90vw] max-h-[90vh] object-contain": !item.meta?.isFullScreen || item.meta?.isFullScreen == "false",
+                                        "w-full h-full object-cover": item.meta?.isFullScreen == "true",
+                                    })}
+                                    autoPlay
+                                    loop
+                                    muted
+                                    playsInline
+                                    style={{
+                                        backfaceVisibility: "hidden",
+                                        transform: "translateZ(0)",
+                                    }}
+                                />
+                            ) : (
+                                <img
+                                    src={item.url}
+                                    className={classNames("", {
+                                        "max-w-[90vw] max-h-[90vh] object-contain": !item.meta?.isFullScreen || item.meta?.isFullScreen == "false",
+                                        "w-full h-full object-cover": item.meta?.isFullScreen == "true",
+                                    })}
+                                    alt=""
+                                    loading={actualIndex < 3 ? "eager" : "lazy"}
+                                    decoding="async"
+                                    style={{
+                                        backfaceVisibility: "hidden",
+                                        transform: "translateZ(0)",
+                                    }}
+                                />
+                            )}
                         </div>
                     </div>
                 );
