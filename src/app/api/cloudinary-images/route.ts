@@ -28,6 +28,7 @@ type MediaItem = {
     isFullScreen?: "true" | "false";
     removeBackground?: "true" | "false";
     rotate?: string;
+    context?: string;
   };
 };
 
@@ -65,6 +66,7 @@ export async function GET() {
           isFullScreen?: "true" | "false";
           removeBackground?: "true" | "false";
           rotate?: string;
+          context?: string;
         };
       }) => {
         const url = image?.variants?.[0];

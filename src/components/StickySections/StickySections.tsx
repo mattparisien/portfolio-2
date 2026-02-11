@@ -114,14 +114,18 @@ const StickySections = ({ items }: MediaGridProps) => {
                         <div className={classNames("rounded-md overflow-hidden inline-flex", {
                             "w-full h-full": item.meta?.isFullScreen == "true",
                         })} style={{
+                            width: item.meta?.isFullScreen === "true" ? "100%" : (item.width ? `${item.width}px` : 'auto'),
+                            height: item.meta?.isFullScreen === "true" ? "100%" : (item.height ? `${item.height}px` : 'auto'),
+                            maxWidth: '90vw',
+                            maxHeight: '90vh',
                             transform: `rotate(${item.meta?.rotate ? item.meta.rotate : 0}deg)`,
                         }}>
                             {item.type === 'video' ? (
                                 <video
                                     src={item.url}
-                                    className={classNames("", {
-                                        "max-w-[90vw] max-h-[90vh] object-contain": !item.meta?.isFullScreen || item.meta?.isFullScreen == "false",
-                                        "w-full h-full object-cover": item.meta?.isFullScreen == "true",
+                                    className={classNames("w-full h-full", {
+                                        "object-contain": !item.meta?.isFullScreen || item.meta?.isFullScreen == "false",
+                                        "object-cover": item.meta?.isFullScreen == "true",
                                     })}
                                     autoPlay
                                     loop
@@ -135,9 +139,9 @@ const StickySections = ({ items }: MediaGridProps) => {
                             ) : (
                                 <img
                                     src={item.url}
-                                    className={classNames("", {
-                                        "max-w-[90vw] max-h-[90vh] object-contain": !item.meta?.isFullScreen || item.meta?.isFullScreen == "false",
-                                        "w-full h-full object-cover": item.meta?.isFullScreen == "true",
+                                    className={classNames("w-full h-full", {
+                                        "object-contain": !item.meta?.isFullScreen || item.meta?.isFullScreen == "false",
+                                        "object-cover": item.meta?.isFullScreen == "true",
                                     })}
                                     alt=""
                                     loading={actualIndex < 3 ? "eager" : "lazy"}
@@ -148,7 +152,11 @@ const StickySections = ({ items }: MediaGridProps) => {
                                     }}
                                 />
                             )}
+                            
                         </div>
+                        <div className="context absolute left-0 top-0 p-3 text-6xl font-light" style={{
+                            fontFamily: 'Freigeist, sans-serif',
+                        }}>{item.meta?.context}</div>
                     </div>
                 );
             })}
