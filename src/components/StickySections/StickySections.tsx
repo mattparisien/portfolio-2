@@ -8,6 +8,27 @@ import { PALETTE } from "@/app/constants";
 
 gsap.registerPlugin(ScrollTrigger);
 
+// Function to darken a hex color
+function darkenHexColor(hex: string, percent: number = 30): string {
+    // Remove # if present
+    hex = hex.replace('#', '');
+    
+    // Parse RGB values
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    
+    // Darken by reducing each component
+    const factor = (100 - percent) / 100;
+    const newR = Math.round(r * factor);
+    const newG = Math.round(g * factor);
+    const newB = Math.round(b * factor);
+    
+    // Convert back to hex
+    const toHex = (n: number) => n.toString(16).padStart(2, '0');
+    return `#${toHex(newR)}${toHex(newG)}${toHex(newB)}`;
+}
+
 interface MediaGridProps {
     items: MediaGridItem[];
     isActive: boolean;
@@ -21,7 +42,7 @@ export type MediaGridItem = MediaItem & {
         isFullScreen?: "true" | "false";
         removeBackground?: "true" | "false";
         rotate?: string;
-
+        context?: string;
     }
 };
 
@@ -100,17 +121,21 @@ const StickySections = ({ items }: MediaGridProps) => {
 
             {visibleItems.map((item, i) => {
                 const actualIndex = visibleRange.start + i;
+                const bgColor = item.meta?.removeBackground === "true" ? "transparent" : PALETTE[actualIndex % PALETTE.length];
+                const textColor = bgColor !== "transparent" ? darkenHexColor(bgColor, 50) : "#000000";
+                
                 return (
                     <div
                         key={actualIndex}
-                        className="sticky left-0 top-0 w-screen h-screen flex items-center justify-center rounded-t-xl pointer-events-all"
+                        className="sticky left-0 top-0 w-screen h-screen flex items-center justify-center rounded-t-xl pointer-events-all relative"
                         ref={addToRefs}
                         style={{
-                            backgroundColor: item.meta?.removeBackground === "true" ? "transparent" : PALETTE[actualIndex % PALETTE.length],
+                            backgroundColor: bgColor,
                             zIndex: actualIndex,
 
                         }}
                     >
+                   
                         <div className={classNames("rounded-md overflow-hidden inline-flex", {
                             "w-full h-full": item.meta?.isFullScreen == "true",
                         })} style={{
@@ -154,9 +179,11 @@ const StickySections = ({ items }: MediaGridProps) => {
                             )}
                             
                         </div>
-                        <div className="context absolute left-0 top-0 p-3 text-6xl font-light" style={{
+                        {/* <div className="context absolute left-0 bottom-0 p-3 text-3xl font-light" style={{
                             fontFamily: 'Freigeist, sans-serif',
-                        }}>{item.meta?.context}</div>
+                            color: textColor,
+                            display: item.meta?.context ? 'block' : 'none',
+                        }}>{item.meta?.context}</div> */}
                     </div>
                 );
             })}
