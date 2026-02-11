@@ -56,8 +56,18 @@ const StickySections = ({ items }: MediaGridProps) => {
                 const bufferBefore = 2; // Render 2 sections before
                 const bufferAfter = 3; // Render 3 sections after
 
-                const start = Math.max(0, currentSection - bufferBefore);
+                let start = Math.max(0, currentSection - bufferBefore);
                 const end = Math.min(items.length, currentSection + bufferAfter + 1);
+
+                // Check if any section in or near the visible range has removeBackground
+                // If so, keep rendering from the beginning to ensure there's always a background
+                // Check from current section up to 2 sections ahead
+                for (let i = Math.max(0, currentSection - 1); i <= currentSection + 2 && i < items.length; i++) {
+                    if (items[i]?.meta?.removeBackground === "true") {
+                        start = 0;
+                        break;
+                    }
+                }
 
                 setVisibleRange({ start, end });
 
@@ -71,7 +81,7 @@ const StickySections = ({ items }: MediaGridProps) => {
         return () => {
             window.removeEventListener("scroll", onScroll);
         };
-    }, [items.length]);
+    }, [items]);
 
     const visibleItems = items.slice(visibleRange.start, visibleRange.end);
 
