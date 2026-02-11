@@ -91,17 +91,17 @@ export default function Home() {
           WebkitMinHeight: '-webkit-fill-available',
         } as React.CSSProperties}
       >
-        <div className="flex flex-col justify-between items-start w-screen h-[100dvh] fixed top-0 left-0 sm:px-8 sm:py-5 px-4 py-3 bg-[#FC79C8]">
+        <div className="flex flex-col justify-between items-start w-screen h-[100dvh] fixed top-0 left-0 sm:px-8 sm:py-5 px-4 py-3 bg-[#FC79C8] z-[1]">
           <h2
             className="text-black leading-[1.12] text-[1.5rem] sm:text-[clamp(2rem,3vw,8rem)]"
             style={styles}
           >
-            Matthew Parisien is a software developer and visual artist based in Montreal, working at the intersection of engineering and design. He builds digital systems and tools where creative thinking informs not just aesthetics, but structure, usability, and execution.
+            <Button href=""> Matthew Parisien</Button> (1997, Montreal) is a software developer and visual artist working at the intersection of engineering and design. He builds digital systems and tools where creative thinking informs not just aesthetics, but structure, usability, and execution.
 
-            With a background that spans data-driven development and years leading a
-            {/* <button className='underline decoration-1 sm:decoration-2 underline-offset-3 cursor-pointer' onClick={() => setIsGridActive(true)}>creative studio</button> */}
-            creative studio,
-            Matthew approaches engineering as a creative practice—translating abstract ideas into clear, scalable systems and collaborating seamlessly across technical and creative teams. He is currently working at Innocap, where he builds data-driven platforms and AI-powered tools. Scroll to see creative work.
+            With a background that spans data-driven development and years leading a creative studio, working for brands such as Lush Cosmetics and Sephora. 
+            Matthew approaches engineering as a creative practice—translating abstract ideas into clear, scalable systems and collaborating seamlessly across technical and creative teams. He is currently working in data engineering at <Button href="https://www.innocap.com/en/media/">Innocap</Button> and is a member of <Button href={"https://creamworldwide.com/"}>Cream Creators.</Button>
+            When he’s not wgling data, he’s probably making art, overthinking color palettes, or spending quality time with his dog Ollie.
+            
           </h2>
           <div className='flex items-center justify-between w-full [&>a]:cursor-pointer [&>a]:decoration-[2px] [&>a]:decoration-black [&>a]:underline-offset-2 [&>a]:hover:underline' style={{ ...styles, fontWeight: 400 }} >
             <div className='text-sm sm:text-lg md:text-xl font-sans'>Matthew Parisien *</div>
@@ -115,4 +115,11 @@ export default function Home() {
 
     </>
   );
+}
+
+
+const Button = ({ children, href }: { children: React.ReactNode, href: string }) => {
+  return <a href={href} target="_blank" rel="noopener noreferrer" className='underline decoration-1 sm:decoration-2 underline-offset-3 cursor-pointer'>
+    {children}
+  </a>
 }
