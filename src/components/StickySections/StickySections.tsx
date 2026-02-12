@@ -107,12 +107,12 @@ const StickySections = ({ items }: MediaGridProps) => {
     const visibleItems = items.slice(visibleRange.start, visibleRange.end);
 
     return <div
-        className="w-screen min-h-screen absolute top-0 left-0"
+        className="w-screen min-h-screen absolute top-0 left-0 pointer-events-none"
         ref={scrollContainerRef}
     >
         <div className="relative top-0 left-0 w-screen">
             {/* Initial spacer to push first section below viewport */}
-            <div className="h-screen" />
+            <div className="h-screen pointer-events-none" />
             
             {/* Spacer for sections before visible range */}
             {visibleRange.start > 0 && (
@@ -127,7 +127,7 @@ const StickySections = ({ items }: MediaGridProps) => {
                 return (
                     <div
                         key={actualIndex}
-                        className="sticky left-0 top-0 w-screen h-screen flex items-center justify-center rounded-t-xl pointer-events-all relative"
+                        className="sticky left-0 top-0 w-screen h-screen flex items-center justify-center rounded-t-xl pointer-events-auto relative"
                         ref={addToRefs}
                         style={{
                             backgroundColor: bgColor,
