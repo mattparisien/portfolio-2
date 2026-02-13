@@ -5,6 +5,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useEffect, useRef, useState } from "react";
 import { PALETTE } from "@/app/constants";
+import { useScrollHeight } from "@/app/hooks/useScrollHeight";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -53,6 +54,7 @@ const StickySections = ({ items }: MediaGridProps) => {
 
     const sectionRefs = useRef<React.RefObject<HTMLDivElement>[]>([]);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const scrollHeight = useScrollHeight();
 
     const addToRefs = (el: HTMLDivElement | null) => {
         if (el) {
@@ -182,7 +184,7 @@ const StickySections = ({ items }: MediaGridProps) => {
                                             maxWidth: item.meta?.isFullScreen === "true" ? "100%" : "90vw",
                                             maxHeight: item.meta?.isFullScreen === "true" ? "100%" : "90vh",
                                             width: item.meta?.isFullScreen === "true" ? "100%" : "auto",
-                                            height: item.meta?.isFullScreen === "true" ? "100%" : "auto",
+                                            height: item.meta?.isFullScreen === "true" ? "100%" : "auto"
                                         }}
                                     />
                                 )}
