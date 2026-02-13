@@ -91,6 +91,7 @@ const StickySections = ({ items }: MediaGridProps) => {
                     }
                 }
 
+                console.log('setting visible range...', start, end);
                 setVisibleRange({ start, end });
 
                 ticking = false;
@@ -105,8 +106,6 @@ const StickySections = ({ items }: MediaGridProps) => {
         };
     }, [items]);
 
-    const visibleItems = items.slice(visibleRange.start, visibleRange.end);
-
     return <div
         className="pointer-events-none"
         ref={scrollContainerRef}
@@ -115,13 +114,15 @@ const StickySections = ({ items }: MediaGridProps) => {
             {/* Initial spacer to push first section below viewport */}
             <div className="h-screen pointer-events-none" />
 
-            {/* Spacer for sections before visible range */}
-            {visibleRange.start > 0 && (
-                <div style={{ height: `${visibleRange.start * 100}vh` }} />
-            )}
+            {items.map((item, actualIndex) => {
+                // Check if this item should be rendered
+                const isInRange = actualIndex >= visibleRange.start && actualIndex < visibleRange.end;
+                
+                if (!isInRange) {
+                    // Render spacer div instead of unmounting
+                    return <div key={actualIndex} style={{ height: '100vh' }} />;
+                }
 
-            {visibleItems.map((item, i) => {
-                const actualIndex = visibleRange.start + i;
                 const bgColor = item.meta?.removeBackground === "true" ? "transparent" : PALETTE[actualIndex % PALETTE.length];
 
 
@@ -199,11 +200,6 @@ const StickySections = ({ items }: MediaGridProps) => {
                     </>
                 );
             })}
-
-            {/* Spacer for sections after visible range */}
-            {visibleRange.end < items.length && (
-                <div style={{ height: `${(items.length - visibleRange.end) * 100}vh` }} />
-            )}
         </div>
     </div>;
 }
