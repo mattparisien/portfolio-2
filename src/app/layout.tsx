@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import 'locomotive-scroll/dist/locomotive-scroll.css';
+
 
 import "./globals.css";
+import SmoothScroller from "@/components/SmoothScroller";
 
 export const metadata: Metadata = {
   title: "Matthew Parisien",
@@ -31,7 +34,9 @@ export default function RootLayout({
 
       </head>
       <body className="antialiased">
-        {children}
+        <SmoothScroller>
+          {children}
+        </SmoothScroller>
       </body>
     </html>
   );

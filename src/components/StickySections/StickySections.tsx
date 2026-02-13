@@ -12,18 +12,18 @@ gsap.registerPlugin(ScrollTrigger);
 function darkenHexColor(hex: string, percent: number = 30): string {
     // Remove # if present
     hex = hex.replace('#', '');
-    
+
     // Parse RGB values
     const r = parseInt(hex.substring(0, 2), 16);
     const g = parseInt(hex.substring(2, 4), 16);
     const b = parseInt(hex.substring(4, 6), 16);
-    
+
     // Darken by reducing each component
     const factor = (100 - percent) / 100;
     const newR = Math.round(r * factor);
     const newG = Math.round(g * factor);
     const newB = Math.round(b * factor);
-    
+
     // Convert back to hex
     const toHex = (n: number) => n.toString(16).padStart(2, '0');
     return `#${toHex(newR)}${toHex(newG)}${toHex(newB)}`;
@@ -43,6 +43,7 @@ export type MediaGridItem = MediaItem & {
         removeBackground?: "true" | "false";
         rotate?: string;
         context?: string;
+        transform?: "scale"
     }
 };
 
@@ -107,13 +108,13 @@ const StickySections = ({ items }: MediaGridProps) => {
     const visibleItems = items.slice(visibleRange.start, visibleRange.end);
 
     return <div
-        className="w-screen min-h-screen absolute top-0 left-0 pointer-events-none"
+        className="pointer-events-none"
         ref={scrollContainerRef}
     >
         <div className="relative top-0 left-0 w-screen">
             {/* Initial spacer to push first section below viewport */}
             <div className="h-screen pointer-events-none" />
-            
+
             {/* Spacer for sections before visible range */}
             {visibleRange.start > 0 && (
                 <div style={{ height: `${visibleRange.start * 100}vh` }} />
@@ -122,69 +123,80 @@ const StickySections = ({ items }: MediaGridProps) => {
             {visibleItems.map((item, i) => {
                 const actualIndex = visibleRange.start + i;
                 const bgColor = item.meta?.removeBackground === "true" ? "transparent" : PALETTE[actualIndex % PALETTE.length];
-                const textColor = bgColor !== "transparent" ? darkenHexColor(bgColor, 50) : "#000000";
-                
-                return (
-                    <div
-                        key={actualIndex}
-                        className="sticky left-0 top-0 w-screen h-screen flex items-center justify-center rounded-t-xl pointer-events-auto relative"
-                        ref={addToRefs}
-                        style={{
-                            backgroundColor: bgColor,
-                            zIndex: actualIndex,
 
-                        }}
-                    >
-                   
-                        <div className={classNames("rounded-md overflow-hidden inline-flex", {
-                            "w-full h-full": item.meta?.isFullScreen == "true",
-                        })} style={{
-                            width: item.meta?.isFullScreen === "true" ? "100%" : (item.width ? `${item.width}px` : 'auto'),
-                            height: item.meta?.isFullScreen === "true" ? "100%" : (item.height ? `${item.height}px` : 'auto'),
-                            maxWidth: '90vw',
-                            maxHeight: '90vh',
-                            transform: `rotate(${item.meta?.rotate ? item.meta.rotate : 0}deg)`,
-                        }}>
-                            {item.type === 'video' ? (
-                                <video
-                                    src={item.url}
-                                    className={classNames("w-full h-full", {
-                                        "object-contain": !item.meta?.isFullScreen || item.meta?.isFullScreen == "false",
-                                        "object-cover": item.meta?.isFullScreen == "true",
-                                    })}
-                                    autoPlay
-                                    loop
-                                    muted
-                                    playsInline
-                                    style={{
-                                        backfaceVisibility: "hidden",
-                                        transform: "translateZ(0)",
-                                    }}
-                                />
-                            ) : (
-                                <img
-                                    src={item.url}
-                                    className={classNames("w-full h-full", {
-                                        "object-contain": !item.meta?.isFullScreen || item.meta?.isFullScreen == "false",
-                                        "object-cover": item.meta?.isFullScreen == "true",
-                                    })}
-                                    alt=""
-                                    loading={actualIndex < 3 ? "eager" : "lazy"}
-                                    decoding="async"
-                                    style={{
-                                        backfaceVisibility: "hidden",
-                                        transform: "translateZ(0)",
-                                    }}
-                                />
-                            )}
-                            
+
+                return (
+                    <>
+                        <div
+                            key={actualIndex}
+                            className="sticky left-0 top-0 w-screen h-screen flex items-center justify-center rounded-t-xl pointer-events-auto relative"
+                            ref={addToRefs}
+                            style={{
+                                backgroundColor: bgColor,
+                                zIndex: actualIndex,
+
+                            }}
+                        >
+
+                            <div className={classNames("rounded-md overflow-hidden inline-flex", {
+                                "w-full h-full": item.meta?.isFullScreen == "true",
+                            })} style={{
+                                width: item.meta?.isFullScreen === "true" ? "100%" : "auto",
+                                height: item.meta?.isFullScreen === "true" ? "100%" : "auto",
+                                maxWidth: item.meta?.isFullScreen === "true" ? "100%" : '90vw',
+                                maxHeight: item.meta?.isFullScreen === "true" ? "100%" : '90vh',
+                                transform: `rotate(${item.meta?.rotate ? item.meta.rotate : 0}deg)`,
+                            }}>
+                                {item.type === 'video' ? (
+                                    <video
+                                        src={item.url}
+                                        className={classNames({
+                                            "w-full h-full object-cover": item.meta?.isFullScreen == "true",
+                                        })}
+                                        autoPlay
+                                        loop
+                                        muted
+                                        playsInline
+                                        style={{
+                                            backfaceVisibility: "hidden",
+                                            transform: "translateZ(0)",
+                                            maxWidth: item.meta?.isFullScreen === "true" ? "100%" : "90vw",
+                                            maxHeight: item.meta?.isFullScreen === "true" ? "100%" : "90vh",
+                                            width: item.meta?.isFullScreen === "true" ? "100%" : "auto",
+                                            height: item.meta?.isFullScreen === "true" ? "100%" : "auto",
+                                        }}
+                                    />
+                                ) : (
+                                    <img
+                                        src={item.url}
+                                        className={classNames({
+                                            "w-full h-full object-cover": item.meta?.isFullScreen == "true",
+                                        })}
+                                        alt=""
+                                        loading={actualIndex < 3 ? "eager" : "lazy"}
+                                        decoding="async"
+                                        style={{
+                                            backfaceVisibility: "hidden",
+                                            transform: "translateZ(0)",
+                                            maxWidth: item.meta?.isFullScreen === "true" ? "100%" : "90vw",
+                                            maxHeight: item.meta?.isFullScreen === "true" ? "100%" : "90vh",
+                                            width: item.meta?.isFullScreen === "true" ? "100%" : "auto",
+                                            height: item.meta?.isFullScreen === "true" ? "100%" : "auto",
+                                        }}
+                                    />
+                                )}
+
+                            </div>
+                            {/* <div className="context absolute left-0 bottom-0 p-3 text-3xl font-light" style={{
+                                fontFamily: 'Freigeist, sans-serif',
+                                color: textColor,
+                                display: item.meta?.context ? 'block' : 'none',
+                            }}>{item.meta?.context}</div> */}
                         </div>
-                        {/* <div className="context absolute left-0 bottom-0 p-3 text-3xl font-light" style={{
-                            fontFamily: 'Freigeist, sans-serif',
-                            color: textColor,
-                            display: item.meta?.context ? 'block' : 'none',
-                        }}>{item.meta?.context}</div> */}
-                    </div>
+                        {/* {item.meta?.transform === "scale" && (
+                            <div className="h-screen pointer-events-none" />
+                        )} */}
+                    </>
                 );
             })}
 
