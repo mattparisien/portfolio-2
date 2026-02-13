@@ -90,6 +90,7 @@ export default function Home() {
           minHeight: '100dvh',
           WebkitMinHeight: '-webkit-fill-available',
         } as React.CSSProperties}
+        data-scroll-container
       >
         <div className="flex flex-col justify-between items-start w-screen h-[100dvh] fixed top-0 left-0 sm:px-8 sm:py-5 px-4 py-3 bg-[#FC79C8]">
           <h2

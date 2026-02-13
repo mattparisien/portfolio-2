@@ -107,7 +107,7 @@ const StickySections = ({ items }: MediaGridProps) => {
     const visibleItems = items.slice(visibleRange.start, visibleRange.end);
 
     return <div
-        className="w-screen min-h-screen absolute top-0 left-0 pointer-events-none"
+        className="pointer-events-none"
         ref={scrollContainerRef}
     >
         <div className="relative top-0 left-0 w-screen">
@@ -123,7 +123,27 @@ const StickySections = ({ items }: MediaGridProps) => {
                 const actualIndex = visibleRange.start + i;
                 const bgColor = item.meta?.removeBackground === "true" ? "transparent" : PALETTE[actualIndex % PALETTE.length];
                 const textColor = bgColor !== "transparent" ? darkenHexColor(bgColor, 50) : "#000000";
-                
+                let isPortrait = item.aspectRatio ? item.aspectRatio < 1 : false;
+                let height;
+                let width;
+
+                if (item.meta?.isFullScreen === "true") {
+                    height = "100%";
+                    width = "100%";
+                } else if (item.width && item.height) {
+                    if (isPortrait) {
+                        height = "90vh";
+                        width = `auto`;
+                    } else {
+                        width = "90vw";
+                        height = "auto";
+                    }
+                } else {
+                    height = "90vh";
+                    width = "auto";
+                }
+
+
                 return (
                     <div
                         key={actualIndex}
@@ -139,10 +159,10 @@ const StickySections = ({ items }: MediaGridProps) => {
                         <div className={classNames("rounded-md overflow-hidden inline-flex", {
                             "w-full h-full": item.meta?.isFullScreen == "true",
                         })} style={{
-                            width: item.meta?.isFullScreen === "true" ? "100%" : (item.width ? `${item.width}px` : 'auto'),
-                            height: item.meta?.isFullScreen === "true" ? "100%" : (item.height ? `${item.height}px` : 'auto'),
-                            maxWidth: '90vw',
-                            maxHeight: '90vh',
+                            width: item.meta?.isFullScreen === "true" ? "100%" : width,
+                            height: item.meta?.isFullScreen === "true" ? "100%" : height,
+                            // maxWidth: '90vw',
+                            // maxHeight: '90vh',
                             transform: `rotate(${item.meta?.rotate ? item.meta.rotate : 0}deg)`,
                         }}>
                             {item.type === 'video' ? (
