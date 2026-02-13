@@ -94,7 +94,7 @@ export default function Home() {
       >
         <div className="flex flex-col justify-between items-start w-screen h-[100dvh] fixed top-0 left-0 sm:px-8 sm:py-5 px-4 py-3 bg-[#FC79C8]">
           <h2
-            className="text-black leading-[1.33] text-[1.5rem] sm:text-[clamp(2rem,3vw,8rem)]"
+            className="text-black leading-[1.24] text-[1.5rem] sm:text-[clamp(2rem,3vw,3rem)]"
             style={styles}
           >
             <Button href=""> Matthew Parisien</Button> (1997, Montreal) is a software developer and visual artist working at the intersection of engineering and design. He builds digital systems and tools where creative thinking informs not just aesthetics, but structure, usability, and execution.
