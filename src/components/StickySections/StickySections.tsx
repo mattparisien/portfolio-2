@@ -119,27 +119,20 @@ const StickySections = ({ items }: MediaGridProps) => {
             {items.map((item, actualIndex) => {
                 // Check if this item should be rendered
                 const isInRange = actualIndex >= visibleRange.start && actualIndex < visibleRange.end;
-                
-                if (!isInRange) {
-                    // Render spacer div instead of unmounting
-                    return <div key={actualIndex} style={{ height: '100vh' }} />;
-                }
-
                 const bgColor = item.meta?.removeBackground === "true" ? "transparent" : PALETTE[actualIndex % PALETTE.length];
 
-
                 return (
-                    <>
-                        <div
-                            key={actualIndex}
-                            className="sticky left-0 top-0 w-screen h-screen flex items-center justify-center rounded-t-xl pointer-events-auto relative"
-                            ref={addToRefs}
-                            style={{
-                                backgroundColor: bgColor,
-                                zIndex: actualIndex,
-
-                            }}
-                        >
+                    <div
+                        key={actualIndex}
+                        className="sticky left-0 top-0 w-screen h-screen flex items-center justify-center rounded-t-xl pointer-events-auto relative"
+                        ref={addToRefs}
+                        style={{
+                            backgroundColor: bgColor,
+                            zIndex: actualIndex,
+                            visibility: isInRange ? 'visible' : 'hidden',
+                            opacity: isInRange ? 1 : 0,
+                        }}
+                    >
 
                             <div className={classNames("rounded-md overflow-hidden inline-flex", {
                                 "w-full h-full": item.meta?.isFullScreen == "true",
@@ -196,10 +189,6 @@ const StickySections = ({ items }: MediaGridProps) => {
                                 display: item.meta?.context ? 'block' : 'none',
                             }}>{item.meta?.context}</div> */}
                         </div>
-                        {/* {item.meta?.transform === "scale" && (
-                            <div className="h-screen pointer-events-none" />
-                        )} */}
-                    </>
                 );
             })}
         </div>
