@@ -116,12 +116,20 @@ const DraggableOverlay = ({ items }: DraggableOverlaytProps) => {
             // Clear canvas
             ctx.clearRect(0, 0, cnv.width, cnv.height);
 
-            // Draw all items
-            canvasItems.forEach(item => {
-                ctx.drawImage(item.img, item.x, item.y, item.w, item.h);
+            // Draw all items except the dragged one
+            canvasItems.forEach((item, index) => {
+                if (index !== draggedIndex) {
+                    ctx.drawImage(item.img, item.x, item.y, item.w, item.h);
+                }
             });
+
+            // Draw the dragged item last (on top)
+            if (draggedIndex !== null && canvasItems[draggedIndex]) {
+                const draggedItem = canvasItems[draggedIndex];
+                ctx.drawImage(draggedItem.img, draggedItem.x, draggedItem.y, draggedItem.w, draggedItem.h);
+            }
         }
-    }, [canvasItems]);
+    }, [canvasItems, draggedIndex]);
 
     const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
         const cnv = canvasRef.current;
