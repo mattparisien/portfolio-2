@@ -114,12 +114,14 @@ export default function Home() {
           url: "https://imagedelivery.net/Ti1_uXa4Q9gNync1g-YdPA/fcb1630d-777f-4499-7716-05e2ca754000/public",
           type: "image",
           width: 805,
-          height: 701
+          height: 701,
+          aspectRatio: 805 / 701
         }, {
           url: "https://imagedelivery.net/Ti1_uXa4Q9gNync1g-YdPA/c26bba74-7388-40b5-b445-a786b3f21f00/public",
           type: "image",
           width: 683,
-          height: 701
+          height: 701,
+          aspectRatio: 683 / 701
         }]} />
         {media.length > 0 && <StickySections items={media} isActive={false} />}
       </main >
