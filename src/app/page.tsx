@@ -1,4 +1,5 @@
 "use client"
+import DraggableOverlay from '@/components/DraggableOverlay/DraggableOverlay';
 import StickySections, { MediaGridItem } from '@/components/StickySections/StickySections';
 import { useEffect, useState } from 'react';
 
@@ -99,9 +100,9 @@ export default function Home() {
           >
             <Button href=""> Matthew Parisien</Button> (1997, Montreal) is a software developer and visual artist working at the intersection of engineering and design. He builds digital systems and tools where creative thinking informs not just aesthetics, but structure, usability, and execution.
 
-            With a background that spans data-driven development and years leading a creative studio, working for brands such as Lush Cosmetics and Sephora. 
+            With a background that spans data-driven development and years leading a creative studio, working for brands such as Lush Cosmetics and Sephora.
             Matthew approaches engineering as a creative practice—translating abstract ideas into clear, scalable systems and collaborating seamlessly across technical and creative teams. He is currently working in data engineering at <Button href="https://www.innocap.com/en/media/">Innocap</Button> and is a member of <Button href={"https://creamworldwide.com/"}>Cream Creators.</Button> When he’s not wrangling data, he’s probably making art, overthinking color palettes, or spending time with his dog Ollie. Scroll to see creative work.
-            
+
           </h2>
           <div className='flex items-center justify-between w-full [&>a]:cursor-pointer [&>a]:decoration-[2px] [&>a]:decoration-black [&>a]:underline-offset-2 [&>a]:hover:underline' style={{ ...styles, fontWeight: 400 }} >
             <div className='text-sm sm:text-lg md:text-xl font-sans'>Matthew Parisien *</div>
@@ -109,6 +110,12 @@ export default function Home() {
           </div>
         </div>
         {/* <Intro items={media} /> */}
+        <DraggableOverlay items={[{
+          url: "https://imagedelivery.net/Ti1_uXa4Q9gNync1g-YdPA/fcb1630d-777f-4499-7716-05e2ca754000/public",
+          type: "image",
+          width: 805,
+          height: 701
+        }]} />
         {media.length > 0 && <StickySections items={media} isActive={false} />}
       </main >
 
