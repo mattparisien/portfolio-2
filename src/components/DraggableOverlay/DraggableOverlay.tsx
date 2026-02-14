@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { fitImageToFrame } from "@/app/helpers";
 
 interface DraggableOverlaytProps {
@@ -18,11 +18,20 @@ interface DraggableOverlaytProps {
 const DraggableOverlay = ({ items }: DraggableOverlaytProps) => {
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [canvasItems, setCanvasItems] = useState<{
+        x: number;
+        y: number;
+        w: number;
+        h: number;
+        img: HTMLImageElement;
+    }[]>([]);
+    const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+    const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
+    // Initialize items and their positions
     useEffect(() => {
         if (canvasRef.current && items.length) {
             const cnv = canvasRef.current;
-            const ctx = cnv.getContext("2d");
             const screenWidth = window.innerWidth;
             const screenHeight = window.innerHeight;
 
@@ -30,7 +39,7 @@ const DraggableOverlay = ({ items }: DraggableOverlaytProps) => {
             cnv.width = screenWidth;
             cnv.height = screenHeight;
 
-            const maxWidth = Math.min(screenWidth, screenHeight) / 3;
+            const maxWidth = Math.min(screenWidth, screenHeight) / 4;
             const maxHeight = maxWidth;
 
             // Store placed rectangles to check for overlaps
@@ -72,7 +81,9 @@ const DraggableOverlay = ({ items }: DraggableOverlaytProps) => {
                 };
             };
 
-            items.forEach(item => {
+            const newCanvasItems: typeof canvasItems = [];
+
+            items.forEach((item, index) => {
                 const { width, height } = fitImageToFrame(item.width, item.height, maxWidth, maxHeight);
                 const w = width;
                 const h = height;
@@ -85,15 +96,101 @@ const DraggableOverlay = ({ items }: DraggableOverlaytProps) => {
                 const img = new Image();
                 img.src = item.url;
                 img.onload = () => {
-                    ctx?.drawImage(img, posX, posY, w, h);
+                    newCanvasItems.push({ x: posX, y: posY, w, h, img });
+                    if (newCanvasItems.length === items.length) {
+                        setCanvasItems(newCanvasItems);
+                    }
                 }
             })
 
         }
     }, [items])
 
-    return <canvas ref={canvasRef} className="fixed top-0 left-0 w-screen h-screen"></canvas>
+    // Draw canvas
+    useEffect(() => {
+        if (canvasRef.current && canvasItems.length) {
+            const cnv = canvasRef.current;
+            const ctx = cnv.getContext("2d");
+            if (!ctx) return;
 
+            // Clear canvas
+            ctx.clearRect(0, 0, cnv.width, cnv.height);
+
+            // Draw all items
+            canvasItems.forEach(item => {
+                ctx.drawImage(item.img, item.x, item.y, item.w, item.h);
+            });
+        }
+    }, [canvasItems]);
+
+    const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+        const cnv = canvasRef.current;
+        if (!cnv) return;
+
+        const rect = cnv.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        // Check which item was clicked (reverse order to get topmost)
+        for (let i = canvasItems.length - 1; i >= 0; i--) {
+            const item = canvasItems[i];
+            if (
+                mouseX >= item.x &&
+                mouseX <= item.x + item.w &&
+                mouseY >= item.y &&
+                mouseY <= item.y + item.h
+            ) {
+                setDraggedIndex(i);
+                setDragOffset({
+                    x: mouseX - item.x,
+                    y: mouseY - item.y
+                });
+                break;
+            }
+        }
+    };
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+        if (draggedIndex === null) return;
+
+        const cnv = canvasRef.current;
+        if (!cnv) return;
+
+        const rect = cnv.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        setCanvasItems(prev => {
+            const newItems = [...prev];
+            const item = newItems[draggedIndex];
+            
+            // Calculate new position with bounds checking
+            let newX = mouseX - dragOffset.x;
+            let newY = mouseY - dragOffset.y;
+
+            // Keep within canvas bounds
+            newX = Math.max(0, Math.min(newX, cnv.width - item.w));
+            newY = Math.max(0, Math.min(newY, cnv.height - item.h));
+
+            newItems[draggedIndex] = { ...item, x: newX, y: newY };
+            return newItems;
+        });
+    };
+
+    const handleMouseUp = () => {
+        setDraggedIndex(null);
+    };
+
+    return (
+        <canvas 
+            ref={canvasRef} 
+            className="fixed top-0 left-0 w-screen h-screen cursor-grab active:cursor-grabbing"
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+        />
+    );
 }
 
 export default DraggableOverlay;

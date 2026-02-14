@@ -110,12 +110,12 @@ export default function Home() {
           </div>
         </div>
         {/* <Intro items={media} /> */}
-        <DraggableOverlay items={[{
+        {/* <DraggableOverlay items={[{
           url: "https://imagedelivery.net/Ti1_uXa4Q9gNync1g-YdPA/fcb1630d-777f-4499-7716-05e2ca754000/public",
           type: "image",
           width: 805,
           height: 701
-        }]} />
+        }]} /> */}
         {media.length > 0 && <StickySections items={media} isActive={false} />}
       </main >
 

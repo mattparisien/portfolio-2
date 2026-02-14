@@ -29,6 +29,7 @@ type MediaItem = {
     removeBackground?: "true" | "false";
     rotate?: string;
     context?: string;
+    excludeFromShowcase?: "true" | "false";
   };
 };
 
@@ -137,7 +138,7 @@ export async function GET() {
        Combine & Respond
     -------------------------------- */
     const media = [
-      ...imagesWithMetadata.filter(Boolean),
+      ...imagesWithMetadata.filter(Boolean).filter(x => x.meta?.excludeFromShowcase !== "true"),
       ...videosWithMetadata,
     ];
 
