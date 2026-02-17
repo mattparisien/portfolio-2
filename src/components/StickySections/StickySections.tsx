@@ -133,6 +133,13 @@ const StickySections = ({ items }: MediaGridProps) => {
             {items.map((item, actualIndex) => {
                 // Check if this item should be rendered
                 const isInRange = actualIndex >= visibleRange.start && actualIndex < visibleRange.end;
+                
+                // Don't render if not in range
+                if (!isInRange) {
+                    // Still need spacer to maintain scroll positions
+                    return <div key={actualIndex} className="h-screen w-screen" />;
+                }
+                
                 const bgColor = item.meta?.removeBackground === "true" ? "transparent" : PALETTE[actualIndex % PALETTE.length];
 
                 return (
@@ -143,7 +150,6 @@ const StickySections = ({ items }: MediaGridProps) => {
                         style={{
                             backgroundColor: bgColor,
                             zIndex: actualIndex,
-                            visibility: isInRange ? 'visible' : 'hidden',
                         }}
                     >
 
