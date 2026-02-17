@@ -51,9 +51,11 @@ export type MediaGridItem = MediaItem & {
 
 const StickySections = ({ items }: MediaGridProps) => {
     const [visibleRange, setVisibleRange] = useState({ start: 0, end: 6 });
+    const [currentSection, setCurrentSection] = useState(0);
 
     const sectionRefs = useRef<React.RefObject<HTMLDivElement>[]>([]);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
     const scrollHeight = useScrollHeight();
 
     const addToRefs = (el: HTMLDivElement | null) => {
@@ -76,17 +78,17 @@ const StickySections = ({ items }: MediaGridProps) => {
                 const scrollY = window.scrollY;
 
                 // Calculate which sections should be visible
-                const currentSection = Math.floor(scrollY / vh);
-                const bufferBefore = 2; // Render 2 sections before
-                const bufferAfter = 3; // Render 3 sections after
+                const current = Math.floor(scrollY / vh);
+                const bufferBefore = 1; // Render 1 section before
+                const bufferAfter = 2; // Render 2 sections after
 
-                let start = Math.max(0, currentSection - bufferBefore);
-                const end = Math.min(items.length, currentSection + bufferAfter + 1);
+                let start = Math.max(0, current - bufferBefore);
+                const end = Math.min(items.length, current + bufferAfter + 1);
 
                 // Check if any section in or near the visible range has removeBackground
                 // If so, keep rendering from the beginning to ensure there's always a background
                 // Check from current section up to 2 sections ahead
-                for (let i = Math.max(0, currentSection - 1); i <= currentSection + 2 && i < items.length; i++) {
+                for (let i = Math.max(0, current - 1); i <= current + 2 && i < items.length; i++) {
                     if (items[i]?.meta?.removeBackground === "true") {
                         start = 0;
                         break;
@@ -95,6 +97,7 @@ const StickySections = ({ items }: MediaGridProps) => {
 
                 console.log('setting visible range...', start, end);
                 setVisibleRange({ start, end });
+                setCurrentSection(current);
 
                 ticking = false;
             });
@@ -108,6 +111,17 @@ const StickySections = ({ items }: MediaGridProps) => {
         };
     }, [items]);
 
+    useEffect(() => {
+        // Pause all videos except the current one
+        videoRefs.current.forEach((video, index) => {
+            if (index === currentSection) {
+                video.play().catch(() => {});
+            } else {
+                video.pause();
+            }
+        });
+    }, [currentSection]);
+
     return <div
         className="pointer-events-none"
         ref={scrollContainerRef}
@@ -119,6 +133,13 @@ const StickySections = ({ items }: MediaGridProps) => {
             {items.map((item, actualIndex) => {
                 // Check if this item should be rendered
                 const isInRange = actualIndex >= visibleRange.start && actualIndex < visibleRange.end;
+                
+                // Don't render if not in range
+                if (!isInRange) {
+                    // Still need spacer to maintain scroll positions
+                    return <div key={actualIndex} className="h-screen w-screen" />;
+                }
+                
                 const bgColor = item.meta?.removeBackground === "true" ? "transparent" : PALETTE[actualIndex % PALETTE.length];
 
                 return (
@@ -129,8 +150,6 @@ const StickySections = ({ items }: MediaGridProps) => {
                         style={{
                             backgroundColor: bgColor,
                             zIndex: actualIndex,
-                            visibility: isInRange ? 'visible' : 'hidden',
-                            opacity: isInRange ? 1 : 0,
                         }}
                     >
 
@@ -145,11 +164,17 @@ const StickySections = ({ items }: MediaGridProps) => {
                             }}>
                                 {item.type === 'video' ? (
                                     <video
+                                        ref={(el) => {
+                                            if (el) {
+                                                videoRefs.current.set(actualIndex, el);
+                                            } else {
+                                                videoRefs.current.delete(actualIndex);
+                                            }
+                                        }}
                                         src={item.url}
                                         className={classNames({
                                             "w-full h-full object-cover": item.meta?.isFullScreen == "true",
                                         })}
-                                        autoPlay
                                         loop
                                         muted
                                         playsInline
