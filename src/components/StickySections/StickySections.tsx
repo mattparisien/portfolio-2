@@ -79,7 +79,7 @@ const StickySections = ({ items }: MediaGridProps) => {
 
                 // Calculate which sections should be visible
                 const current = Math.floor(scrollY / vh);
-                const bufferBefore = 1; // Render 1 section before
+                const bufferBefore = 3; // Render 3 sections before (backwards)
                 const bufferAfter = 2; // Render 2 sections after
 
                 let start = Math.max(0, current - bufferBefore);
@@ -134,7 +134,7 @@ const StickySections = ({ items }: MediaGridProps) => {
         className="pointer-events-none"
         ref={scrollContainerRef}
     >
-        <div className="fixed top-0 left-0 z-[999] text-4xl p-4" >{ctx}</div>
+        {/* <div className="fixed top-0 left-0 z-[999] text-4xl p-4" >{ctx}</div> */}
         <div className="relative top-0 left-0 w-screen">
             {/* Initial spacer to push first section below viewport */}
             <div className="h-screen pointer-events-none" />
