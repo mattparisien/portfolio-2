@@ -3,7 +3,7 @@ import { MediaItem } from "@/app/page";
 import classNames from "classnames";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PALETTE } from "@/app/constants";
 import { useScrollHeight } from "@/app/hooks/useScrollHeight";
 
@@ -122,10 +122,19 @@ const StickySections = ({ items }: MediaGridProps) => {
         });
     }, [currentSection]);
 
+    const ctx = useMemo(() => {
+        return items[currentSection -1 || 0]?.meta?.context || null;
+    }, [items,currentSection]);
+
+    const textColor = useMemo(() => {
+
+    }, [items, currentSection])
+
     return <div
         className="pointer-events-none"
         ref={scrollContainerRef}
     >
+        <div className="fixed top-0 left-0 z-[999] text-4xl p-4" >{ctx}</div>
         <div className="relative top-0 left-0 w-screen">
             {/* Initial spacer to push first section below viewport */}
             <div className="h-screen pointer-events-none" />
@@ -214,11 +223,7 @@ const StickySections = ({ items }: MediaGridProps) => {
                                 )}
 
                             </div>
-                            {/* <div className="context absolute left-0 bottom-0 p-3 text-3xl font-light" style={{
-                                fontFamily: 'Freigeist, sans-serif',
-                                color: textColor,
-                                display: item.meta?.context ? 'block' : 'none',
-                            }}>{item.meta?.context}</div> */}
+                    
                         </div>
                 );
             })}
