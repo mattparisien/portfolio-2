@@ -1,5 +1,6 @@
 "use client"
 import DraggableOverlay from '@/components/DraggableOverlay/DraggableOverlay';
+import IntroSection from '@/components/IntroSection';
 import StickySections, { MediaGridItem } from '@/components/StickySections/StickySections';
 import StickySections2 from '@/components/StickySections/StickySections2';
 import { useEffect, useState } from 'react';
@@ -32,25 +33,6 @@ function shuffle(array: unknown[], seed: number) {
 }
 
 
-// Assign scroll-in behaviours to a small percentage of items (seeded, deterministic).
-// ~5% scale, ~8% slide-left, ~8% slide-right, ~8% slide-down — rest default to slide-up.
-function assignTransforms(items: MediaGridItem[], seed: number): MediaGridItem[] {
-  const random = mulberry32(seed);
-  return items.map(item => {
-    const roll = random();
-    if (roll < 0.05) {
-      return { ...item, meta: { ...item.meta, transform: 'scale' as const } };
-    } else if (roll < 0.13) {
-      return { ...item, meta: { ...item.meta, transform: 'slide-left' as const } };
-    } else if (roll < 0.21) {
-      return { ...item, meta: { ...item.meta, transform: 'slide-right' as const } };
-    } else if (roll < 0.29) {
-      return { ...item, meta: { ...item.meta, transform: 'slide-down' as const } };
-    }
-    return item;
-  });
-}
-
 export default function Home() {
   const [media, setMedia] = useState<MediaGridItem[]>([]);
 
@@ -64,7 +46,7 @@ export default function Home() {
 
         // Set media state first
         const shuffled = shuffle(mediaItems, 125) as MediaGridItem[];
-        setMedia(assignTransforms(shuffled, 42));
+        setMedia(shuffled);
 
         // Preload all media in background
         const preloadPromises = mediaItems.map((item: MediaGridItem) => {
@@ -100,10 +82,11 @@ export default function Home() {
     fetchAndPreloadMedia();
   }, []);
 
-  const styles = {
-    fontFamily: 'Freigeist, sans-serif',
-    fontWeight: "300",
-  };
+  // const styles = {
+  //   fontFamily: 'Adieu, sans-serif',
+  //   // fontWeight: 100
+    
+  // };
 
   return (
     <>
@@ -114,22 +97,7 @@ export default function Home() {
         } as React.CSSProperties}
         data-scroll-container
       >
-        {/* <div className="flex flex-col justify-between items-start w-screen h-[100dvh] fixed top-0 left-0 sm:px-8 sm:py-5 px-4 py-3 bg-[#FC79C8]">
-          <h2
-            className="text-black leading-[1.24] text-[1.4rem] sm:text-[clamp(1.7rem,3vw,3rem)]"
-            style={styles}
-          >
-            <Button href=""> Matthew Parisien</Button> (1997, Montreal) is a software developer and visual artist working at the intersection of engineering and design. He builds digital systems and tools where creative thinking informs not just aesthetics, but structure, usability, and execution.
-
-            With a background that spans data-driven development and years leading a creative studio, working for brands such as Lush Cosmetics and Sephora.
-            Matthew approaches engineering as a creative practice—translating abstract ideas into clear, scalable systems and collaborating seamlessly across technical and creative teams. He is currently working in data engineering at <Button href="https://www.innocap.com/en/media/">Innocap</Button> and is a member of <Button href={"https://creamworldwide.com/"}>Cream Creators.</Button> When he’s not wrangling data, he’s probably making art, overthinking color palettes, or spending time with his dog Ollie. Scroll to see creative work.
-
-          </h2>
-          <div className='flex items-center justify-between w-full [&>a]:cursor-pointer [&>a]:decoration-[2px] [&>a]:decoration-black [&>a]:underline-offset-2 [&>a]:hover:underline' style={{ ...styles, fontWeight: 400 }} >
-            <div className='text-sm sm:text-lg md:text-xl font-sans'>Matthew Parisien *</div>
-            <a className='text-sm sm:text-lg text-lg md:text-xl font-sans' href='mailto:matthewparisien4@gmail.com'>matthewparisien4@gmail.com</a>
-          </div>
-        </div> */}
+       <IntroSection/>
         {/* <Intro items={media} /> */}
         {/* <DraggableOverlay items={[{
           url: "https://imagedelivery.net/Ti1_uXa4Q9gNync1g-YdPA/fcb1630d-777f-4499-7716-05e2ca754000/public",
