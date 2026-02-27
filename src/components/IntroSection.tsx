@@ -13,27 +13,17 @@ const IntroSection = () => {
     useEffect(() => {
 
         const handleClick = (e) => {
-            console.log(circleRef.current)
             const { clientX, clientY } = e;
-            const { width, height } = circleRef.current?.getBoundingClientRect();
-            circleRef.current.style.transform = `translate(${clientX - width / 2}px, ${clientY - height / 2}px)`;
+            const el = circleRef.current;
+            // offsetWidth/offsetHeight are unaffected by CSS scale transforms
+            const x = clientX - el.offsetWidth / 2;
+            const y = clientY - el.offsetHeight / 2;
 
-            if (animationRef.current?.isActive()) {
-                animationRef.current.kill();
-            }
-         
-                animationRef.current = gsap.timeline()
-                .set(circleRef.current, { scale: 0, x: clientX - width / 2, y: clientY - height / 2, duration: 0})
-                .to(circleRef.current, {
-                    scale: 10,
-                    duration: 1,
-                    ease: "expo.inOut",
-                    x: clientX - width / 2,
-                    y: clientY - height / 2
-                })
-              
-            
+            animationRef.current?.kill();
 
+            animationRef.current = gsap.timeline()
+                .set(el, { x, y, scale: 0 })
+                .to(el,  { scale: 10, duration: 0.5, ease: "expo.inOut" });
         }
 
 
