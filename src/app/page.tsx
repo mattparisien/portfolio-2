@@ -33,7 +33,7 @@ function shuffle(array: unknown[], seed: number) {
 
 
 // Assign scroll-in behaviours to a small percentage of items (seeded, deterministic).
-// ~5% scale, ~8% slide-left, ~8% slide-right — rest default to slide-up.
+// ~5% scale, ~8% slide-left, ~8% slide-right, ~8% slide-down — rest default to slide-up.
 function assignTransforms(items: MediaGridItem[], seed: number): MediaGridItem[] {
   const random = mulberry32(seed);
   return items.map(item => {
@@ -44,6 +44,8 @@ function assignTransforms(items: MediaGridItem[], seed: number): MediaGridItem[]
       return { ...item, meta: { ...item.meta, transform: 'slide-left' as const } };
     } else if (roll < 0.21) {
       return { ...item, meta: { ...item.meta, transform: 'slide-right' as const } };
+    } else if (roll < 0.29) {
+      return { ...item, meta: { ...item.meta, transform: 'slide-down' as const } };
     }
     return item;
   });

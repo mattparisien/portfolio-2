@@ -18,7 +18,7 @@ export type MediaGridItem = MediaItem & {
         removeBackground?: "true" | "false";
         rotate?: string;
         context?: string;
-        transform?: "scale" | "slide-left" | "slide-right";
+        transform?: "scale" | "slide-left" | "slide-right" | "slide-down";
     };
 };
 
@@ -56,6 +56,9 @@ const StickySections = ({ items }: MediaGridProps) => {
                 } else if (transform === 'slide-right') {
                     panel.style.transform = `translateX(${(1 - progress) * 100}%)`;
                     // panel.style.opacity = '1';
+                } else if (transform === 'slide-down') {
+                    panel.style.transform = `translateY(${(1 - progress) * -100}%)`;
+                    // panel.style.opacity = '1';
                 } else {
                     panel.style.transform = `translateY(${(1 - progress) * 100}%)`;
                     // panel.style.opacity = '1';
@@ -89,6 +92,7 @@ const StickySections = ({ items }: MediaGridProps) => {
                     transform === 'scale'       ? 'scale(0)' :
                     transform === 'slide-left'  ? 'translateX(-100%)' :
                     transform === 'slide-right' ? 'translateX(100%)' :
+                    transform === 'slide-down'  ? 'translateY(-100%)' :
                     'translateY(100%)';
 
                 return (
