@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
+import { PALETTE } from "@/app/constants";
 
 const IntroSection = () => {
     const wrapperRef = useRef<HTMLDivElement>(null);
@@ -14,16 +15,30 @@ const IntroSection = () => {
 
         const handleClick = (e) => {
             const { clientX, clientY } = e;
-            const el = circleRef.current;
-            // offsetWidth/offsetHeight are unaffected by CSS scale transforms
-            const x = clientX - el.offsetWidth / 2;
-            const y = clientY - el.offsetHeight / 2;
+            const el      = circleRef.current;
+            const wrapper = wrapperRef.current;
+            const radius  = el.offsetWidth / 2;
+
+            // Position circle centred on click (natural/unscaled size)
+            const x = clientX - radius;
+            const y = clientY - radius;
+
+            // Find the farthest corner of the wrapper from the click point —
+            // the circle must reach it to fully cover the section.
+            const rect = wrapper.getBoundingClientRect();
+            const maxDist = Math.max(
+                Math.hypot(clientX - rect.left,  clientY - rect.top),
+                Math.hypot(clientX - rect.right, clientY - rect.top),
+                Math.hypot(clientX - rect.left,  clientY - rect.bottom),
+                Math.hypot(clientX - rect.right, clientY - rect.bottom),
+            );
+            const targetScale = maxDist / radius;
 
             animationRef.current?.kill();
 
             animationRef.current = gsap.timeline()
                 .set(el, { x, y, scale: 0 })
-                .to(el,  { scale: 10, duration: 0.5, ease: "expo.inOut" });
+                .to(el,  { scale: targetScale, duration: 0.5, ease: "expo.inOut" });
         }
 
 
