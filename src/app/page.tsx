@@ -32,6 +32,17 @@ function shuffle(array: unknown[], seed: number) {
 }
 
 
+// Assign meta.transform: "scale" to ~5% of items (seeded, deterministic)
+function assignScaleTransforms(items: MediaGridItem[], seed: number, rate = 0.05): MediaGridItem[] {
+  const random = mulberry32(seed);
+  return items.map(item => {
+    if (random() < rate) {
+      return { ...item, meta: { ...item.meta, transform: 'scale' as const } };
+    }
+    return item;
+  });
+}
+
 export default function Home() {
   const [media, setMedia] = useState<MediaGridItem[]>([]);
 
@@ -44,7 +55,8 @@ export default function Home() {
         const mediaItems = data.media || [];
 
         // Set media state first
-        setMedia(shuffle(mediaItems, 125) as MediaGridItem[]); // Shuffle with fixed seed for consistent order
+        const shuffled = shuffle(mediaItems, 125) as MediaGridItem[];
+        setMedia(assignScaleTransforms(shuffled, 42)); // ~5% get scale behaviour
 
         // Preload all media in background
         const preloadPromises = mediaItems.map((item: MediaGridItem) => {
