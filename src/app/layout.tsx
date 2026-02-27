@@ -33,7 +33,7 @@ export default function RootLayout({
         <meta name="robots" content="noindex, nofollow"></meta>
 
       </head>
-      <body className="antialiased">
+      <body className="antialiased" suppressHydrationWarning>
         <SmoothScroller>
           {children}
         </SmoothScroller>

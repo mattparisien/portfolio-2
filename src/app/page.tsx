@@ -1,6 +1,7 @@
 "use client"
 import DraggableOverlay from '@/components/DraggableOverlay/DraggableOverlay';
 import StickySections, { MediaGridItem } from '@/components/StickySections/StickySections';
+import StickySections2 from '@/components/StickySections/StickySections2';
 import { useEffect, useState } from 'react';
 
 export interface MediaItem {
@@ -93,7 +94,7 @@ export default function Home() {
         } as React.CSSProperties}
         data-scroll-container
       >
-        <div className="flex flex-col justify-between items-start w-screen h-[100dvh] fixed top-0 left-0 sm:px-8 sm:py-5 px-4 py-3 bg-[#FC79C8]">
+        {/* <div className="flex flex-col justify-between items-start w-screen h-[100dvh] fixed top-0 left-0 sm:px-8 sm:py-5 px-4 py-3 bg-[#FC79C8]">
           <h2
             className="text-black leading-[1.24] text-[1.4rem] sm:text-[clamp(1.7rem,3vw,3rem)]"
             style={styles}
@@ -108,7 +109,7 @@ export default function Home() {
             <div className='text-sm sm:text-lg md:text-xl font-sans'>Matthew Parisien *</div>
             <a className='text-sm sm:text-lg text-lg md:text-xl font-sans' href='mailto:matthewparisien4@gmail.com'>matthewparisien4@gmail.com</a>
           </div>
-        </div>
+        </div> */}
         {/* <Intro items={media} /> */}
         {/* <DraggableOverlay items={[{
           url: "https://imagedelivery.net/Ti1_uXa4Q9gNync1g-YdPA/fcb1630d-777f-4499-7716-05e2ca754000/public",
@@ -123,7 +124,7 @@ export default function Home() {
           height: 701,
           aspectRatio: 683 / 701
         }]} /> */}
-        {media.length > 0 && <StickySections items={media} isActive={false} />}
+        {media.length > 0 && <StickySections items={media.filter(x => x.type === "image")} isActive={false} />}
       </main >
 
 
