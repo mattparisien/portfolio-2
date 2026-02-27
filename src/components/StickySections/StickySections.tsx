@@ -18,7 +18,7 @@ export type MediaGridItem = MediaItem & {
         removeBackground?: "true" | "false";
         rotate?: string;
         context?: string;
-        transform?: "scale";
+        transform?: "scale" | "slide-left" | "slide-right";
     };
 };
 
@@ -39,7 +39,7 @@ const StickySections = ({ items }: MediaGridProps) => {
                 if (!panel) return;
 
                 const item = itemsRef.current[i];
-                const isScale = item?.meta?.transform === 'scale';
+                const transform = item?.meta?.transform;
 
                 // Each panel gets one full vh of scroll space to animate in.
                 // Panel i starts at scroll position i * vh and lands at (i+1) * vh.
@@ -47,9 +47,15 @@ const StickySections = ({ items }: MediaGridProps) => {
                 const end = (i + 1) * vh;
                 const progress = Math.min(1, Math.max(0, (scrollY - start) / (end - start)));
 
-                if (isScale) {
+                if (transform === 'scale') {
                     panel.style.transform = `scale(${progress})`;
                     // panel.style.opacity = String(progress);
+                } else if (transform === 'slide-left') {
+                    panel.style.transform = `translateX(${(1 - progress) * -100}%)`;
+                    // panel.style.opacity = '1';
+                } else if (transform === 'slide-right') {
+                    panel.style.transform = `translateX(${(1 - progress) * 100}%)`;
+                    // panel.style.opacity = '1';
                 } else {
                     panel.style.transform = `translateY(${(1 - progress) * 100}%)`;
                     // panel.style.opacity = '1';
@@ -76,8 +82,14 @@ const StickySections = ({ items }: MediaGridProps) => {
 
 
 
-                const isScale = item?.meta?.transform === 'scale';
-                const bgColor =  (isScale || item.meta?.removeBackground === "true") ? "transparent" : PALETTE[i % PALETTE.length];
+                const transform = item?.meta?.transform;
+                const bgColor = (transform === 'scale' || item.meta?.removeBackground === "true") ? "transparent" : PALETTE[i % PALETTE.length];
+
+                const initialTransform =
+                    transform === 'scale'       ? 'scale(0)' :
+                    transform === 'slide-left'  ? 'translateX(-100%)' :
+                    transform === 'slide-right' ? 'translateX(100%)' :
+                    'translateY(100%)';
 
                 return (
                     <div
@@ -91,10 +103,8 @@ const StickySections = ({ items }: MediaGridProps) => {
                             width: '100%',
                             height: '100vh',
                             zIndex: i + 1,
-                            // Scale items start invisible at full size centre;
-                            // slide items start fully below the viewport.
-                            transform: isScale ? 'scale(0)' : 'translateY(100%)',
-                            // opacity: isScale ? 0 : 1,
+                            transform: initialTransform,
+                            // opacity: transform === 'scale' ? 0 : 1,
                             transformOrigin: 'center center',
                             willChange: 'transform, opacity',
                             backgroundColor: bgColor,

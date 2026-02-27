@@ -32,12 +32,18 @@ function shuffle(array: unknown[], seed: number) {
 }
 
 
-// Assign meta.transform: "scale" to ~5% of items (seeded, deterministic)
-function assignScaleTransforms(items: MediaGridItem[], seed: number, rate = 0.05): MediaGridItem[] {
+// Assign scroll-in behaviours to a small percentage of items (seeded, deterministic).
+// ~5% scale, ~8% slide-left, ~8% slide-right — rest default to slide-up.
+function assignTransforms(items: MediaGridItem[], seed: number): MediaGridItem[] {
   const random = mulberry32(seed);
   return items.map(item => {
-    if (random() < rate) {
+    const roll = random();
+    if (roll < 0.05) {
       return { ...item, meta: { ...item.meta, transform: 'scale' as const } };
+    } else if (roll < 0.13) {
+      return { ...item, meta: { ...item.meta, transform: 'slide-left' as const } };
+    } else if (roll < 0.21) {
+      return { ...item, meta: { ...item.meta, transform: 'slide-right' as const } };
     }
     return item;
   });
@@ -56,7 +62,7 @@ export default function Home() {
 
         // Set media state first
         const shuffled = shuffle(mediaItems, 125) as MediaGridItem[];
-        setMedia(assignScaleTransforms(shuffled, 42)); // ~5% get scale behaviour
+        setMedia(assignTransforms(shuffled, 42));
 
         // Preload all media in background
         const preloadPromises = mediaItems.map((item: MediaGridItem) => {
