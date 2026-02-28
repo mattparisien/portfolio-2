@@ -1,13 +1,20 @@
-import { ReactElement, useEffect, useMemo, useRef, useState } from "react";
-import gsap from "gsap";
-import { chunkArray, getRandomArbitrary } from "@/app/helpers";
+import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { getRandomArbitrary } from "@/app/helpers";
 import { PALETTE } from "@/app/constants";
+import gsap from "gsap";
 
 const IntroSection = () => {
     const theme = { bg: "#1a1a1a", fg: "#ffffff" };
-    const wrapperRef  = useRef<HTMLDivElement>(null);
-    const expanderRef = useRef<HTMLDivElement>(null);
-    const wordRef     = useRef<HTMLDivElement>(null);
+    const wrapperRef = useRef<HTMLDivElement>(null);
+    const [isReady, setIsReady] = useState(false);
+
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            setIsReady(true);
+        }, 1000);
+
+        return () => clearTimeout(timeout);
+    }, [])
 
 
     const pills = useMemo(() => {
@@ -15,11 +22,11 @@ const IntroSection = () => {
 
         return items.map((item, i) => {
 
-            return <Pill key={i} i={i}>{item}</Pill>
+            return <Pill key={i} i={i} isReady={isReady}>{item}</Pill>
     })
         
 
-    }, [])
+    }, [isReady])
 
     return (
         <div
@@ -33,11 +40,12 @@ const IntroSection = () => {
 }
 
 interface PillProps {
-    children: ReactElement,
-    i: number
+    children: ReactNode,
+    i: number,
+    isReady: boolean
 }
 
-export const Pill = ({children, i}: PillProps) => {
+export const Pill = ({children, i, isReady}: PillProps) => {
 
     const pillRef = useRef<HTMLDivElement>(null);
     const [offset, setOffset] = useState({x:0, y: 0, r: 0})
@@ -45,54 +53,45 @@ export const Pill = ({children, i}: PillProps) => {
        const bg = PALETTE[i % PALETTE.length];
       
        useEffect(() => {
+        if (!pillRef.current || !isReady) return;
 
-        if (!pillRef.current) return;
+        const minRadius = 80;
+        const maxRadius = 260;
 
-        const { width, height } = pillRef.current.getBoundingClientRect();
+        const angle  = getRandomArbitrary(0, Math.PI * 2);
+        const radius = getRandomArbitrary(minRadius, maxRadius);
 
-            const offsetFactorX = 20;
-            const offsetFactorY = 40;
-            let minOffsetX = width;
-            let maxOffsetX = width + offsetFactorX;
-            let minOffsetY = height;
-            let maxOffsetY = height + offsetFactorY;
+        const offsetX = Math.cos(angle) * radius;
+        const offsetY = Math.sin(angle) * radius;
 
-            const isMinus = Math.random() > 0.5;
+        const rotate = getRandomArbitrary(15, 35);
+        const r = i % 2 === 0 ? -rotate : rotate;
 
-            if (isMinus) {
-                minOffsetX = minOffsetX * -1;
-                maxOffsetX = maxOffsetX * -1;
+        const startX = Math.cos(angle) * (radius + 200);
+        const startY = Math.sin(angle) * (radius + 200);
 
-                minOffsetY = minOffsetY * -1;
-                maxOffsetY = maxOffsetY * -1;
-            }
+        gsap.timeline().set(pillRef.current, {
+            opacity: 1,
+            x: startX,
+            y: startY,
+            rotation: 0
+        }).to(pillRef.current, {
+            opacity: 1,
+            x: offsetX,
+            y: offsetY,
+            rotation: r,
+            delay: i * 0.1 + 0.5,
+            duration: 1.5,
+            ease: "power3.out"
+        })
+       }, [i, isReady])
 
 
-
-
-            
-
-            const offsetX = getRandomArbitrary(minOffsetX, maxOffsetX);
-            const offsetY = getRandomArbitrary(minOffsetY, maxOffsetY);
-
-
-            const minR = 20;
-            const maxR = 40;
-            const rotate = getRandomArbitrary(minR, maxR);
-            const r = i % 2 === 0 ? -(rotate) : rotate;
-
-            
-
-            setOffset({
-                x: offsetX,
-                y: offsetY,
-                r
-            })
-       }, [i])
 
 
             return <div ref={pillRef} className="px-4 py-10 rounded-full text-3xl absolute top-1/2 left-1/2" style={{
                 backgroundColor: bg,
+                opacity: isReady ? 1 : 0,
                 transform: `rotate(${offset.r}deg)translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px))`
             }}>{children}</div>
 }
