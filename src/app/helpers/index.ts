@@ -51,6 +51,10 @@ export function chunkArray<T>(array: T[], chunkSize: number): T[][] {
   return chunks;
 }
 
+export function getRandomArbitrary(min:number, max:number) {
+  return Math.random() * (max - min) + min;
+}
+
 // Simple seeded PRNG for deterministic shuffling
 function mulberry32(seed: number) {
   return function() {
@@ -60,6 +64,8 @@ function mulberry32(seed: number) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   }
 }
+
+
 
 export { mulberry32 };
 
