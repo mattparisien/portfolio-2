@@ -24,8 +24,8 @@ const IntroSection = () => {
             const vh       = window.innerHeight;
             const scrollY  = window.scrollY;
             const progress = Math.min(1, Math.max(0, scrollY / (vh * SCROLL_LENGTH_VH)));
-            // Radius shrinks from 150% (fully visible) → 0% (fully hidden), revealing back layer
-            const radius = 150 * (1 - progress);
+            // Radius grows from 0% (hidden) → 150% (fully covers screen)
+            const radius = 150 * progress;
             if (frontRef.current) {
                 frontRef.current.style.clipPath = `circle(${radius}% at 50% 50%)`;
             }
@@ -116,9 +116,13 @@ const IntroSection = () => {
                 <div
                     ref={backRef}
                     className={`${sharedClasses} cursor-pointer overflow-hidden`}
-                    style={{ backgroundColor: theme.bg, color: theme.fg, zIndex: 1 }}
-                >
-                    <p className="z-20 relative">Back layer — click me</p>
+    style={{
+                        backgroundColor: "#f5f0e8",
+                        color: "#1a1a1a",
+                        clipPath: "circle(0% at 50% 50%)",
+                        zIndex: 2,
+                    }}                >
+                    <p className="z-20 relative text-black">Back layer — click me</p>
                     {/* Ripple circle */}
                     <div className="circle z-10 w-10 h-10 absolute top-0 left-0 rounded-full" ref={circleRef} />
                 </div>
@@ -127,12 +131,9 @@ const IntroSection = () => {
                 <div
                     ref={frontRef}
                     className={`${sharedClasses} pointer-events-none`}
-                    style={{
-                        backgroundColor: "#f5f0e8",
-                        color: "#1a1a1a",
-                        clipPath: "circle(150% at 50% 50%)",
-                        zIndex: 2,
-                    }}
+                                        style={{ backgroundColor: theme.bg, color: theme.fg, zIndex: 1 }}
+
+                
                 >
                     <p className="z-20 relative">Front layer — scroll to reveal</p>
                 </div>
