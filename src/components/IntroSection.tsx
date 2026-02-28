@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import gsap from "gsap";
 import { PALETTE } from "@/app/constants";
+import { chunkArray } from "@/app/helpers";
 
 const IntroSection = () => {
     const [theme, setTheme] = useState({
@@ -11,6 +12,32 @@ const IntroSection = () => {
     const circleRef = useRef<HTMLDivElement>(null);
     const animationRef = useRef<GSAPTimeline>(null);
     const clickCountRef = useRef(0);
+
+    const pills = useMemo(() => {
+        const chunks = chunkArray(["Creative", "Developer", "Designer", "Thinker", "Maker", "Innovator"], 2);
+        
+        const colors = [
+            "#AEF344",
+
+        "#FE9800",
+        "#AD8AFF",
+        "#84C7FE",
+        "#FFEDD3"
+        ]
+        return chunks.map((row, i) => (
+            <div className="row flex justify-between items-between w-full">
+                {row.map((word, j) => (
+                    <div
+                        key={`${i}-${j}`}
+                        className="inline-block m-4 px-4 py-1 rounded-full cursor-pointer leading-tighter tracking-tight"
+                        style={{ backgroundColor: colors[(i * chunks[0].length + j) % colors.length] }}
+                    >
+                        {word}
+                    </div>
+                ))} 
+            </div>
+        ));
+    }, [])
 
     // useEffect(() => {
 
@@ -76,7 +103,9 @@ const IntroSection = () => {
 
 
     return (
-        <div className="w-screen h-screen bg-black font-mono text-white text-6xl">Matthew Parisien (1997) is a software developer and visual artist working in Montreal, Quebec.</div>
+        <div className="w-screen h-screen font-mono text-6xl" style={{ backgroundColor: theme.bg, color: theme.bg }} ref={wrapperRef}>
+            <div className="flex flex-col items-center justify-center h-full max-w-200 mx-auto">{pills}</div>
+        </div>
     )
 }
 
