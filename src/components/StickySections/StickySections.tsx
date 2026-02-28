@@ -11,6 +11,8 @@ const KEEP_AHEAD  = 2; // total window = KEEP_BEHIND + 1 (active) + KEEP_AHEAD =
 interface MediaGridProps {
     items: MediaGridItem[];
     isActive: boolean;
+    /** Number of vh units already consumed by preceding sections. StickySections scroll math starts after this offset. */
+    scrollOffsetVh?: number;
 }
 
 export type MediaGridItem = MediaItem & {
@@ -35,7 +37,7 @@ function getInitialTransform(): string {
     return 'translateY(100%)';
 }
 
-const StickySections = ({ items }: MediaGridProps) => {
+const StickySections = ({ items, scrollOffsetVh = 0 }: MediaGridProps) => {
     // Map from global item index → DOM element (survives window shifts)
     const panelRefs = useRef<Map<number, HTMLDivElement>>(new Map());
     const itemsRef  = useRef(items);
@@ -52,12 +54,12 @@ const StickySections = ({ items }: MediaGridProps) => {
         const vh      = window.innerHeight;
         const scrollY = window.scrollY;
         panelRefs.current.forEach((panel, i) => {
-            const start    = i * vh;
-            const end      = (i + 1) * vh;
+            const start    = (i + scrollOffsetVh) * vh;
+            const end      = (i + scrollOffsetVh + 1) * vh;
             const progress = Math.min(1, Math.max(0, (scrollY - start) / (end - start)));
             applyPanelTransform(panel, progress);
         });
-    }, []);
+    }, [scrollOffsetVh]);
 
     // Re-apply transforms whenever the window changes so newly mounted panels
     // receive the correct position immediately (no frame of flash)
@@ -73,7 +75,7 @@ const StickySections = ({ items }: MediaGridProps) => {
             const vh         = window.innerHeight;
             const scrollY    = window.scrollY;
             const total      = itemsRef.current.length;
-            const active     = Math.max(0, Math.min(total - 1, Math.floor(scrollY / vh)));
+            const active     = Math.max(0, Math.min(total - 1, Math.floor((scrollY - scrollOffsetVh * vh) / vh)));
             const newStart   = Math.max(0, active - KEEP_BEHIND);
             const newEnd     = Math.min(total - 1, active + KEEP_AHEAD);
 
@@ -94,7 +96,7 @@ const StickySections = ({ items }: MediaGridProps) => {
             window.removeEventListener('scroll', onScroll);
             window.removeEventListener('resize', onScroll);
         };
-    }, [items, updateTransforms]);
+    }, [items, updateTransforms, scrollOffsetVh]);
 
     return (
         <>

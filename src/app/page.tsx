@@ -1,8 +1,6 @@
 "use client"
-import DraggableOverlay from '@/components/DraggableOverlay/DraggableOverlay';
 import IntroSection from '@/components/IntroSection';
 import StickySections, { MediaGridItem } from '@/components/StickySections/StickySections';
-import StickySections2 from '@/components/StickySections/StickySections2';
 import { useEffect, useState } from 'react';
 
 export interface MediaItem {
@@ -112,17 +110,10 @@ export default function Home() {
           height: 701,
           aspectRatio: 683 / 701
         }]} /> */}
-        {media.length > 0 && <StickySections items={media.filter(x => x.type === "image")} isActive={false} />}
+        {media.length > 0 && <StickySections items={media.filter(x => x.type === "image")} isActive={false} scrollOffsetVh={2} />}
       </main >
 
 
     </>
   );
-}
-
-
-const Button = ({ children, href }: { children: React.ReactNode, href: string }) => {
-  return <a href={href} target="_blank" rel="noopener noreferrer" className='underline decoration-1 sm:decoration-2 underline-offset-3 cursor-pointer'>
-    {children}
-  </a>
 }
