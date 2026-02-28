@@ -32,6 +32,15 @@
   font-display: swap;
 }
 
+
+@font-face {
+  font-family: 'Maax Mono';
+  src: url('/assets/fonts/MaaxMono.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -66,8 +75,8 @@ body {
   --color-5: #5266AB;
 }
 
-.font-display {
-  font-family: 'Adieu', sans-serif !important;
+.font-mono {
+  font-family: 'Maax Mono', monospace !important;
   font-weight: 300;
 }
 
