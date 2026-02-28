@@ -52,13 +52,25 @@ export const Pill = ({children, i}: PillProps) => {
 
             const offsetFactorX = 20;
             const offsetFactorY = 40;
+            let minOffsetX = width;
+            let maxOffsetX = width + offsetFactorX;
+            let minOffsetY = height;
+            let maxOffsetY = height + offsetFactorY;
 
-            const baseX = width + offsetFactorX;
-            const baseY = height + offsetFactorY;
-            const minOffsetX = -baseX;
-            const maxOffsetX = baseX;
-            const minOffsetY = -baseY;
-            const maxOffsetY = baseY;
+            const isMinus = Math.random() > 0.5;
+
+            if (isMinus) {
+                minOffsetX = minOffsetX * -1;
+                maxOffsetX = maxOffsetX * -1;
+
+                minOffsetY = minOffsetY * -1;
+                maxOffsetY = maxOffsetY * -1;
+            }
+
+
+
+
+            
 
             const offsetX = getRandomArbitrary(minOffsetX, maxOffsetX);
             const offsetY = getRandomArbitrary(minOffsetY, maxOffsetY);
