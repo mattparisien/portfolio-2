@@ -1,5 +1,6 @@
 "use client"
 import IntroSection from '@/components/IntroSection';
+import IntroSection2 from '@/components/IntroSection2';
 import StickySections, { MediaGridItem } from '@/components/StickySections/StickySections';
 import { useEffect, useState } from 'react';
 
@@ -95,7 +96,7 @@ export default function Home() {
         } as React.CSSProperties}
         data-scroll-container
       >
-       <IntroSection/>
+       <IntroSection2/>
         {/* <Intro items={media} /> */}
         {/* <DraggableOverlay items={[{
           url: "https://imagedelivery.net/Ti1_uXa4Q9gNync1g-YdPA/fcb1630d-777f-4499-7716-05e2ca754000/public",
