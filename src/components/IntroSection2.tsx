@@ -4,7 +4,7 @@ import gsap from "gsap";
 import { useSplitText } from "@/app/hooks/useSplitText";
 import classNames from "classnames";
 
-const SHARED_TEXT = "Hello there, I'm a creative software developer with a passion for crafting engaging digital experiences. I specialize in front-end development, UI/UX design, and interactive media. With a background in both design and engineering, I bring a unique blend of creativity and technical expertise to every project. Whether it's building responsive websites, developing immersive web applications, or experimenting with new technologies, I'm always eager to push the boundaries of what's possible on the web. Let's create something amazing together!";
+const SHARED_TEXT = "Somewhere In Between Art & Software";
 
 const PALETTE = [
     {bg: "#00AF59", fg: "#000F00", text: SHARED_TEXT },
@@ -243,8 +243,8 @@ const IntroSection = () => {
                 clipPath:        `circle(0px at ${cx}px ${cy}px)`,
             });
 
-            // Trigger shuffle on back layer as it is revealed
-            setBackSlot({ text: current.text, animate: true, id: idx * 2 });
+            // Back layer reveals via clip-path — no shuffle needed after first load
+            setBackSlot({ text: current.text, animate: false, id: idx * 2 });
 
             gsap.to(back, {
                 clipPath: `circle(${maxR}px at ${cx}px ${cy}px)`,
@@ -277,11 +277,11 @@ const IntroSection = () => {
             className="relative w-screen h-screen overflow-hidden cursor-pointer font-mono"
             ref={wrapperRef}
         >
-            <div ref={frontRef} className="absolute flex items-center justify-center inset-0 p-2 text-[3rem] leading-[1.1] tracking-tight">
-                <ShuffleText key={frontSlot.id} text={frontSlot.text} animate={frontSlot.animate}  className=""  linesClassName={linesClassName} exit={true}/>
+            <div ref={frontRef} className="absolute flex inset-0 p-2 text-[9rem] leading-[1.1] tracking-tight">
+                <ShuffleText key={frontSlot.id} text={frontSlot.text} animate={frontSlot.animate}  className=""  linesClassName={linesClassName} />
             </div>
-            <div ref={backRef} className="absolute flex items-center justify-center inset-0 p-2 text-[3rem] leading-[1.1] tracking-tight">
-                <ShuffleText key={backSlot.id} text={backSlot.text} animate={backSlot.animate} className="" linesClassName={linesClassName} exit={true}/>
+            <div ref={backRef} className="absolute flex inset-0 p-2 text-[9rem] leading-[1.1] tracking-tight">
+                <ShuffleText key={backSlot.id} text={backSlot.text} animate={backSlot.animate} className="" linesClassName={linesClassName} />
             </div>
         </div>
     );
