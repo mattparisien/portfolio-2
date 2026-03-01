@@ -1,8 +1,10 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { getRandomArbitrary } from "@/app/helpers";
 import gsap from "gsap";
+import { useSplitText } from "@/app/hooks/useSplitText";
+import classNames from "classnames";
 
-const SHARED_TEXT = "UX Engineer for complex products"
+const SHARED_TEXT = "UX Engineer for complex <Products/> based in Montreal"
 
 const PALETTE = [
     {bg: "#00AF59", fg: "#000F00", text: SHARED_TEXT },
@@ -17,21 +19,37 @@ const PALETTE = [
 // Characters used while shuffling
 const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*?";
 
-// ─── Shuffle hook ──────────────────────────────────────────────────────────────
-// Each character becomes visible one-by-one while cycling random glyphs,
-// then locks onto its final value one-by-one in the same order.
-function useShuffleText(text: string, animate: boolean, stagger = 45, shuffleDuration = 900, tickInterval = 60) {
-    const [chars, setChars] = useState<string[]>(() =>
-        animate ? text.split("").map(() => " ") : text.split("")
-    );
+const STAGGER          = 45;   // ms between each char becoming visible
+const SHUFFLE_DURATION = 900;  // ms each char spends cycling glyphs
+const TICK_INTERVAL    = 60;   // ms between DOM updates (~16 fps)
+
+// ─── ShuffleText component ─────────────────────────────────────────────────────
+interface ShuffleTextProps { text: string; animate: boolean; className?: string, linesClassName?: string }
+
+function ShuffleText({ text, animate, className, linesClassName }: ShuffleTextProps) {
+    const containerRef = useRef<HTMLSpanElement>(null);
+    const { chars, isReady } = useSplitText(containerRef, { type: "chars,words,lines", linesClass: classNames("lines", linesClassName) });
 
     useEffect(() => {
+        if (!isReady) return;
+
+        const letterEls = chars as HTMLElement[];
+        // SplitText skips spaces, so read each span's own textContent as the
+        // target character — avoids index drift against the space-inclusive string.
+        const targets = letterEls.map(el => el.textContent ?? "");
+
         if (!animate) {
-            setChars(text.split(""));
+            // Non-animated layer: restore original content and make visible
+            letterEls.forEach((el, i) => {
+                el.style.visibility = "visible";
+                el.textContent = targets[i];
+            });
             return;
         }
 
-        const letters = text.split("");
+        // Hide all chars before the first tick
+        letterEls.forEach(el => { el.style.visibility = "hidden"; });
+
         const start = performance.now();
         let raf: number;
         let lastTick = 0;
@@ -39,55 +57,42 @@ function useShuffleText(text: string, animate: boolean, stagger = 45, shuffleDur
         const tick = (now: number) => {
             const elapsed = now - start;
 
-            if (now - lastTick >= tickInterval) {
+            if (now - lastTick >= TICK_INTERVAL) {
                 lastTick = now;
-                setChars(letters.map((ch, i) => {
-                    const visibleAt = i * stagger;
-                    const lockAt    = visibleAt + shuffleDuration;
-                    if (elapsed < visibleAt) return " ";   // not yet revealed
-                    if (elapsed >= lockAt)   return ch;    // locked in
-                    return GLYPHS[Math.floor(Math.random() * GLYPHS.length)]; // shuffling
-                }));
+                letterEls.forEach((el, i) => {
+                    const ch        = targets[i];
+                    const visibleAt = i * STAGGER;
+                    const lockAt    = visibleAt + SHUFFLE_DURATION;
+
+                    if (elapsed < visibleAt) {
+                        el.style.visibility = "hidden";
+                    } else if (elapsed >= lockAt) {
+                        el.style.visibility = "visible";
+                        el.textContent = ch;
+                    } else {
+                        el.style.visibility = "visible";
+                        el.textContent = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+                    }
+                });
             }
 
-            const totalDuration = (letters.length - 1) * stagger + shuffleDuration;
+            const totalDuration = (targets.length - 1) * STAGGER + SHUFFLE_DURATION;
             if (elapsed < totalDuration) {
                 raf = requestAnimationFrame(tick);
             } else {
-                setChars(letters); // guarantee final state
+                // Guarantee final state
+                letterEls.forEach((el, i) => {
+                    el.style.visibility = "visible";
+                    el.textContent = targets[i];
+                });
             }
         };
 
         raf = requestAnimationFrame(tick);
         return () => cancelAnimationFrame(raf);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [text, animate]);
+    }, [isReady, animate, chars]);
 
-    return chars;
-}
-
-// ─── ShuffleText component ─────────────────────────────────────────────────────
-interface ShuffleTextProps { text: string; animate: boolean }
-
-function ShuffleText({ text, animate }: ShuffleTextProps) {
-    const chars = useShuffleText(text, animate);
-    return (
-        <>
-            {chars.map((ch, i) => (
-                <span
-                    key={i}
-                    style={{
-                        display:    "inline-block",
-                        visibility: ch === " " ? "hidden" : "visible",
-                        // keep word spacing consistent even when chars are hidden
-                        width:      ch === " " ? "0.28em" : undefined,
-                    }}
-                >
-                    {ch === " " ? "\u00A0" : ch}
-                </span>
-            ))}
-        </>
-    );
+    return <span ref={containerRef} className={className}>{text}</span>;
 }
 
 // ─── IntroSection ──────────────────────────────────────────────────────────────
@@ -164,16 +169,18 @@ const IntroSection = () => {
         return () => wrapper.removeEventListener("click", handleClick);
     }, []);
 
+    const linesClassName = "translate-x-[calc(var(--line-index)_*_30%)] overflow-hidden";
+
     return (
         <div
             className="relative w-screen h-screen overflow-hidden cursor-pointer font-mono"
             ref={wrapperRef}
         >
-            <div ref={frontRef} className="absolute inset-0 p-2 text-[3rem] leading-[1.1] tracking-tight">
-                <ShuffleText key={frontSlot.id} text={frontSlot.text} animate={frontSlot.animate} />
+            <div ref={frontRef} className="absolute flex inset-0 p-2 text-[3rem] leading-[1.1] tracking-tight">
+                <ShuffleText key={frontSlot.id} text={frontSlot.text} animate={frontSlot.animate}  className="max-w-80"  linesClassName={linesClassName}/>
             </div>
-            <div ref={backRef} className="absolute inset-0 p-2 text-[3rem] leading-[1.1] tracking-tight">
-                <ShuffleText key={backSlot.id} text={backSlot.text} animate={backSlot.animate} />
+            <div ref={backRef} className="absolute flex inset-0 p-2 text-[3rem] leading-[1.1] tracking-tight">
+                <ShuffleText key={backSlot.id} text={backSlot.text} animate={backSlot.animate} className="max-w-80" linesClassName={linesClassName}/>
             </div>
         </div>
     );
