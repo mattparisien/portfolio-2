@@ -8,11 +8,12 @@ const SHARED_TEXT = "Somewhere In Between Art & Software";
 
 const PALETTE = [
     {bg: "#00AF59", fg: "#000F00", text: SHARED_TEXT },
-    {bg: "#FFD0E1", fg: "#000F00", text: SHARED_TEXT },
     {bg: "#D72D2C", fg: "#F2F0E5", text: SHARED_TEXT },
     {bg: "#FAFF00", fg: "#000F00", text: SHARED_TEXT },
     {bg: "#C8A3E1", fg: "#1E1C1F", text: SHARED_TEXT },
     {bg: "#252122", fg: "#F2F0E5", text: SHARED_TEXT },
+        {bg: "#E65483", fg: "#000F00", text: SHARED_TEXT },
+
     {bg: "white",   fg: "#1542FA", text: SHARED_TEXT },
 ];
 
@@ -27,14 +28,25 @@ const EXIT_SHUFFLE_DURATION = 400; // ms each char spends shuffling before vanis
 const HOLD_DELAY            = 600; // ms pause between entrance finishing and exit starting
 
 // ─── ShuffleText component ─────────────────────────────────────────────────────
-interface ShuffleTextProps { text: string; animate: boolean; exit?: boolean; className?: string, linesClassName?: string }
+interface ShuffleTextProps { text: string; animate: boolean; exit?: boolean; wiggleTrigger?: number; className?: string, linesClassName?: string }
 
-function ShuffleText({ text, animate, exit = false, className, linesClassName }: ShuffleTextProps) {
+function ShuffleText({ text, animate, exit = false, wiggleTrigger = 0, className, linesClassName }: ShuffleTextProps) {
     const containerRef = useRef<HTMLSpanElement>(null);
     const exitRef      = useRef(exit);
     exitRef.current    = exit;
     const { chars, isReady } = useSplitText(containerRef, { type: "chars,words,lines", linesClass: classNames("lines", linesClassName) });
 
+    // Wiggle a different random char each time the trigger increments
+    useEffect(() => {
+        if (!isReady || wiggleTrigger === 0 || chars.length === 0) return;
+        const el = chars[Math.floor(Math.random() * chars.length)] as HTMLElement;
+        gsap.killTweensOf(el);
+        gsap.timeline()
+            .to(el, { rotation: -18, y: -6, scale: 1.3, duration: 0.08, ease: "power2.out" })
+            .to(el, { rotation:  14, y:  4, scale: 1.1, duration: 0.1,  ease: "power2.inOut" })
+            .to(el, { rotation:  -8, y: -2, scale: 1.05, duration: 0.1, ease: "power2.inOut" })
+            .to(el, { rotation:   0, y:  0, scale: 1,   duration: 0.12, ease: "elastic.out(1, 0.4)" });
+    }, [wiggleTrigger, isReady, chars]);
     useEffect(() => {
         if (!isReady) return;
 
@@ -205,6 +217,8 @@ const IntroSection = () => {
     const backRef      = useRef<HTMLDivElement>(null);
     const currentIndex = useRef<number>(0);
 
+    const [wiggleTrigger, setWiggleTrigger] = useState(0);
+
     // React drives the text content; GSAP drives colors + clipPath
     const [frontSlot, setFrontSlot] = useState<TextSlot>({ text: PALETTE[0].text, animate: true,  id: 0 });
     const [backSlot,  setBackSlot]  = useState<TextSlot>({ text: PALETTE[1].text, animate: false, id: 1 });
@@ -237,6 +251,7 @@ const IntroSection = () => {
             );
 
             gsap.killTweensOf(back);
+            setWiggleTrigger(t => t + 1);
             gsap.set(back, {
                 backgroundColor: current.bg,
                 color:           current.fg,
@@ -278,7 +293,7 @@ const IntroSection = () => {
             ref={wrapperRef}
         >
             <div ref={frontRef} className="absolute flex inset-0 p-2 text-[9rem] leading-[1.1] tracking-tight">
-                <ShuffleText key={frontSlot.id} text={frontSlot.text} animate={frontSlot.animate}  className=""  linesClassName={linesClassName} />
+                <ShuffleText key={frontSlot.id} text={frontSlot.text} animate={frontSlot.animate} wiggleTrigger={wiggleTrigger} className=""  linesClassName={linesClassName} />
             </div>
             <div ref={backRef} className="absolute flex inset-0 p-2 text-[9rem] leading-[1.1] tracking-tight">
                 <ShuffleText key={backSlot.id} text={backSlot.text} animate={backSlot.animate} className="" linesClassName={linesClassName} />
