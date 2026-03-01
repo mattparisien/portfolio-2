@@ -23,10 +23,12 @@ const STAGGER          = 20;   // ms between each char becoming visible
 const SHUFFLE_DURATION = 900;  // ms each char spends cycling glyphs
 const TICK_INTERVAL    = 60;   // ms between DOM updates (~16 fps)
 
-// ─── ShuffleText component ─────────────────────────────────────────────────────
-interface ShuffleTextProps { text: string; animate: boolean; className?: string, linesClassName?: string }
+const EXIT_SHUFFLE_DURATION = 400; // ms each char spends shuffling before vanishing
 
-function ShuffleText({ text, animate, className, linesClassName }: ShuffleTextProps) {
+// ─── ShuffleText component ─────────────────────────────────────────────────────
+interface ShuffleTextProps { text: string; animate: boolean; exit?: boolean; className?: string, linesClassName?: string }
+
+function ShuffleText({ text, animate, exit = false, className, linesClassName }: ShuffleTextProps) {
     const containerRef = useRef<HTMLSpanElement>(null);
     const { chars, isReady } = useSplitText(containerRef, { type: "chars,words,lines", linesClass: classNames("lines", linesClassName) });
 
@@ -37,6 +39,47 @@ function ShuffleText({ text, animate, className, linesClassName }: ShuffleTextPr
         // SplitText skips spaces, so read each span's own textContent as the
         // target character — avoids index drift against the space-inclusive string.
         const targets = letterEls.map(el => el.textContent ?? "");
+
+        if (exit) {
+            // Exit: chars are visible, shuffle then disappear one-by-one
+            letterEls.forEach((el, i) => {
+                el.style.visibility = "visible";
+                el.textContent = targets[i];
+            });
+
+            const exitStart = performance.now();
+            let exitRaf: number;
+            let exitLastTick = 0;
+
+            const exitTick = (now: number) => {
+                const elapsed = now - exitStart;
+
+                if (now - exitLastTick >= TICK_INTERVAL) {
+                    exitLastTick = now;
+                    letterEls.forEach((el, i) => {
+                        const shuffleAt = i * STAGGER;
+                        const hideAt    = shuffleAt + EXIT_SHUFFLE_DURATION;
+
+                        if (elapsed < shuffleAt) {
+                            // not yet — still showing final char
+                        } else if (elapsed >= hideAt) {
+                            el.style.visibility = "hidden";
+                        } else {
+                            el.style.visibility = "visible";
+                            el.textContent = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+                        }
+                    });
+                }
+
+                const totalDuration = (targets.length - 1) * STAGGER + EXIT_SHUFFLE_DURATION;
+                if (elapsed < totalDuration) {
+                    exitRaf = requestAnimationFrame(exitTick);
+                }
+            };
+
+            exitRaf = requestAnimationFrame(exitTick);
+            return () => cancelAnimationFrame(exitRaf);
+        }
 
         if (!animate) {
             // Non-animated layer: restore original content and make visible
@@ -90,7 +133,7 @@ function ShuffleText({ text, animate, className, linesClassName }: ShuffleTextPr
 
         raf = requestAnimationFrame(tick);
         return () => cancelAnimationFrame(raf);
-    }, [isReady, animate, chars]);
+    }, [isReady, animate, exit, chars]);
 
     return <span ref={containerRef} className={className}>{text}</span>;
 }
@@ -177,10 +220,10 @@ const IntroSection = () => {
             ref={wrapperRef}
         >
             <div ref={frontRef} className="absolute flex inset-0 p-2 text-[3rem] leading-[1.1] tracking-tight">
-                <ShuffleText key={frontSlot.id} text={frontSlot.text} animate={frontSlot.animate}  className="max-w-80"  linesClassName={linesClassName}/>
+                <ShuffleText key={frontSlot.id} text={frontSlot.text} animate={frontSlot.animate}  className="max-w-80"  linesClassName={linesClassName} exit={true}/>
             </div>
             <div ref={backRef} className="absolute flex inset-0 p-2 text-[3rem] leading-[1.1] tracking-tight">
-                <ShuffleText key={backSlot.id} text={backSlot.text} animate={backSlot.animate} className="max-w-80" linesClassName={linesClassName}/>
+                <ShuffleText key={backSlot.id} text={backSlot.text} animate={backSlot.animate} className="max-w-80" linesClassName={linesClassName} exit={true}/>
             </div>
         </div>
     );
