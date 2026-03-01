@@ -19,7 +19,7 @@ const PALETTE = [
 // Characters used while shuffling
 const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*?";
 
-const STAGGER          = 45;   // ms between each char becoming visible
+const STAGGER          = 20;   // ms between each char becoming visible
 const SHUFFLE_DURATION = 900;  // ms each char spends cycling glyphs
 const TICK_INTERVAL    = 60;   // ms between DOM updates (~16 fps)
 
