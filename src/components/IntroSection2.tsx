@@ -4,7 +4,7 @@ import gsap from "gsap";
 import { useSplitText } from "@/app/hooks/useSplitText";
 import classNames from "classnames";
 
-const SHARED_TEXT = "UX Engineer for complex <Products/> based in Montreal"
+const SHARED_TEXT = "Hello there, I'm a creative software developer with a passion for crafting engaging digital experiences. I specialize in front-end development, UI/UX design, and interactive media. With a background in both design and engineering, I bring a unique blend of creativity and technical expertise to every project. Whether it's building responsive websites, developing immersive web applications, or experimenting with new technologies, I'm always eager to push the boundaries of what's possible on the web. Let's create something amazing together!";
 
 const PALETTE = [
     {bg: "#00AF59", fg: "#000F00", text: SHARED_TEXT },
@@ -20,16 +20,19 @@ const PALETTE = [
 const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*?";
 
 const STAGGER          = 20;   // ms between each char becoming visible
-const SHUFFLE_DURATION = 900;  // ms each char spends cycling glyphs
-const TICK_INTERVAL    = 60;   // ms between DOM updates (~16 fps)
+const SHUFFLE_DURATION = 500;  // ms each char spends cycling glyphs
+const TICK_INTERVAL    = 40;   // ms between DOM updates (~16 fps)
 
 const EXIT_SHUFFLE_DURATION = 400; // ms each char spends shuffling before vanishing
+const HOLD_DELAY            = 600; // ms pause between entrance finishing and exit starting
 
 // ─── ShuffleText component ─────────────────────────────────────────────────────
 interface ShuffleTextProps { text: string; animate: boolean; exit?: boolean; className?: string, linesClassName?: string }
 
 function ShuffleText({ text, animate, exit = false, className, linesClassName }: ShuffleTextProps) {
     const containerRef = useRef<HTMLSpanElement>(null);
+    const exitRef      = useRef(exit);
+    exitRef.current    = exit;
     const { chars, isReady } = useSplitText(containerRef, { type: "chars,words,lines", linesClass: classNames("lines", linesClassName) });
 
     useEffect(() => {
@@ -40,15 +43,79 @@ function ShuffleText({ text, animate, exit = false, className, linesClassName }:
         // target character — avoids index drift against the space-inclusive string.
         const targets = letterEls.map(el => el.textContent ?? "");
 
-        if (exit) {
-            // Exit: chars are visible, shuffle then disappear one-by-one
+        if (exitRef.current && !animate) {
+            // Exit-only: chars are already visible, shuffle then disappear one-by-one
+            letterEls.forEach((el, i) => {
+                el.style.visibility = "visible";
+                el.textContent = targets[i];
+            });
+
+            let exitRaf: number;
+            const runExit = () => {
+                const exitStart = performance.now();
+                let exitLastTick = 0;
+
+                const exitTick = (now: number) => {
+                    const elapsed = now - exitStart;
+
+                    if (now - exitLastTick >= TICK_INTERVAL) {
+                        exitLastTick = now;
+                        letterEls.forEach((el, i) => {
+                            const shuffleAt = i * STAGGER;
+                            const hideAt    = shuffleAt + EXIT_SHUFFLE_DURATION;
+
+                            if (elapsed < shuffleAt) {
+                                // not yet — still showing final char
+                            } else if (elapsed >= hideAt) {
+                                el.style.visibility = "hidden";
+                            } else {
+                                el.style.visibility = "visible";
+                                el.textContent = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+                            }
+                        });
+                    }
+
+                    const totalDuration = (targets.length - 1) * STAGGER + EXIT_SHUFFLE_DURATION;
+                    if (elapsed < totalDuration) {
+                        exitRaf = requestAnimationFrame(exitTick);
+                    } else {
+                        // Guarantee last char is hidden
+                        letterEls.forEach(el => { el.style.visibility = "hidden"; });
+                    }
+                };
+                exitRaf = requestAnimationFrame(exitTick);
+            };
+
+            runExit();
+            return () => cancelAnimationFrame(exitRaf);
+        }
+
+        if (!animate) {
+            // Non-animated layer: restore original content and make visible
+            letterEls.forEach((el, i) => {
+                el.style.visibility = "visible";
+                el.textContent = targets[i];
+            });
+            return;
+        }
+
+        // Hide all chars before the first tick
+        letterEls.forEach(el => { el.style.visibility = "hidden"; });
+
+        const start = performance.now();
+        let raf: number;
+        let holdTimeout: ReturnType<typeof setTimeout>;
+        let exitRaf: number;
+        let lastTick = 0;
+
+        const runExit = () => {
+            // Guarantee entrance final state first
             letterEls.forEach((el, i) => {
                 el.style.visibility = "visible";
                 el.textContent = targets[i];
             });
 
             const exitStart = performance.now();
-            let exitRaf: number;
             let exitLastTick = 0;
 
             const exitTick = (now: number) => {
@@ -74,28 +141,13 @@ function ShuffleText({ text, animate, exit = false, className, linesClassName }:
                 const totalDuration = (targets.length - 1) * STAGGER + EXIT_SHUFFLE_DURATION;
                 if (elapsed < totalDuration) {
                     exitRaf = requestAnimationFrame(exitTick);
+                } else {
+                    // Guarantee last char is hidden
+                    letterEls.forEach(el => { el.style.visibility = "hidden"; });
                 }
             };
-
             exitRaf = requestAnimationFrame(exitTick);
-            return () => cancelAnimationFrame(exitRaf);
-        }
-
-        if (!animate) {
-            // Non-animated layer: restore original content and make visible
-            letterEls.forEach((el, i) => {
-                el.style.visibility = "visible";
-                el.textContent = targets[i];
-            });
-            return;
-        }
-
-        // Hide all chars before the first tick
-        letterEls.forEach(el => { el.style.visibility = "hidden"; });
-
-        const start = performance.now();
-        let raf: number;
-        let lastTick = 0;
+        };
 
         const tick = (now: number) => {
             const elapsed = now - start;
@@ -128,12 +180,18 @@ function ShuffleText({ text, animate, exit = false, className, linesClassName }:
                     el.style.visibility = "visible";
                     el.textContent = targets[i];
                 });
+                // Chain exit after a hold delay if requested
+                if (exitRef.current) holdTimeout = setTimeout(runExit, HOLD_DELAY);
             }
         };
 
         raf = requestAnimationFrame(tick);
-        return () => cancelAnimationFrame(raf);
-    }, [isReady, animate, exit, chars]);
+        return () => {
+            cancelAnimationFrame(raf);
+            cancelAnimationFrame(exitRaf);
+            clearTimeout(holdTimeout);
+        };
+    }, [isReady, animate, chars]);
 
     return <span ref={containerRef} className={className}>{text}</span>;
 }
@@ -212,18 +270,18 @@ const IntroSection = () => {
         return () => wrapper.removeEventListener("click", handleClick);
     }, []);
 
-    const linesClassName = "translate-x-[calc(var(--line-index)_*_30%)] overflow-hidden";
+    const linesClassName = "overflow-hidden";
 
     return (
         <div
             className="relative w-screen h-screen overflow-hidden cursor-pointer font-mono"
             ref={wrapperRef}
         >
-            <div ref={frontRef} className="absolute flex inset-0 p-2 text-[3rem] leading-[1.1] tracking-tight">
-                <ShuffleText key={frontSlot.id} text={frontSlot.text} animate={frontSlot.animate}  className="max-w-80"  linesClassName={linesClassName} exit={true}/>
+            <div ref={frontRef} className="absolute flex items-center justify-center inset-0 p-2 text-[3rem] leading-[1.1] tracking-tight">
+                <ShuffleText key={frontSlot.id} text={frontSlot.text} animate={frontSlot.animate}  className=""  linesClassName={linesClassName} exit={true}/>
             </div>
-            <div ref={backRef} className="absolute flex inset-0 p-2 text-[3rem] leading-[1.1] tracking-tight">
-                <ShuffleText key={backSlot.id} text={backSlot.text} animate={backSlot.animate} className="max-w-80" linesClassName={linesClassName} exit={true}/>
+            <div ref={backRef} className="absolute flex items-center justify-center inset-0 p-2 text-[3rem] leading-[1.1] tracking-tight">
+                <ShuffleText key={backSlot.id} text={backSlot.text} animate={backSlot.animate} className="" linesClassName={linesClassName} exit={true}/>
             </div>
         </div>
     );
