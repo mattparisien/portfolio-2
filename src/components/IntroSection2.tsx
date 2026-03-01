@@ -2,18 +2,96 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import { getRandomArbitrary } from "@/app/helpers";
 import gsap from "gsap";
 
-const SHARED_TEXT = "Somewhere along the way, art history turned into software and software turned into product.";
+const SHARED_TEXT = "UX Engineer for complex products"
 
 const PALETTE = [
     {bg: "#00AF59", fg: "#000F00", text: SHARED_TEXT },
     {bg: "#FFD0E1", fg: "#000F00", text: SHARED_TEXT },
     {bg: "#D72D2C", fg: "#F2F0E5", text: SHARED_TEXT },
     {bg: "#FAFF00", fg: "#000F00", text: SHARED_TEXT },
-
     {bg: "#C8A3E1", fg: "#1E1C1F", text: SHARED_TEXT },
     {bg: "#252122", fg: "#F2F0E5", text: SHARED_TEXT },
-    {bg: "white", fg: "#1542FA", text: SHARED_TEXT },
+    {bg: "white",   fg: "#1542FA", text: SHARED_TEXT },
 ];
+
+// Characters used while shuffling
+const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*?";
+
+// ─── Shuffle hook ──────────────────────────────────────────────────────────────
+// Each character becomes visible one-by-one while cycling random glyphs,
+// then locks onto its final value one-by-one in the same order.
+function useShuffleText(text: string, animate: boolean, stagger = 45, shuffleDuration = 900, tickInterval = 60) {
+    const [chars, setChars] = useState<string[]>(() =>
+        animate ? text.split("").map(() => " ") : text.split("")
+    );
+
+    useEffect(() => {
+        if (!animate) {
+            setChars(text.split(""));
+            return;
+        }
+
+        const letters = text.split("");
+        const start = performance.now();
+        let raf: number;
+        let lastTick = 0;
+
+        const tick = (now: number) => {
+            const elapsed = now - start;
+
+            if (now - lastTick >= tickInterval) {
+                lastTick = now;
+                setChars(letters.map((ch, i) => {
+                    const visibleAt = i * stagger;
+                    const lockAt    = visibleAt + shuffleDuration;
+                    if (elapsed < visibleAt) return " ";   // not yet revealed
+                    if (elapsed >= lockAt)   return ch;    // locked in
+                    return GLYPHS[Math.floor(Math.random() * GLYPHS.length)]; // shuffling
+                }));
+            }
+
+            const totalDuration = (letters.length - 1) * stagger + shuffleDuration;
+            if (elapsed < totalDuration) {
+                raf = requestAnimationFrame(tick);
+            } else {
+                setChars(letters); // guarantee final state
+            }
+        };
+
+        raf = requestAnimationFrame(tick);
+        return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [text, animate]);
+
+    return chars;
+}
+
+// ─── ShuffleText component ─────────────────────────────────────────────────────
+interface ShuffleTextProps { text: string; animate: boolean }
+
+function ShuffleText({ text, animate }: ShuffleTextProps) {
+    const chars = useShuffleText(text, animate);
+    return (
+        <>
+            {chars.map((ch, i) => (
+                <span
+                    key={i}
+                    style={{
+                        display:    "inline-block",
+                        visibility: ch === " " ? "hidden" : "visible",
+                        // keep word spacing consistent even when chars are hidden
+                        width:      ch === " " ? "0.28em" : undefined,
+                    }}
+                >
+                    {ch === " " ? "\u00A0" : ch}
+                </span>
+            ))}
+        </>
+    );
+}
+
+// ─── IntroSection ──────────────────────────────────────────────────────────────
+interface TextSlot { text: string; animate: boolean; id: number }
 
 const IntroSection = () => {
     const wrapperRef   = useRef<HTMLDivElement>(null);
@@ -21,58 +99,63 @@ const IntroSection = () => {
     const backRef      = useRef<HTMLDivElement>(null);
     const currentIndex = useRef<number>(0);
 
+    // React drives the text content; GSAP drives colors + clipPath
+    const [frontSlot, setFrontSlot] = useState<TextSlot>({ text: PALETTE[0].text, animate: true,  id: 0 });
+    const [backSlot,  setBackSlot]  = useState<TextSlot>({ text: PALETTE[1].text, animate: false, id: 1 });
+
     useEffect(() => {
         const wrapper = wrapperRef.current;
         const front   = frontRef.current;
         const back    = backRef.current;
         if (!wrapper || !front || !back) return;
 
-        // Initialise both layers — GSAP owns all visual props, React owns nothing
         const p0 = PALETTE[0];
         const p1 = PALETTE[1];
+        // GSAP owns backgrounds, colors, and clip-path — React owns children
         gsap.set(front, { backgroundColor: p0.bg, color: p0.fg });
         gsap.set(back,  { backgroundColor: p1.bg, color: p1.fg, clipPath: "circle(0px at 50% 50%)" });
-        front.textContent = p0.text;
-        back.textContent  = p1.text;
 
         const handleClick = (e: MouseEvent) => {
             const idx     = ++currentIndex.current;
-            const current = PALETTE[idx % PALETTE.length];
+            const current = PALETTE[idx       % PALETTE.length];
             const next    = PALETTE[(idx + 1) % PALETTE.length];
 
             const rect = wrapper.getBoundingClientRect();
             const cx   = e.clientX - rect.left;
             const cy   = e.clientY - rect.top;
             const maxR = Math.max(
-                Math.hypot(cx,              cy),
-                Math.hypot(cx - rect.width,  cy),
-                Math.hypot(cx,              cy - rect.height),
-                Math.hypot(cx - rect.width,  cy - rect.height),
+                Math.hypot(cx,             cy),
+                Math.hypot(cx - rect.width, cy),
+                Math.hypot(cx,             cy - rect.height),
+                Math.hypot(cx - rect.width, cy - rect.height),
             );
 
-            // Prepare back layer synchronously before animation
             gsap.killTweensOf(back);
             gsap.set(back, {
                 backgroundColor: current.bg,
-                color: current.fg,
-                clipPath: `circle(0px at ${cx}px ${cy}px)`,
+                color:           current.fg,
+                clipPath:        `circle(0px at ${cx}px ${cy}px)`,
             });
-            back.textContent = current.text;
+
+            // Trigger shuffle on back layer as it is revealed
+            setBackSlot({ text: current.text, animate: true, id: idx * 2 });
 
             gsap.to(back, {
                 clipPath: `circle(${maxR}px at ${cx}px ${cy}px)`,
                 duration: 0.8,
-                ease: "expo.inOut",
+                ease:     "expo.inOut",
                 onComplete() {
-                    // Bake into front synchronously, then reset back — all via GSAP, no React state
+                    // Bake revealed palette into front (no shuffle — already visible)
                     gsap.set(front, { backgroundColor: current.bg, color: current.fg });
-                    front.textContent = current.text;
+                    setFrontSlot({ text: current.text, animate: false, id: idx * 2 + 1 });
+
+                    // Reset back to next palette entry (hidden, no shuffle yet)
                     gsap.set(back, {
                         backgroundColor: next.bg,
-                        color: next.fg,
-                        clipPath: "circle(0px at 50% 50%)",
+                        color:           next.fg,
+                        clipPath:        "circle(0px at 50% 50%)",
                     });
-                    back.textContent = next.text;
+                    setBackSlot({ text: next.text, animate: false, id: idx * 2 + 2 });
                 },
             });
         };
@@ -83,11 +166,15 @@ const IntroSection = () => {
 
     return (
         <div
-            className="relative w-screen h-screen overflow-hidden cursor-pointer font-mono text-6xl"
+            className="relative w-screen h-screen overflow-hidden cursor-pointer font-mono"
             ref={wrapperRef}
         >
-            <div ref={frontRef} className="absolute inset-0 p-2 text-8xl tracking-tight" />
-            <div ref={backRef}  className="absolute inset-0 p-2 text-8xl tracking-tight" />
+            <div ref={frontRef} className="absolute inset-0 p-2 text-[3rem] leading-[1.1] tracking-tight">
+                <ShuffleText key={frontSlot.id} text={frontSlot.text} animate={frontSlot.animate} />
+            </div>
+            <div ref={backRef} className="absolute inset-0 p-2 text-[3rem] leading-[1.1] tracking-tight">
+                <ShuffleText key={backSlot.id} text={backSlot.text} animate={backSlot.animate} />
+            </div>
         </div>
     );
 }
