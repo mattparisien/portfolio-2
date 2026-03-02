@@ -17,6 +17,22 @@
 }
 
 @font-face {
+  font-family: 'Founders Grotesk';
+  src: url('/assets/fonts/test-founders-grotesk-condensed-bold.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Salsa';
+  src: url('/assets/fonts/Salsa-BT-Regular-4-3-2-1.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: 'Freigeist';
   src: url('/assets/fonts/ItemsTextTrial-Book.otf') format('opentype');
   font-weight: 500;
@@ -78,6 +94,11 @@ body {
 .font-mono {
   font-family: 'Maax Mono', monospace !important;
   font-weight: 300;
+}
+
+.font-jumbo {
+  font-family: 'Salsa', sans-serif !important;
+  font-weight: 400;
 }
 
 .zigzag-button .letter-animate {

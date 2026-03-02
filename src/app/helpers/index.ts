@@ -56,7 +56,7 @@ export function getRandomArbitrary(min:number, max:number) {
 }
 
 // Simple seeded PRNG for deterministic shuffling
-function mulberry32(seed: number) {
+export function mulberry32(seed: number) {
   return function() {
     let t = seed += 0x6D2B79F5;
     t = Math.imul(t ^ (t >>> 15), t | 1);
@@ -67,8 +67,6 @@ function mulberry32(seed: number) {
 
 
 
-export { mulberry32 };
-
 export function shuffleArray<T>(array: T[], seed: number): T[] {
   const random = mulberry32(seed);
   const arr = array.slice(); // copy to avoid mutating original
@@ -78,3 +76,12 @@ export function shuffleArray<T>(array: T[], seed: number): T[] {
   }
   return arr;
 }
+
+export function lerp(start: number, end: number, t: number): number {
+  return start + (end - start) * t;
+}
+
+export function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
