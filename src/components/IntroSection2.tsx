@@ -8,31 +8,38 @@ gsap.registerPlugin(ScrollTrigger);
 const SHARED_TEXT = "Somewhere In Between Art & Software";
 
 const PALETTE = [
-    {bg: "#00AF59", fg: "#000F00", text: SHARED_TEXT },
-    {bg: "#D72D2C", fg: "#F2F0E5", text: SHARED_TEXT },
-    {bg: "#FAFF00", fg: "#000F00", text: SHARED_TEXT },
-    {bg: "#C8A3E1", fg: "#6E6025", text: SHARED_TEXT },
-    {bg: "#252122", fg: "#F2F0E5", text: SHARED_TEXT },
-        {bg: "#E65483", fg: "#000F00", text: SHARED_TEXT },
+    { bg: "#00AF59", fg: "#000F00", text: SHARED_TEXT },
+    { bg: "#D72D2C", fg: "#F2F0E5", text: SHARED_TEXT },
+    { bg: "#FAFF00", fg: "#000F00", text: SHARED_TEXT },
+    { bg: "#C8A3E1", fg: "#6E6025", text: SHARED_TEXT },
+    { bg: "#252122", fg: "#F2F0E5", text: SHARED_TEXT },
+    { bg: "#E65483", fg: "#000F00", text: SHARED_TEXT },
 
-    {bg: "white",   fg: "#1542FA", text: SHARED_TEXT },
+    { bg: "white", fg: "#1542FA", text: SHARED_TEXT },
 ];
+
+const blobsPaths = [
+    "M58.2,-2.1C58.2,27.9,29.1,55.9,-1.4,55.9C-31.9,55.9,-63.8,27.9,-63.8,-2.1C-63.8,-32,-31.9,-64.1,-1.4,-64.1C29.1,-64.1,58.2,-32,58.2,-2.1Z",
+    "M56.4,0.6C56.4,27.7,28.2,55.5,1.4,55.5C-25.4,55.5,-50.8,27.7,-50.8,0.6C-50.8,-26.4,-25.4,-52.9,1.4,-52.9C28.2,-52.9,56.4,-26.4,56.4,0.6Z",
+    "M51.8,-0.4C51.8,26.2,25.9,52.4,0.4,52.4C-25.1,52.4,-50.2,26.2,-50.2,-0.4C-50.2,-26.9,-25.1,-53.9,0.4,-53.9C25.9,-53.9,51.8,-26.9,51.8,-0.4Z",
+    "M64.1,-19C72.7,5.6,62.1,38.2,43.2,49.6C24.3,60.9,-2.8,51,-24.6,34.9C-46.5,18.8,-63.1,-3.5,-58.1,-23.1C-53.1,-42.7,-26.6,-59.5,0.6,-59.7C27.8,-59.9,55.5,-43.5,64.1,-19Z"
+]
 
 // ─── IntroSection ──────────────────────────────────────────────────────────────
 
 
 const IntroSection = () => {
     const wrapperRef = useRef<HTMLDivElement>(null);
-    const stickyRef  = useRef<HTMLDivElement>(null);
-    const frontRef   = useRef<HTMLDivElement>(null);
-    const backRef    = useRef<HTMLDivElement>(null);
+    const stickyRef = useRef<HTMLDivElement>(null);
+    const frontRef = useRef<HTMLDivElement>(null);
+    const backRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const back = backRef.current;
         const wrapper = wrapperRef.current;
         if (!back || !wrapper) return;
 
-        // Start hidden
+        // Front is always fully visible underneath; back grows on top to cover it
         gsap.set(back, { clipPath: "circle(0% at 50% 50%)" });
 
         const st = ScrollTrigger.create({
@@ -41,8 +48,7 @@ const IntroSection = () => {
             end: "bottom bottom",
             scrub: true,
             onUpdate(self) {
-                const r = self.progress * 150;
-                gsap.set(back, { clipPath: `circle(${r}% at 50% 50%)` });
+                gsap.set(back, { clipPath: `circle(${self.progress * 150}% at 50% 50%)` });
             },
         });
 
@@ -55,20 +61,30 @@ const IntroSection = () => {
             <div ref={stickyRef} className="sticky top-0 w-screen h-screen overflow-hidden">
 
                 {/* Front layer — always visible */}
-                <div ref={frontRef} className="absolute inset-0 font-jumbo flex flex-col leading-tight">
+                <div ref={frontRef} className="absolute inset-0 font-jumbo flex flex-col leading-tight" style={{
+                    backgroundColor: PALETTE[0].bg,
+                    color: PALETTE[0].fg,
+                }}>
                     <div className="text-[23vw] flex h-full justify-center items-end leading-tight tracking-tighter">
                         <div>WHO THAT?</div>
                     </div>
                 </div>
 
                 {/* Back layer — revealed by scroll-driven circle clip-path */}
-                <div ref={backRef} className="absolute inset-0 px-4 font-mono flex flex-col text-5xl leading-tight">
+                <div ref={backRef} className="absolute inset-0 px-4 font-mono flex flex-col text-5xl leading-tight" style={{
+                    backgroundColor: PALETTE[3].bg,
+                    color: PALETTE[3].fg,
+                }}>
                     <div className="flex w-full justify-between">
                         Lorem ipsum dolor sit amet consectetur adipisicing elit. Dolores voluptatum commodi nulla dignissimos cumque obcaecati consequuntur labore neque odio cum, nesciunt vero suscipit blanditiis est. Magni quas nostrum aut consequatur quis incidunt! Placeat sequi nesciunt, ex quam qui aperiam ea animi tempore quaerat blanditiis perferendis eaque dolore, obcaecati totam quas.
                     </div>
                 </div>
 
             </div>
+
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#FF0066" d="M63.3,-0.2C63.3,26.2,31.7,52.3,-0.2,52.3C-32.1,52.3,-64.2,26.2,-64.2,-0.2C-64.2,-26.6,-32.1,-53.2,-0.2,-53.2C31.7,-53.2,63.3,-26.6,63.3,-0.2Z" transform="translate(100 100)" />
+            </svg>
         </div>
     );
 }
