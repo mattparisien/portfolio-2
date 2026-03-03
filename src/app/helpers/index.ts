@@ -85,3 +85,6 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
 
+export function norm01(value: number, min: number, max: number): number {
+  return Math.min(1, Math.max(0, (value - min) / (max - min)));
+}
