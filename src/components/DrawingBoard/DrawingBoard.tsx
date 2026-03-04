@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import type { Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage } from "fabric";
 import Toolbar from "./components/Toolbar";
 import BoardHeader from "./components/BoardHeader";
+import DrawingTools from "./components/DrawingTools";
 import { BOARD_ID, BG_COLOR } from "./constants";
 import type { Tool, ShapeType } from "./types";
 
@@ -34,6 +35,7 @@ export default function DrawingBoard() {
   const [brushSize, setBrushSize] = useState(5);
   const [isSyncing, setIsSyncing] = useState(false);
   const [zoom, setZoom] = useState(1);
+  const [hasSelection, setHasSelection] = useState(false);
 
   const toolRef = useRef<Tool>("select");
   const colorRef = useRef("#000000");
@@ -238,7 +240,11 @@ export default function DrawingBoard() {
         saveObject(target);
       });
 
+      fc.on("selection:created", () => setHasSelection(true));
+      fc.on("selection:updated", () => setHasSelection(true));
+
       fc.on("selection:cleared", () => {
+        setHasSelection(false);
         if (!pendingMultiSave) return;
         const objs = pendingMultiSave;
         pendingMultiSave = null;
@@ -484,20 +490,27 @@ export default function DrawingBoard() {
   return (
     <div className="fixed inset-0 overflow-hidden" style={{ overscrollBehavior: "none" }}>
       <canvas ref={canvasElRef} className="absolute inset-0 touch-none" />
-      <Toolbar
+      {hasSelection && (
+        <Toolbar
+          tool={tool}
+          color={color}
+          brushSize={brushSize}
+          zoom={zoom}
+          onToolChange={setTool}
+          onColorChange={setColor}
+          onBrushSizeChange={setBrushSize}
+          onZoomIn={zoomIn}
+          onZoomOut={zoomOut}
+          onClear={clearCanvas}
+          onRecolorSelected={recolorSelected}
+          onAddGif={addGif}
+        />
+      )}
+      <DrawingTools
         tool={tool}
         color={color}
-        brushSize={brushSize}
-        zoom={zoom}
         onToolChange={setTool}
-        onColorChange={setColor}
-        onBrushSizeChange={setBrushSize}
-        onZoomIn={zoomIn}
-        onZoomOut={zoomOut}
-        onClear={clearCanvas}
         onAddShape={addShape}
-        onRecolorSelected={recolorSelected}
-        onAddGif={addGif}
       />
       <BoardHeader isSyncing={isSyncing} />
     </div>
