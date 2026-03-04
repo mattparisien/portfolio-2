@@ -17,8 +17,13 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   await dbConnect();
-  const { boardId = "main", fabricJSON } = await request.json();
-  await FabricObject.create({ boardId, fabricJSON });
+  const { boardId = "main", objectId, fabricJSON } = await request.json();
+  if (!objectId) return NextResponse.json({ error: "objectId required" }, { status: 400 });
+  await FabricObject.findOneAndUpdate(
+    { boardId, objectId },
+    { boardId, objectId, fabricJSON },
+    { upsert: true, new: true }
+  );
   return NextResponse.json({ ok: true });
 }
 

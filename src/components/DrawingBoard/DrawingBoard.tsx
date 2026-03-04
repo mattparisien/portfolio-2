@@ -41,11 +41,17 @@ export default function DrawingBoard() {
   colorRef.current = color;
   brushSizeRef.current = brushSize;
 
-  const saveObject = useCallback((obj: { toObject: () => object }) => {
+  const saveObject = useCallback((obj: { toObject: () => object } & { boardObjectId?: string }) => {
+    // Stamp a stable ID the first time this object is saved
+    if (!obj.boardObjectId) {
+      (obj as Record<string, unknown>).boardObjectId = crypto.randomUUID();
+    }
+    const objectId = obj.boardObjectId as string;
+    const fabricJSON = JSON.stringify({ ...(obj.toObject()), boardObjectId: objectId });
     fetch("/api/board-objects", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ boardId: BOARD_ID, fabricJSON: JSON.stringify(obj.toObject()) }),
+      body: JSON.stringify({ boardId: BOARD_ID, objectId, fabricJSON }),
     }).catch(console.error);
   }, []);
 
@@ -130,7 +136,12 @@ export default function DrawingBoard() {
           // Prevent tap-to-edit on replayed text objects
           parsed.forEach((o) => { if (o.type === "IText" || o.type === "i-text") o.editable = false; });
           const enlivened = await util.enlivenObjects(parsed);
-          (enlivened as unknown[]).forEach((obj) => fc.add(obj as Parameters<typeof fc.add>[0]));
+          (enlivened as unknown[]).forEach((obj, i) => {
+            // Restore the stable ID so subsequent saves upsert instead of insert
+            const src = parsed[i];
+            if (src.boardObjectId) (obj as Record<string, unknown>).boardObjectId = src.boardObjectId;
+            fc.add(obj as Parameters<typeof fc.add>[0]);
+          });
           fc.renderAll();
         })
         .catch((e) => console.error("Failed to load board objects", e))
