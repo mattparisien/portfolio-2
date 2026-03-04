@@ -7,9 +7,12 @@ interface ToolbarProps {
   tool: Tool;
   color: string;
   brushSize: number;
+  zoom: number;
   onToolChange: (t: Tool) => void;
   onColorChange: (c: string) => void;
   onBrushSizeChange: (s: number) => void;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
   onClear: () => void;
 }
 
@@ -17,9 +20,12 @@ export default function Toolbar({
   tool,
   color,
   brushSize,
+  zoom,
   onToolChange,
   onColorChange,
   onBrushSizeChange,
+  onZoomIn,
+  onZoomOut,
   onClear,
 }: ToolbarProps) {
   return (
@@ -95,10 +101,33 @@ export default function Toolbar({
       <button
         onClick={onClear}
         title="Clear canvas"
-        className="w-9 h-9 rounded-xl flex items-center justify-center text-lg hover:bg-red-50 transition-colors"
+        className="w-9 h-9 rounded-xl flex items-center justify-center text-lg hover:bg-red-50 transition-colors border-r border-gray-200 pr-3 mr-0"
       >
         🗑️
       </button>
+
+      {/* Zoom controls */}
+      <div className="flex items-center gap-1">
+        <button
+          onClick={onZoomOut}
+          title="Zoom out"
+          disabled={zoom <= 0.25}
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-base font-bold transition-colors hover:bg-gray-100 disabled:opacity-30"
+        >
+          −
+        </button>
+        <span className="text-xs text-gray-600 w-10 text-center tabular-nums">
+          {Math.round(zoom * 100)}%
+        </span>
+        <button
+          onClick={onZoomIn}
+          title="Zoom in"
+          disabled={zoom >= 4}
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-base font-bold transition-colors hover:bg-gray-100 disabled:opacity-30"
+        >
+          +
+        </button>
+      </div>
     </div>
   );
 }

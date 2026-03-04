@@ -53,11 +53,13 @@ export function replayStroke(
   }
 }
 
-/** Clear canvas and redraw the background colour. */
+/** Clear canvas and redraw the background colour. Always resets the transform
+ *  first so the fill covers the entire canvas surface regardless of current zoom. */
 export function clearToBackground(ctx: CanvasRenderingContext2D) {
-  const prev = ctx.globalCompositeOperation;
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0); // pixel-space: fill whole canvas
   ctx.globalCompositeOperation = "source-over";
   ctx.fillStyle = BG_COLOR;
   ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-  ctx.globalCompositeOperation = prev;
+  ctx.restore(); // restores transform + compositeOperation
 }

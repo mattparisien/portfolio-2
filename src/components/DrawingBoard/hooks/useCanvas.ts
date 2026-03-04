@@ -9,13 +9,16 @@ interface UseCanvasOptions {
   tool: Tool;
   color: string;
   brushSize: number;
+  zoom: number;
+  offsetX: number;
+  offsetY: number;
   onSyncStart: () => void;
   onSyncEnd: () => void;
 }
 
 export function useCanvas(
   canvasRef: React.RefObject<HTMLCanvasElement | null>,
-  { tool, color, brushSize, onSyncStart, onSyncEnd }: UseCanvasOptions
+  { tool, color, brushSize, zoom, offsetX, offsetY, onSyncStart, onSyncEnd }: UseCanvasOptions
 ) {
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
 
@@ -23,16 +26,23 @@ export function useCanvas(
   const toolRef = useRef(tool);
   const colorRef = useRef(color);
   const brushSizeRef = useRef(brushSize);
+  const zoomRef = useRef(zoom);
+  const offsetXRef = useRef(offsetX);
+  const offsetYRef = useRef(offsetY);
   toolRef.current = tool;
   colorRef.current = color;
   brushSizeRef.current = brushSize;
+  zoomRef.current = zoom;
+  offsetXRef.current = offsetX;
+  offsetYRef.current = offsetY;
 
   // In-memory stroke list — used to re-render on resize without a network round-trip.
   const strokesRef = useRef<StrokeRecord[]>([]);
 
-  /** Replay all in-memory strokes onto the canvas (e.g. after resize). */
+  /** Replay all in-memory strokes onto the canvas (e.g. after resize or zoom change). */
   const replayAll = useCallback((ctx: CanvasRenderingContext2D) => {
     clearToBackground(ctx);
+    ctx.setTransform(zoomRef.current, 0, 0, zoomRef.current, offsetXRef.current, offsetYRef.current);
     strokesRef.current.forEach((s) => replayStroke(ctx, s));
     applyCtxStyles(ctx, toolRef.current, colorRef.current, brushSizeRef.current);
   }, []);
@@ -63,6 +73,7 @@ export function useCanvas(
 
     ctx.fillStyle = BG_COLOR;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.setTransform(zoom, 0, 0, zoom, offsetX, offsetY);
     applyCtxStyles(ctx, toolRef.current, colorRef.current, brushSizeRef.current);
 
     onSyncStart();
@@ -86,6 +97,13 @@ export function useCanvas(
   useEffect(() => {
     if (ctxRef.current) applyCtxStyles(ctxRef.current, tool, color, brushSize);
   }, [tool, color, brushSize]);
+
+  // Replay everything when zoom or offset changes so content transforms correctly.
+  useEffect(() => {
+    const ctx = ctxRef.current;
+    if (!ctx) return;
+    replayAll(ctx);
+  }, [zoom, offsetX, offsetY, replayAll]);
 
   /** Call this after a stroke is committed so it goes into the in-memory list. */
   const addStroke = useCallback((stroke: StrokeRecord) => {

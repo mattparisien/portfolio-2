@@ -10,23 +10,33 @@ interface UseDrawingOptions {
   toolRef: React.RefObject<Tool>;
   colorRef: React.RefObject<string>;
   brushSizeRef: React.RefObject<number>;
+  zoomRef: React.RefObject<number>;
+  offsetRef: React.RefObject<{ x: number; y: number }>;
   /** Called when a stroke is finalised, before the API call. */
   onStrokeCommitted: (stroke: StrokeRecord) => void;
 }
 
 function getPoint(
   e: React.MouseEvent | React.TouchEvent | MouseEvent | TouchEvent,
-  canvas: HTMLCanvasElement
+  canvas: HTMLCanvasElement,
+  zoom: number,
+  offset: { x: number; y: number }
 ): Point {
   const rect = canvas.getBoundingClientRect();
   if ("touches" in e) {
     const touch =
       (e as TouchEvent).changedTouches?.[0] ??
       (e as React.TouchEvent).touches[0];
-    return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+    return {
+      x: (touch.clientX - rect.left - offset.x) / zoom,
+      y: (touch.clientY - rect.top - offset.y) / zoom,
+    };
   }
   const me = e as MouseEvent | React.MouseEvent;
-  return { x: me.clientX - rect.left, y: me.clientY - rect.top };
+  return {
+    x: (me.clientX - rect.left - offset.x) / zoom,
+    y: (me.clientY - rect.top - offset.y) / zoom,
+  };
 }
 
 export function useDrawing({
@@ -35,6 +45,8 @@ export function useDrawing({
   toolRef,
   colorRef,
   brushSizeRef,
+  zoomRef,
+  offsetRef,
   onStrokeCommitted,
 }: UseDrawingOptions) {
   const isDrawing = useRef(false);
@@ -87,7 +99,7 @@ export function useDrawing({
       if (!canvas || !ctx) return;
 
       isDrawing.current = true;
-      const pt = getPoint(e, canvas);
+      const pt = getPoint(e, canvas, zoomRef.current, offsetRef.current);
       lastPoint.current = pt;
       lastMidpoint.current = pt;
       currentStrokePoints.current = [pt];
@@ -109,7 +121,7 @@ export function useDrawing({
       e.preventDefault();
       const canvas = canvasRef.current!;
       const ctx = ctxRef.current;
-      const pt = getPoint(e, canvas);
+      const pt = getPoint(e, canvas, zoomRef.current, offsetRef.current);
 
       // Midpoint between the last recorded point and the new point.
       // Drawing quadratic bezier from the previous midpoint → current midpoint
@@ -144,8 +156,9 @@ export function useDrawing({
       const canvas = canvasRef.current;
       if (!canvas) return;
       isDrawing.current = true;
-      const pt = getPoint(e, canvas);
+      const pt = getPoint(e, canvas, zoomRef.current, offsetRef.current);
       lastPoint.current = pt;
+      lastMidpoint.current = pt;
       currentStrokePoints.current = [pt];
     },
     [canvasRef]
