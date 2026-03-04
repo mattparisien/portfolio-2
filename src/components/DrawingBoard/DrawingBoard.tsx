@@ -116,7 +116,10 @@ export default function DrawingBoard() {
       // Load persisted objects
       setIsSyncing(true);
       fetch(`/api/board-objects?boardId=${BOARD_ID}`)
-        .then((r) => r.json())
+        .then((r) => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return r.json();
+        })
         .then(async ({ objects }: { objects: { fabricJSON: string }[] }) => {
           if (!Array.isArray(objects) || objects.length === 0) return;
           const parsed = objects.map((o) => JSON.parse(o.fabricJSON)) as Record<string, unknown>[];
