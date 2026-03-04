@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import type { Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path } from "fabric";
+import type { Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage } from "fabric";
 import Toolbar from "./components/Toolbar";
 import BoardHeader from "./components/BoardHeader";
 import { BOARD_ID, BG_COLOR } from "./constants";
@@ -20,6 +20,7 @@ type FabricMods = {
   Circle: typeof Circle;
   Triangle: typeof Triangle;
   Path: typeof Path;
+  FabricImage: typeof FabricImage;
   util: (typeof import("fabric"))["util"];
 };
 
@@ -41,13 +42,17 @@ export default function DrawingBoard() {
   colorRef.current = color;
   brushSizeRef.current = brushSize;
 
-  const saveObject = useCallback((obj: { toObject: () => object } & { boardObjectId?: string }) => {
+  const saveObject = useCallback((obj: { toObject: () => object } & { boardObjectId?: string; giphyId?: string }) => {
     // Stamp a stable ID the first time this object is saved
     if (!obj.boardObjectId) {
       (obj as Record<string, unknown>).boardObjectId = crypto.randomUUID();
     }
     const objectId = obj.boardObjectId as string;
-    const fabricJSON = JSON.stringify({ ...(obj.toObject()), boardObjectId: objectId });
+    const fabricJSON = JSON.stringify({
+      ...(obj.toObject()),
+      boardObjectId: objectId,
+      ...(obj.giphyId ? { giphyId: obj.giphyId } : {}),
+    });
     fetch("/api/board-objects", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -139,8 +144,8 @@ export default function DrawingBoard() {
     canvasEl.addEventListener("touchend", onTouchEnd);
 
     // Async fabric setup (dynamic import = SSR safe)
-    import("fabric").then(({ Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, util }) => {
-      modsRef.current = { Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, util };
+    import("fabric").then(({ Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, util }) => {
+      modsRef.current = { Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, util };
 
       const fc = new Canvas(canvasEl, {
         width: window.innerWidth,
@@ -173,9 +178,10 @@ export default function DrawingBoard() {
           parsed.forEach((o) => { if (o.type === "IText" || o.type === "i-text") o.editable = false; });
           const enlivened = await util.enlivenObjects(parsed);
           (enlivened as unknown[]).forEach((obj, i) => {
-            // Restore the stable ID so subsequent saves upsert instead of insert
+            // Restore stable IDs so subsequent saves upsert instead of insert
             const src = parsed[i];
             if (src.boardObjectId) (obj as Record<string, unknown>).boardObjectId = src.boardObjectId;
+            if (src.giphyId) (obj as Record<string, unknown>).giphyId = src.giphyId;
             fc.add(obj as Parameters<typeof fc.add>[0]);
           });
         })
@@ -369,6 +375,38 @@ export default function DrawingBoard() {
     setTool("shape");
   }, [saveObject]);
 
+  // ── Add a GIF from Giphy ───────────────────────────────────────────────────
+  const addGif = useCallback((giphyId: string, url: string) => {
+    const fc = fabricRef.current;
+    const mods = modsRef.current;
+    if (!fc || !mods) return;
+
+    mods.FabricImage.fromURL(url, { crossOrigin: "anonymous" }).then((img) => {
+      const vpt = fc.viewportTransform as number[];
+      const cx = (window.innerWidth  / 2 - vpt[4]) / vpt[0];
+      const cy = (window.innerHeight / 2 - vpt[5]) / vpt[3];
+      // Scale to max 280px wide
+      const scale = Math.min(1, 280 / (img.width ?? 280));
+      img.set({
+        left: cx,
+        top: cy,
+        originX: "center",
+        originY: "center",
+        scaleX: scale,
+        scaleY: scale,
+        selectable: true,
+        hasControls: true,
+      });
+      // Stamp custom props for persistence
+      (img as unknown as Record<string, unknown>).giphyId = giphyId;
+      fc.add(img);
+      fc.setActiveObject(img);
+      fc.requestRenderAll();
+      saveObject(img);
+      setTool("select");
+    }).catch((e) => console.error("Failed to load GIF", e));
+  }, [saveObject]);
+
   const recolorSelected = useCallback((c: string) => {
     const fc = fabricRef.current;
     if (!fc) return;
@@ -420,6 +458,7 @@ export default function DrawingBoard() {
         onClear={clearCanvas}
         onAddShape={addShape}
         onRecolorSelected={recolorSelected}
+        onAddGif={addGif}
       />
       <BoardHeader isSyncing={isSyncing} />
     </div>
