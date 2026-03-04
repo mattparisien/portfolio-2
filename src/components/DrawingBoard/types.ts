@@ -1,4 +1,6 @@
-export type Tool = "pencil" | "eraser" | "text";
+export type Tool = "pencil" | "eraser" | "text" | "shape" | "select";
+
+export type ShapeType = "rect" | "circle" | "triangle" | "star" | "heart";
 
 export interface Point {
   x: number;

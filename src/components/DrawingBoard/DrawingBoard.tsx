@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import type { Canvas, PencilBrush, IText, Point } from "fabric";
+import type { Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path } from "fabric";
 import Toolbar from "./components/Toolbar";
 import BoardHeader from "./components/BoardHeader";
 import { BOARD_ID, BG_COLOR } from "./constants";
-import type { Tool } from "./types";
+import type { Tool, ShapeType } from "./types";
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 4;
@@ -16,6 +16,10 @@ type FabricMods = {
   PencilBrush: typeof PencilBrush;
   IText: typeof IText;
   Point: typeof Point;
+  Rect: typeof Rect;
+  Circle: typeof Circle;
+  Triangle: typeof Triangle;
+  Path: typeof Path;
   util: (typeof import("fabric"))["util"];
 };
 
@@ -96,8 +100,8 @@ export default function DrawingBoard() {
     canvasEl.addEventListener("touchend", onTouchEnd);
 
     // Async fabric setup (dynamic import = SSR safe)
-    import("fabric").then(({ Canvas, PencilBrush, IText, Point, util }) => {
-      modsRef.current = { Canvas, PencilBrush, IText, Point, util };
+    import("fabric").then(({ Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, util }) => {
+      modsRef.current = { Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, util };
 
       const fc = new Canvas(canvasEl, {
         width: window.innerWidth,
@@ -134,6 +138,9 @@ export default function DrawingBoard() {
 
       // Persist new paths automatically
       fc.on("path:created", (e) => { saveObject(e.path); });
+
+      // Persist shape position/transform after user moves/resizes it
+      fc.on("object:modified", (e) => { if (e.target) saveObject(e.target); });
 
       fc.on("mouse:down", (e) => {
         if (toolRef.current === "eraser") {
@@ -200,13 +207,88 @@ export default function DrawingBoard() {
       brush.color = color;
       brush.width = brushSize;
       fc.freeDrawingBrush = brush;
+    } else if (tool === "select" || tool === "shape") {
+      fc.isDrawingMode = false;
+      fc.selection = true;
+      fc.getObjects().forEach((o) => {
+        o.selectable = true;
+        o.evented = true;
+      });
     } else {
       fc.isDrawingMode = false;
       fc.selection = false;
+      fc.discardActiveObject();
     }
-    fc.defaultCursor = tool === "eraser" ? "cell" : tool === "text" ? "text" : "crosshair";
+    fc.defaultCursor =
+      tool === "eraser" ? "cell" :
+      tool === "text"   ? "text" :
+      tool === "select" || tool === "shape" ? "default" :
+      "crosshair";
     fc.requestRenderAll();
   }, [tool, color, brushSize]);
+
+  // ── Add a shape at the centre of the visible viewport ────────────────────
+  const addShape = useCallback((shapeType: ShapeType) => {
+    const fc = fabricRef.current;
+    const mods = modsRef.current;
+    if (!fc || !mods) return;
+
+    const vpt = fc.viewportTransform as number[];
+    const cx = (window.innerWidth  / 2 - vpt[4]) / vpt[0];
+    const cy = (window.innerHeight / 2 - vpt[5]) / vpt[3];
+
+    const common = {
+      fill: colorRef.current,
+      stroke: "transparent",
+      strokeWidth: 0,
+      selectable: true,
+      hasControls: true,
+      hasBorders: true,
+      originX: "center" as const,
+      originY: "center" as const,
+      left: cx,
+      top: cy,
+    };
+
+    let obj;
+    switch (shapeType) {
+      case "rect":
+        obj = new mods.Rect({ ...common, width: 140, height: 90, rx: 6, ry: 6 });
+        break;
+      case "circle":
+        obj = new mods.Circle({ ...common, radius: 65 });
+        break;
+      case "triangle":
+        obj = new mods.Triangle({ ...common, width: 130, height: 112 });
+        break;
+      case "star": {
+        const s = "M 50 5 L 61 35 L 95 35 L 68 57 L 79 91 L 50 70 L 21 91 L 32 57 L 5 35 L 39 35 Z";
+        obj = new mods.Path(s, { ...common });
+        break;
+      }
+      case "heart": {
+        const h = "M 50 85 C 10 60 -10 35 10 18 C 25 5 42 10 50 22 C 58 10 75 5 90 18 C 110 35 90 60 50 85 Z";
+        obj = new mods.Path(h, { ...common });
+        break;
+      }
+    }
+    if (!obj) return;
+    fc.add(obj);
+    fc.setActiveObject(obj);
+    fc.requestRenderAll();
+    saveObject(obj);
+    setTool("shape");
+  }, [saveObject]);
+
+  const recolorSelected = useCallback((c: string) => {
+    const fc = fabricRef.current;
+    if (!fc) return;
+    const obj = fc.getActiveObject();
+    if (!obj) return;
+    obj.set({ fill: c });
+    fc.requestRenderAll();
+    saveObject(obj);
+  }, [saveObject]);
 
   const zoomIn = useCallback(() => {
     const fc = fabricRef.current; const mods = modsRef.current;
@@ -247,6 +329,8 @@ export default function DrawingBoard() {
         onZoomIn={zoomIn}
         onZoomOut={zoomOut}
         onClear={clearCanvas}
+        onAddShape={addShape}
+        onRecolorSelected={recolorSelected}
       />
       <BoardHeader isSyncing={isSyncing} />
     </div>
