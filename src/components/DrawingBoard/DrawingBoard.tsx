@@ -62,8 +62,11 @@ export default function DrawingBoard() {
     const canvasEl = canvasElRef.current;
     if (!canvasEl) return;
 
+    type SaveableObj = { toObject: () => object; boardObjectId?: string };
     const pendingTextRef = { current: null as IText | null };
     let isEraserDown = false;
+    // Stash of objects needing re-save after a multi-select transform
+    let pendingMultiSave: SaveableObj[] | null = null;
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
@@ -92,16 +95,23 @@ export default function DrawingBoard() {
       // Don't intercept while typing inside an IText
       if (!active || (active as { isEditing?: boolean }).isEditing) return;
       e.preventDefault();
-      fc.remove(active);
+      // Clear any pending multi-save so deleted objects aren't re-saved
+      pendingMultiSave = null;
+      const isMulti = (active as { type?: string }).type === "activeSelection";
+      const members: SaveableObj[] = isMulti
+        ? (active as unknown as { getObjects(): SaveableObj[] }).getObjects().slice()
+        : [active as unknown as SaveableObj];
+      members.forEach((obj) => {
+        fc.remove(obj as unknown as Parameters<typeof fc.remove>[0]);
+        const oid = (obj as { boardObjectId?: string }).boardObjectId;
+        if (oid) {
+          fetch(`/api/board-objects?boardId=${BOARD_ID}&objectId=${encodeURIComponent(oid)}`, {
+            method: "DELETE",
+          }).catch(console.error);
+        }
+      });
       fc.discardActiveObject();
       fc.requestRenderAll();
-      // Remove from DB — need the objectId we stamped on it
-      const oid = (active as { boardObjectId?: string }).boardObjectId;
-      if (oid) {
-        fetch(`/api/board-objects?boardId=${BOARD_ID}&objectId=${encodeURIComponent(oid)}`, {
-          method: "DELETE",
-        }).catch(console.error);
-      }
     };
     window.addEventListener("keydown", handleKeyDown);
 
@@ -175,8 +185,29 @@ export default function DrawingBoard() {
       // Persist new paths automatically
       fc.on("path:created", (e) => { saveObject(e.path); });
 
-      // Persist shape position/transform after user moves/resizes it
-      fc.on("object:modified", (e) => { if (e.target) saveObject(e.target); });
+      // Persist shape position/transform after user moves/resizes it.
+      // ActiveSelection = multi-select group: don't save the ephemeral group itself.
+      // Instead, stash its members and save them individually once Fabric has
+      // restored their individual transforms (which happens on selection:cleared).
+
+      fc.on("object:modified", (e) => {
+        const target = e.target;
+        if (!target) return;
+        if ((target as { type?: string }).type === "activeSelection") {
+          pendingMultiSave = (target as unknown as { getObjects(): SaveableObj[] }).getObjects().slice();
+          return;
+        }
+        saveObject(target);
+      });
+
+      fc.on("selection:cleared", () => {
+        if (!pendingMultiSave) return;
+        const objs = pendingMultiSave;
+        pendingMultiSave = null;
+        // Fabric restores individual transforms before firing selection:cleared,
+        // so each object's left/top/scaleX/scaleY/angle are correct here.
+        objs.forEach((obj) => saveObject(obj));
+      });
 
       // Snap rotation to 45° increments when Shift is held
       fc.on("object:rotating", (e) => {
