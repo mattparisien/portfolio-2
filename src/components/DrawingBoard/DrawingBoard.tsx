@@ -118,6 +118,9 @@ export default function DrawingBoard() {
       });
       fabricRef.current = fc;
 
+      // Paint background immediately — before the async fetch resolves
+      fc.renderAll();
+
       const brush = new PencilBrush(fc);
       brush.color = colorRef.current;
       brush.width = brushSizeRef.current;
@@ -142,10 +145,9 @@ export default function DrawingBoard() {
             if (src.boardObjectId) (obj as Record<string, unknown>).boardObjectId = src.boardObjectId;
             fc.add(obj as Parameters<typeof fc.add>[0]);
           });
-          fc.renderAll();
         })
         .catch((e) => console.error("Failed to load board objects", e))
-        .finally(() => setIsSyncing(false));
+        .finally(() => { setIsSyncing(false); fc.renderAll(); });
 
       // Persist new paths automatically
       fc.on("path:created", (e) => { saveObject(e.path); });
