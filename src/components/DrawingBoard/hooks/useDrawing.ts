@@ -14,6 +14,8 @@ interface UseDrawingOptions {
   offsetRef: React.RefObject<{ x: number; y: number }>;
   /** Called when a stroke is finalised, before the API call. */
   onStrokeCommitted: (stroke: StrokeRecord) => void;
+  /** Called when user clicks the canvas with the text tool. */
+  onTextClick: (canvasPt: { x: number; y: number }, screenPt: { x: number; y: number }) => void;
 }
 
 function getPoint(
@@ -48,6 +50,7 @@ export function useDrawing({
   zoomRef,
   offsetRef,
   onStrokeCommitted,
+  onTextClick,
 }: UseDrawingOptions) {
   const isDrawing = useRef(false);
   const lastPoint = useRef<Point | null>(null);
@@ -100,8 +103,22 @@ export function useDrawing({
       const ctx = ctxRef.current;
       if (!canvas || !ctx) return;
 
-      isDrawing.current = true;
       const pt = getPoint(e, canvas, zoomRef.current, offsetRef.current);
+
+      // Text tool: hand off to parent to show the text input overlay.
+      if (toolRef.current === "text") {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = "touches" in e
+          ? (e as React.TouchEvent).touches[0].clientX
+          : (e as React.MouseEvent).clientX;
+        const clientY = "touches" in e
+          ? (e as React.TouchEvent).touches[0].clientY
+          : (e as React.MouseEvent).clientY;
+        onTextClick(pt, { x: clientX - rect.left, y: clientY - rect.top });
+        return;
+      }
+
+      isDrawing.current = true;
       lastPoint.current = pt;
       lastMidpoint.current = pt;
       currentStrokePoints.current = [pt];

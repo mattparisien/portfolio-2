@@ -110,5 +110,12 @@ export function useCanvas(
     strokesRef.current.push(stroke);
   }, []);
 
-  return { ctxRef, toolRef, colorRef, brushSizeRef, addStroke };
+  /** Clear both the in-memory stroke list and the canvas surface. */
+  const clearStrokes = useCallback(() => {
+    strokesRef.current = [];
+    const ctx = ctxRef.current;
+    if (ctx) clearToBackground(ctx);
+  }, []);
+
+  return { ctxRef, toolRef, colorRef, brushSizeRef, addStroke, clearStrokes };
 }

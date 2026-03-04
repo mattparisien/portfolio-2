@@ -25,6 +25,19 @@ export function replayStroke(
   applyCtxStyles(ctx, tool, color, brushSize);
   ctx.beginPath();
 
+  if (tool === "text") {
+    if (!stroke.text || points.length === 0) return;
+    const fontSize = stroke.fontSize ?? brushSize ?? 20;
+    ctx.save();
+    ctx.globalCompositeOperation = "source-over";
+    ctx.fillStyle = color;
+    ctx.font = `${fontSize}px sans-serif`;
+    ctx.textBaseline = "top";
+    ctx.fillText(stroke.text, points[0].x, points[0].y);
+    ctx.restore();
+    return;
+  }
+
   if (points.length === 1) {
     const prev = ctx.globalCompositeOperation;
     ctx.arc(points[0].x, points[0].y, brushSize / 2, 0, Math.PI * 2);

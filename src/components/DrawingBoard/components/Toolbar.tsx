@@ -35,7 +35,7 @@ export default function Toolbar({
     >
       {/* Tool toggle */}
       <div className="flex gap-1 border-r border-gray-200 pr-3">
-        {(["pencil", "eraser"] as Tool[]).map((t) => (
+        {(["pencil", "eraser", "text"] as Tool[]).map((t) => (
           <button
             key={t}
             title={t}
@@ -46,7 +46,7 @@ export default function Toolbar({
               color: tool === t ? "#fff" : "#000",
             }}
           >
-            {t === "pencil" ? "✏️" : "🧹"}
+            {t === "pencil" ? "✏️" : t === "eraser" ? "🧹" : "T"}
           </button>
         ))}
       </div>
