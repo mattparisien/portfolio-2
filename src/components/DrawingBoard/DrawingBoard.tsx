@@ -361,6 +361,34 @@ export default function DrawingBoard() {
     fc.requestRenderAll();
   }, [tool, color, brushSize]);
 
+  // ── Add a text element at the centre of the visible viewport ─────────────
+  const addText = useCallback(() => {
+    const fc = fabricRef.current;
+    const mods = modsRef.current;
+    if (!fc || !mods) return;
+
+    const vpt = fc.viewportTransform as number[];
+    const cx = (window.innerWidth  / 2 - vpt[4]) / vpt[0];
+    const cy = (window.innerHeight / 2 - vpt[5]) / vpt[3];
+
+    const txt = new mods.IText("Type something", {
+      left: cx,
+      top: cy,
+      originX: "center",
+      originY: "center",
+      fontSize: Math.max(brushSizeRef.current * 2, 24),
+      fill: colorRef.current,
+      fontFamily: "sans-serif",
+      editable: true,
+    });
+    fc.add(txt);
+    fc.setActiveObject(txt);
+    txt.enterEditing();
+    requestAnimationFrame(() => { txt.selectAll(); fc.requestRenderAll(); });
+    fc.requestRenderAll();
+    setTool("text");
+  }, []);
+
   // ── Add a shape at the centre of the visible viewport ────────────────────
   const addShape = useCallback((shapeType: ShapeType) => {
     const fc = fabricRef.current;
@@ -503,7 +531,6 @@ export default function DrawingBoard() {
           onZoomOut={zoomOut}
           onClear={clearCanvas}
           onRecolorSelected={recolorSelected}
-          onAddGif={addGif}
         />
       )}
       <DrawingTools
@@ -511,6 +538,8 @@ export default function DrawingBoard() {
         color={color}
         onToolChange={setTool}
         onAddShape={addShape}
+        onAddText={addText}
+        onAddGif={addGif}
       />
       <BoardHeader isSyncing={isSyncing} />
     </div>

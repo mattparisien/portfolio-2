@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
 import type { Tool } from "../types";
 import { COLORS } from "../constants";
-import GifPicker from "./GifPicker";
 
 interface ToolbarProps {
   tool: Tool;
@@ -17,7 +15,6 @@ interface ToolbarProps {
   onZoomOut: () => void;
   onClear: () => void;
   onRecolorSelected: (c: string) => void;
-  onAddGif: (id: string, url: string) => void;
 }
 
 export default function Toolbar({
@@ -32,42 +29,7 @@ export default function Toolbar({
   onZoomOut,
   onClear,
   onRecolorSelected,
-  onAddGif,
 }: ToolbarProps) {
-  const [gifPopoverOpen, setGifPopoverOpen] = useState(false);
-  const gifButtonRef = useRef<HTMLButtonElement>(null);
-  const gifPopoverRef = useRef<HTMLDivElement>(null);
-
-  // Close GIF popover on outside click
-  useEffect(() => {
-    if (!gifPopoverOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (
-        !gifButtonRef.current?.contains(e.target as Node) &&
-        !gifPopoverRef.current?.contains(e.target as Node)
-      ) {
-        setGifPopoverOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [gifPopoverOpen]);
-
-  // Prevent canvas wheel/touch handlers (registered on window) from stealing
-  // scroll events while the GIF popover is open.
-  useEffect(() => {
-    const el = gifPopoverRef.current;
-    if (!el || !gifPopoverOpen) return;
-    const stop = (e: Event) => e.stopPropagation();
-    el.addEventListener("wheel", stop, { passive: false });
-    el.addEventListener("touchstart", stop, { passive: false });
-    el.addEventListener("touchmove", stop, { passive: false });
-    return () => {
-      el.removeEventListener("wheel", stop);
-      el.removeEventListener("touchstart", stop);
-      el.removeEventListener("touchmove", stop);
-    };
-  }, [gifPopoverOpen]);
 
   return (
     <div
@@ -100,40 +62,6 @@ export default function Toolbar({
         >
           🧹
         </button>
-      </div>
-
-      {/* GIF button */}
-      <div className="relative border-r border-gray-200 pr-3">
-        <button
-          ref={gifButtonRef}
-          title="Add GIF"
-          onClick={() => setGifPopoverOpen((o) => !o)}
-          className="w-9 h-9 rounded-xl flex items-center justify-center text-lg transition-all"
-          style={{
-            background: gifPopoverOpen ? "#000" : "transparent",
-            color: gifPopoverOpen ? "#fff" : "#000",
-          }}
-        >
-          <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-            <rect x="2" y="6" width="20" height="12" rx="2" fill="none" stroke="currentColor" strokeWidth="1.8"/>
-            <text x="5.5" y="15.5" fontSize="7.5" fontWeight="bold" fill="currentColor" fontFamily="sans-serif">GIF</text>
-          </svg>
-        </button>
-
-        {gifPopoverOpen && (
-          <div
-            ref={gifPopoverRef}
-            className="absolute bottom-[calc(100%+10px)] left-1/2 -translate-x-1/2 p-3 rounded-2xl shadow-xl z-50"
-            style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)", width: 420 }}
-          >
-            <GifPicker
-              onSelect={(id, url) => {
-                onAddGif(id, url);
-                setGifPopoverOpen(false);
-              }}
-            />
-          </div>
-        )}
       </div>
 
       {/* Color swatches */}
