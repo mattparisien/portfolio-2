@@ -1,4 +1,19 @@
+import type { Canvas, PencilBrush, IText, Point as FabricPoint, Rect, Circle, Triangle, Path, FabricImage } from "fabric";
+
 export type Tool = "pencil" | "eraser" | "text" | "shape" | "select";
+
+export type FabricMods = {
+  Canvas: typeof Canvas;
+  PencilBrush: typeof PencilBrush;
+  IText: typeof IText;
+  Point: typeof FabricPoint;
+  Rect: typeof Rect;
+  Circle: typeof Circle;
+  Triangle: typeof Triangle;
+  Path: typeof Path;
+  FabricImage: typeof FabricImage;
+  util: (typeof import("fabric"))["util"];
+};
 
 export type ShapeType = "rect" | "circle" | "triangle" | "star" | "heart";
 

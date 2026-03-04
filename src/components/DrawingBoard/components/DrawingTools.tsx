@@ -62,40 +62,55 @@ interface DrawingToolsProps {
 }
 
 export default function DrawingTools({ tool, color, onToolChange, onAddShape, onAddText, onAddGif }: DrawingToolsProps) {
-  const [shapeOpen, setShapeOpen] = useState(false);
-  const [gifOpen, setGifOpen] = useState(false);
+  // pinned = user clicked to keep open; hover = mouse is over trigger or popover
+  const [shapePinned, setShapePinned] = useState(false);
+  const [shapeHover, setShapeHover] = useState(false);
+  const [gifPinned, setGifPinned] = useState(false);
+  const [gifHover, setGifHover] = useState(false);
+
+  const shapeOpen = shapePinned || shapeHover;
+  const gifOpen = gifPinned || gifHover;
+
   const shapeRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
   const gifRef = useRef<HTMLButtonElement>(null);
   const gifPopoverRef = useRef<HTMLDivElement>(null);
 
+  // hover delay timers so moving into the popover doesn't flicker it closed
+  const shapeLeaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const gifLeaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const cancelShapeLeave = () => { if (shapeLeaveTimer.current) clearTimeout(shapeLeaveTimer.current); };
+  const cancelGifLeave   = () => { if (gifLeaveTimer.current)   clearTimeout(gifLeaveTimer.current); };
+
+  // click-outside dismisses only when pinned
   useEffect(() => {
-    if (!shapeOpen) return;
+    if (!shapePinned) return;
     const handler = (e: MouseEvent) => {
       if (
         !shapeRef.current?.contains(e.target as Node) &&
         !popoverRef.current?.contains(e.target as Node)
       ) {
-        setShapeOpen(false);
+        setShapePinned(false);
       }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [shapeOpen]);
+  }, [shapePinned]);
 
   useEffect(() => {
-    if (!gifOpen) return;
+    if (!gifPinned) return;
     const handler = (e: MouseEvent) => {
       if (
         !gifRef.current?.contains(e.target as Node) &&
         !gifPopoverRef.current?.contains(e.target as Node)
       ) {
-        setGifOpen(false);
+        setGifPinned(false);
       }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [gifOpen]);
+  }, [gifPinned]);
 
   // Stop canvas scroll/touch handlers stealing events inside GIF popover
   useEffect(() => {
@@ -121,11 +136,13 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
     <button
       title={title}
       onClick={onClick}
-      className="w-10 h-10 rounded-xl flex items-center justify-center transition-all"
+      className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110"
       style={{
         background: active ? "#000" : "transparent",
         color: active ? "#fff" : "#111",
       }}
+      onMouseEnter={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.07)"; }}
+      onMouseLeave={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
     >
       {icon}
     </button>
@@ -158,15 +175,23 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
       )}
 
       {/* Shapes */}
-      <div className="relative">
+      <div
+        className="relative"
+        onMouseEnter={() => { cancelShapeLeave(); setShapeHover(true); }}
+        onMouseLeave={() => { shapeLeaveTimer.current = setTimeout(() => setShapeHover(false), 120); }}
+      >
         <button
           ref={shapeRef}
           title="Shapes"
-          onClick={() => { setShapeOpen((o) => !o); setGifOpen(false); onToolChange("shape"); }}
-          className="w-10 h-10 rounded-xl flex items-center justify-center transition-all"
+          onClick={() => {
+            const nowPinned = !shapePinned;
+            setShapePinned(nowPinned);
+            if (nowPinned) { setGifPinned(false); setGifHover(false); onToolChange("shape"); }
+          }}
+          className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110"
           style={{
-            background: tool === "shape" || shapeOpen ? "#000" : "transparent",
-            color: tool === "shape" || shapeOpen ? "#fff" : "#111",
+            background: shapePinned ? "#000" : shapeHover ? "rgba(0,0,0,0.07)" : "transparent",
+            color: shapePinned ? "#fff" : "#111",
           }}
         >
           <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -188,7 +213,8 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
                 title={s.label}
                 onClick={() => {
                   onAddShape(s.type);
-                  setShapeOpen(false);
+                  setShapePinned(false);
+                  setShapeHover(false);
                 }}
                 className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-gray-100 transition-colors flex-1"
                 style={{ color }}
@@ -202,15 +228,23 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
       </div>
 
       {/* GIF / Sticker picker */}
-      <div className="relative">
+      <div
+        className="relative"
+        onMouseEnter={() => { cancelGifLeave(); setGifHover(true); }}
+        onMouseLeave={() => { gifLeaveTimer.current = setTimeout(() => setGifHover(false), 120); }}
+      >
         <button
           ref={gifRef}
           title="Add GIF or Sticker"
-          onClick={() => { setGifOpen((o) => !o); setShapeOpen(false); }}
-          className="w-10 h-10 rounded-xl flex items-center justify-center transition-all"
+          onClick={() => {
+            const nowPinned = !gifPinned;
+            setGifPinned(nowPinned);
+            if (nowPinned) { setShapePinned(false); setShapeHover(false); }
+          }}
+          className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110"
           style={{
-            background: gifOpen ? "#000" : "transparent",
-            color: gifOpen ? "#fff" : "#111",
+            background: gifPinned ? "#000" : gifHover ? "rgba(0,0,0,0.07)" : "transparent",
+            color: gifPinned ? "#fff" : "#111",
           }}
         >
           <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -228,7 +262,8 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
             <GifPicker
               onSelect={(id, url) => {
                 onAddGif(id, url);
-                setGifOpen(false);
+                setGifPinned(false);
+                setGifHover(false);
               }}
             />
           </div>
