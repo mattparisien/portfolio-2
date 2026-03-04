@@ -1,0 +1,14 @@
+export type Tool = "pencil" | "eraser";
+
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export interface StrokeRecord {
+  tool: Tool;
+  color: string;
+  brushSize: number;
+  /** Points normalised to 0–1 relative to the viewport at time of recording. */
+  points: Point[];
+}
