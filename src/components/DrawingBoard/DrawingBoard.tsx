@@ -28,7 +28,7 @@ export default function DrawingBoard() {
   const fabricRef = useRef<Canvas | null>(null);
   const modsRef = useRef<FabricMods | null>(null);
 
-  const [tool, setTool] = useState<Tool>("pencil");
+  const [tool, setTool] = useState<Tool>("select");
   const [color, setColor] = useState("#000000");
   const [brushSize, setBrushSize] = useState(5);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -141,6 +141,12 @@ export default function DrawingBoard() {
 
       // Persist shape position/transform after user moves/resizes it
       fc.on("object:modified", (e) => { if (e.target) saveObject(e.target); });
+
+      // Snap rotation to 45° increments when Shift is held
+      fc.on("object:rotating", (e) => {
+        if (!e.e.shiftKey || !e.target) return;
+        e.target.set("angle", Math.round(e.target.angle! / 45) * 45);
+      });
 
       fc.on("mouse:down", (e) => {
         if (toolRef.current === "eraser") {
