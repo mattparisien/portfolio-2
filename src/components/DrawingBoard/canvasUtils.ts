@@ -34,10 +34,21 @@ export function replayStroke(
     ctx.fill();
     ctx.globalCompositeOperation = prev;
   } else {
+    // Replay using the same midpoint quadratic bezier technique used when drawing.
     ctx.moveTo(points[0].x, points[0].y);
+    let prevMid = { x: points[0].x, y: points[0].y };
     for (let i = 1; i < points.length; i++) {
-      ctx.lineTo(points[i].x, points[i].y);
+      const mid = {
+        x: (points[i - 1].x + points[i].x) / 2,
+        y: (points[i - 1].y + points[i].y) / 2,
+      };
+      ctx.quadraticCurveTo(points[i - 1].x, points[i - 1].y, mid.x, mid.y);
+      prevMid = mid;
     }
+    // Draw to the final point
+    const last = points[points.length - 1];
+    ctx.quadraticCurveTo(last.x, last.y, last.x, last.y);
+    void prevMid;
     ctx.stroke();
   }
 }
