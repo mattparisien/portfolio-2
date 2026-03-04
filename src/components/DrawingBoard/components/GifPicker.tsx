@@ -5,6 +5,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 const API_KEY = process.env.NEXT_PUBLIC_GIPHY_API_KEY!;
 const LIMIT = 24;
 
+type Tab = "gifs" | "stickers";
+
 interface GiphyImage {
   url: string;
   width: string;
@@ -35,21 +37,23 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 export default function GifPicker({ onSelect }: GifPickerProps) {
+  const [tab, setTab] = useState<Tab>("gifs");
   const [query, setQuery] = useState("");
   const [gifs, setGifs] = useState<GiphyGif[]>([]);
   const [loading, setLoading] = useState(true);
   const debouncedQuery = useDebounce(query, 400);
   const abortRef = useRef<AbortController | null>(null);
 
-  const fetchGifs = useCallback(async (q: string) => {
+  const fetchGifs = useCallback(async (q: string, t: Tab) => {
     abortRef.current?.abort();
     const ctrl = new AbortController();
     abortRef.current = ctrl;
     setLoading(true);
     try {
+      const type = t === "stickers" ? "stickers" : "gifs";
       const endpoint = q.trim()
-        ? `https://api.giphy.com/v1/gifs/search?api_key=${API_KEY}&q=${encodeURIComponent(q)}&limit=${LIMIT}&rating=r`
-        : `https://api.giphy.com/v1/gifs/trending?api_key=${API_KEY}&limit=${LIMIT}&rating=r`;
+        ? `https://api.giphy.com/v1/${type}/search?api_key=${API_KEY}&q=${encodeURIComponent(q)}&limit=${LIMIT}&rating=g`
+        : `https://api.giphy.com/v1/${type}/trending?api_key=${API_KEY}&limit=${LIMIT}&rating=g`;
       const res = await fetch(endpoint, { signal: ctrl.signal });
       const json = await res.json();
       setGifs(json.data ?? []);
@@ -61,18 +65,45 @@ export default function GifPicker({ onSelect }: GifPickerProps) {
   }, []);
 
   useEffect(() => {
-    fetchGifs(debouncedQuery);
-  }, [debouncedQuery, fetchGifs]);
+    fetchGifs(debouncedQuery, tab);
+  }, [debouncedQuery, tab, fetchGifs]);
+
+  const switchTab = (t: Tab) => {
+    if (t === tab) return;
+    setTab(t);
+    setQuery("");
+  };
+
+  const emptyLabel = tab === "stickers" ? "No stickers found" : "No GIFs found";
+  const placeholder = tab === "stickers" ? "Search Stickers…" : "Search GIFs…";
 
   return (
     <div className="flex flex-col gap-2">
+      {/* Tabs */}
+      <div className="flex gap-1 p-1 rounded-xl bg-gray-100">
+        {(["gifs", "stickers"] as Tab[]).map((t) => (
+          <button
+            key={t}
+            onClick={() => switchTab(t)}
+            className="flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all"
+            style={{
+              background: tab === t ? "#fff" : "transparent",
+              color: tab === t ? "#000" : "#888",
+              boxShadow: tab === t ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+            }}
+          >
+            {t === "gifs" ? "GIFs" : "Stickers"}
+          </button>
+        ))}
+      </div>
+
       {/* Search bar */}
       <div className="relative">
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search GIFs…"
+          placeholder={placeholder}
           autoFocus
           className="w-full px-3 py-2 pr-8 text-sm rounded-xl border border-gray-200 bg-white outline-none focus:border-gray-400 transition-colors"
         />
@@ -86,44 +117,46 @@ export default function GifPicker({ onSelect }: GifPickerProps) {
         )}
       </div>
 
-      {/* GIF grid */}
-      <div className="overflow-y-auto" style={{ maxHeight: 380 }}>
-      <div
-        className="grid gap-2"
-        style={{ gridTemplateColumns: "repeat(3, 1fr)" }}
-      >
-        {loading
-          ? Array.from({ length: 9 }).map((_, i) => (
+      {/* Grid — CSS masonry via columns */}
+      <div className="overflow-y-auto" style={{ maxHeight: 360 }}>
+        {loading ? (
+          <div style={{ columns: 3, columnGap: 8 }}>
+            {[80, 110, 60, 100, 75, 90, 120, 65, 95].map((h, i) => (
               <div
                 key={i}
-                className="rounded-lg bg-gray-100 animate-pulse"
-                style={{ aspectRatio: "1" }}
+                className="rounded-lg bg-gray-100 animate-pulse mb-2 break-inside-avoid"
+                style={{ height: h, display: "block" }}
               />
-            ))
-          : gifs.map((gif) => {
+            ))}
+          </div>
+        ) : gifs.length === 0 ? (
+          <p className="text-center text-xs text-gray-400 py-6">{emptyLabel}</p>
+        ) : (
+          <div style={{ columns: 3, columnGap: 8 }}>
+            {gifs.map((gif) => {
               const thumb = gif.images.fixed_height_small;
               return (
                 <button
                   key={gif.id}
                   title={gif.title}
                   onClick={() => onSelect(gif.id, gif.images.original.url)}
-                  className="rounded-lg overflow-hidden hover:opacity-80 active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-black"
-                  style={{ aspectRatio: `${thumb.width}/${thumb.height}` }}
+                  className="rounded-lg overflow-hidden hover:opacity-80 active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-black mb-2 break-inside-avoid w-full"
+                  style={{ display: "block" }}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={thumb.url}
                     alt={gif.title}
+                    width={Number(thumb.width)}
+                    height={Number(thumb.height)}
                     loading="lazy"
-                    className="w-full h-full object-cover"
+                    className="w-full h-auto block"
                   />
                 </button>
               );
             })}
-        {!loading && gifs.length === 0 && (
-          <p className="col-span-3 text-center text-xs text-gray-400 py-6">No GIFs found</p>
+          </div>
         )}
-      </div>
       </div>
 
       {/* Brand */}

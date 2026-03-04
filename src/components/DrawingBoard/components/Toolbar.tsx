@@ -121,6 +121,22 @@ export default function Toolbar({
     return () => document.removeEventListener("mousedown", handler);
   }, [gifPopoverOpen]);
 
+  // Prevent canvas wheel/touch handlers (registered on window) from stealing
+  // scroll events while the GIF popover is open.
+  useEffect(() => {
+    const el = gifPopoverRef.current;
+    if (!el || !gifPopoverOpen) return;
+    const stop = (e: Event) => e.stopPropagation();
+    el.addEventListener("wheel", stop, { passive: false });
+    el.addEventListener("touchstart", stop, { passive: false });
+    el.addEventListener("touchmove", stop, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", stop);
+      el.removeEventListener("touchstart", stop);
+      el.removeEventListener("touchmove", stop);
+    };
+  }, [gifPopoverOpen]);
+
   return (
     <div
       className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl"
