@@ -15,6 +15,7 @@
     "classnames": "^2.5.1",
     "cloudinary": "^2.7.0",
     "embla-carousel-react": "^8.6.0",
+    "fabric": "^7.2.0",
     "gsap": "file:gsap-bonus.tgz",
     "image-size": "^2.0.2",
     "locomotive-scroll": "^5.0.1",
