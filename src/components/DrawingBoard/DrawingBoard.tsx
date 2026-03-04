@@ -52,7 +52,9 @@ export default function DrawingBoard() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ boardId: BOARD_ID, objectId, fabricJSON }),
-    }).catch(console.error);
+    })
+      .then((r) => { if (!r.ok) throw new Error(`saveObject HTTP ${r.status}`); })
+      .catch(console.error);
   }, []);
 
   // ── Main initialisation ────────────────────────────────────────────────────
@@ -81,6 +83,27 @@ export default function DrawingBoard() {
     };
     window.addEventListener("wheel", handleWheel, { passive: false });
     window.addEventListener("resize", handleResize);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Delete" && e.key !== "Backspace") return;
+      const fc = fabricRef.current;
+      if (!fc) return;
+      const active = fc.getActiveObject();
+      // Don't intercept while typing inside an IText
+      if (!active || (active as { isEditing?: boolean }).isEditing) return;
+      e.preventDefault();
+      fc.remove(active);
+      fc.discardActiveObject();
+      fc.requestRenderAll();
+      // Remove from DB — need the objectId we stamped on it
+      const oid = (active as { boardObjectId?: string }).boardObjectId;
+      if (oid) {
+        fetch(`/api/board-objects?boardId=${BOARD_ID}&objectId=${encodeURIComponent(oid)}`, {
+          method: "DELETE",
+        }).catch(console.error);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
 
     // Two-finger touch pan (non-passive so preventDefault works)
     let lastTouchMid: { x: number; y: number } | null = null;
@@ -192,19 +215,35 @@ export default function DrawingBoard() {
       });
       fc.on("mouse:up", () => { isEraserDown = false; });
 
+      // Double-click to edit existing text objects (works in any tool mode)
+      fc.on("mouse:dblclick", (e) => {
+        const target = e.target;
+        if (!target || (target as { type?: string }).type !== "i-text") return;
+        const txt = target as unknown as IText;
+        txt.set({ editable: true });
+        fc.setActiveObject(txt);
+        txt.enterEditing();
+        pendingTextRef.current = txt;
+      });
+
       // Persist text when user finishes typing (Enter or click away)
       fc.on("text:editing:exited", (e) => {
         const txt = e.target as IText;
-        if (txt !== pendingTextRef.current) return;
+        const isNew = txt === pendingTextRef.current;
         pendingTextRef.current = null;
-        if (!txt.text?.trim()) { fc.remove(txt); fc.requestRenderAll(); return; }
-        saveObject(txt);
+        // Remove new empty text objects
+        if (isNew && !txt.text?.trim()) { fc.remove(txt); fc.requestRenderAll(); }
+        // Save any text that has content (new or edited existing)
+        else if (txt.text?.trim()) { saveObject(txt); }
+        // Always return to select mode after finishing a text edit
+        setTool("select");
       });
     });
 
     return () => {
       window.removeEventListener("wheel", handleWheel);
       window.removeEventListener("resize", handleResize);
+      window.removeEventListener("keydown", handleKeyDown);
       canvasEl.removeEventListener("touchstart", onTouchStart);
       canvasEl.removeEventListener("touchmove", onTouchMove);
       canvasEl.removeEventListener("touchend", onTouchEnd);

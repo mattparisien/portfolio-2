@@ -8,8 +8,14 @@ const FabricObjectSchema = new Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-// Unique constraint so upserts work correctly
-FabricObjectSchema.index({ boardId: 1, objectId: 1 }, { unique: true });
+// Sparse so documents without objectId (legacy) don't conflict
+FabricObjectSchema.index({ boardId: 1, objectId: 1 }, { unique: true, sparse: true });
+
+// Always bust the cache in development so schema changes (like adding objectId)
+// are picked up immediately without restarting the server.
+if (process.env.NODE_ENV === "development" && mongoose.models.FabricBoardObject) {
+  delete (mongoose.models as Record<string, unknown>).FabricBoardObject;
+}
 
 export default mongoose.models.FabricBoardObject ??
   mongoose.model("FabricBoardObject", FabricObjectSchema);

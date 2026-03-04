@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   if (!objectId) return NextResponse.json({ error: "objectId required" }, { status: 400 });
   await FabricObject.findOneAndUpdate(
     { boardId, objectId },
-    { boardId, objectId, fabricJSON },
+    { $set: { boardId, objectId, fabricJSON } },
     { upsert: true, new: true }
   );
   return NextResponse.json({ ok: true });
@@ -31,6 +31,13 @@ export async function DELETE(request: Request) {
   await dbConnect();
   const { searchParams } = new URL(request.url);
   const boardId = searchParams.get("boardId") ?? "main";
-  await FabricObject.deleteMany({ boardId });
+  const objectId = searchParams.get("objectId");
+  if (objectId) {
+    // Delete a single object
+    await FabricObject.deleteOne({ boardId, objectId });
+  } else {
+    // Clear the entire board
+    await FabricObject.deleteMany({ boardId });
+  }
   return NextResponse.json({ ok: true });
 }

@@ -192,17 +192,12 @@ export default function Toolbar({
             onClick={() => {
               onColorChange(c);
               onRecolorSelected(c);
-              if (tool !== "shape") onToolChange("pencil");
             }}
             className="w-6 h-6 rounded-full transition-transform hover:scale-110"
             style={{
               background: c,
-              border:
-                color === c && (tool === "pencil" || tool === "shape")
-                  ? "2px solid #333"
-                  : "1.5px solid #ccc",
-              transform:
-                color === c && (tool === "pencil" || tool === "shape") ? "scale(1.25)" : undefined,
+              border: color === c ? "2px solid #333" : "1.5px solid #ccc",
+              transform: color === c ? "scale(1.25)" : undefined,
             }}
           />
         ))}
