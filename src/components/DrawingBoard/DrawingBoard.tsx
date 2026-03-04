@@ -109,6 +109,29 @@ export default function DrawingBoard() {
     return () => window.removeEventListener("wheel", onWheel);
   }, [zoomAtPoint, panBy]);
 
+  // Native (non-passive) touch listeners on the canvas so preventDefault actually
+  // works — React attaches synthetic touch handlers passively in newer versions,
+  // which means e.preventDefault() is silently ignored and Chrome/Safari still
+  // fire back/forward swipe navigation on two-finger horizontal swipes.
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const onNativeTouchStart = (e: TouchEvent) => {
+      if (e.touches.length >= 2) e.preventDefault();
+    };
+    const onNativeTouchMove = (e: TouchEvent) => {
+      if (e.touches.length >= 2) e.preventDefault();
+    };
+
+    canvas.addEventListener("touchstart", onNativeTouchStart, { passive: false });
+    canvas.addEventListener("touchmove", onNativeTouchMove, { passive: false });
+    return () => {
+      canvas.removeEventListener("touchstart", onNativeTouchStart);
+      canvas.removeEventListener("touchmove", onNativeTouchMove);
+    };
+  }, [canvasRef]);
+
   // Two-finger touch pan
   const handleTouchStart = useCallback(
     (e: React.TouchEvent) => {
@@ -145,7 +168,7 @@ export default function DrawingBoard() {
   }, [ctxRef]);
 
   return (
-    <div className="fixed inset-0 overflow-hidden">
+    <div className="fixed inset-0 overflow-hidden" style={{ overscrollBehavior: "none" }}>
       <canvas
         ref={canvasRef}
         className="absolute inset-0 touch-none"
