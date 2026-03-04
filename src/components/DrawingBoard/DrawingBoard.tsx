@@ -42,6 +42,28 @@ export default function DrawingBoard() {
   colorRef.current = color;
   brushSizeRef.current = brushSize;
 
+  // ── Animated GIF render loop ───────────────────────────────────────────────
+  // The browser advances <img> GIF frames automatically; we just need to keep
+  // calling requestRenderAll() so Fabric repaints each frame onto the canvas.
+  const gifCountRef = useRef(0);
+  const gifRafRef = useRef<number | null>(null);
+
+  const startGifLoop = useCallback(() => {
+    if (gifRafRef.current !== null) return;
+    const loop = () => {
+      fabricRef.current?.requestRenderAll();
+      gifRafRef.current = requestAnimationFrame(loop);
+    };
+    gifRafRef.current = requestAnimationFrame(loop);
+  }, []);
+
+  const stopGifLoop = useCallback(() => {
+    if (gifRafRef.current !== null) {
+      cancelAnimationFrame(gifRafRef.current);
+      gifRafRef.current = null;
+    }
+  }, []);
+
   const saveObject = useCallback((obj: { toObject: () => object } & { boardObjectId?: string; giphyId?: string }) => {
     // Stamp a stable ID the first time this object is saved
     if (!obj.boardObjectId) {
@@ -114,6 +136,11 @@ export default function DrawingBoard() {
             method: "DELETE",
           }).catch(console.error);
         }
+        // If it was an animated GIF, reduce the counter and stop loop when none remain
+        if ((obj as { giphyId?: string }).giphyId) {
+          gifCountRef.current = Math.max(0, gifCountRef.current - 1);
+          if (gifCountRef.current === 0) stopGifLoop();
+        }
       });
       fc.discardActiveObject();
       fc.requestRenderAll();
@@ -181,9 +208,14 @@ export default function DrawingBoard() {
             // Restore stable IDs so subsequent saves upsert instead of insert
             const src = parsed[i];
             if (src.boardObjectId) (obj as Record<string, unknown>).boardObjectId = src.boardObjectId;
-            if (src.giphyId) (obj as Record<string, unknown>).giphyId = src.giphyId;
+            if (src.giphyId) {
+              (obj as Record<string, unknown>).giphyId = src.giphyId;
+              gifCountRef.current += 1;
+            }
             fc.add(obj as Parameters<typeof fc.add>[0]);
           });
+          // Restart animation loop if any restored objects are animated GIFs
+          if (gifCountRef.current > 0) startGifLoop();
         })
         .catch((e) => console.error("Failed to load board objects", e))
         .finally(() => { setIsSyncing(false); fc.renderAll(); });
@@ -284,11 +316,12 @@ export default function DrawingBoard() {
       canvasEl.removeEventListener("touchstart", onTouchStart);
       canvasEl.removeEventListener("touchmove", onTouchMove);
       canvasEl.removeEventListener("touchend", onTouchEnd);
+      stopGifLoop();
       fabricRef.current?.dispose();
       fabricRef.current = null;
       modsRef.current = null;
     };
-  }, [saveObject]);
+  }, [saveObject, startGifLoop, stopGifLoop]);
 
   // ── Sync tool / color / brush → fabric ────────────────────────────────────
   useEffect(() => {
@@ -404,8 +437,11 @@ export default function DrawingBoard() {
       fc.requestRenderAll();
       saveObject(img);
       setTool("select");
+      // Start the animation loop so this GIF plays
+      gifCountRef.current += 1;
+      startGifLoop();
     }).catch((e) => console.error("Failed to load GIF", e));
-  }, [saveObject]);
+  }, [saveObject, startGifLoop]);
 
   const recolorSelected = useCallback((c: string) => {
     const fc = fabricRef.current;
@@ -439,8 +475,11 @@ export default function DrawingBoard() {
     fc.clear();
     fc.backgroundColor = BG_COLOR;
     fc.renderAll();
+    // Stop the GIF animation loop — no GIFs left after a clear
+    gifCountRef.current = 0;
+    stopGifLoop();
     fetch(`/api/board-objects?boardId=${BOARD_ID}`, { method: "DELETE" }).catch(console.error);
-  }, []);
+  }, [stopGifLoop]);
 
   return (
     <div className="fixed inset-0 overflow-hidden" style={{ overscrollBehavior: "none" }}>
