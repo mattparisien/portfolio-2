@@ -23,6 +23,7 @@ export default function DrawingBoard() {
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const zoomRef = useRef(1);
   const offsetRef = useRef({ x: 0, y: 0 });
+  const lastPanTouchRef = useRef<{ x: number; y: number } | null>(null);
 
   const { ctxRef, toolRef, colorRef, brushSizeRef, addStroke } = useCanvas(
     canvasRef,
@@ -50,6 +51,15 @@ export default function DrawingBoard() {
   });
 
   const clampZoom = (v: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, +v.toFixed(2)));
+
+  const panBy = useCallback((dx: number, dy: number) => {
+    const newOffset = {
+      x: offsetRef.current.x + dx,
+      y: offsetRef.current.y + dy,
+    };
+    offsetRef.current = newOffset;
+    setOffset(newOffset);
+  }, []);
 
   /**
    * Zoom to `nextZoom`, keeping the canvas-space point under (pivotX, pivotY)
@@ -85,16 +95,49 @@ export default function DrawingBoard() {
     zoomAtPoint(zoomRef.current - ZOOM_STEP, c.x, c.y);
   }, [zoomAtPoint, canvasCenter]);
 
-  // Ctrl/Cmd + scroll wheel zooms toward cursor
+  // Wheel: Ctrl/Cmd → zoom toward cursor; plain scroll → pan
   useEffect(() => {
     const onWheel = (e: WheelEvent) => {
-      if (!e.ctrlKey && !e.metaKey) return;
       e.preventDefault();
-      zoomAtPoint(zoomRef.current - e.deltaY * 0.001, e.clientX, e.clientY);
+      if (e.ctrlKey || e.metaKey) {
+        zoomAtPoint(zoomRef.current - e.deltaY * 0.001, e.clientX, e.clientY);
+      } else {
+        panBy(-e.deltaX, -e.deltaY);
+      }
     };
     window.addEventListener("wheel", onWheel, { passive: false });
     return () => window.removeEventListener("wheel", onWheel);
-  }, [zoomAtPoint]);
+  }, [zoomAtPoint, panBy]);
+
+  // Two-finger touch pan
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      if (e.touches.length === 2) {
+        const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        lastPanTouchRef.current = { x: cx, y: cy };
+      } else {
+        startDraw(e);
+      }
+    },
+    [startDraw]
+  );
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        if (!lastPanTouchRef.current) return;
+        const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        panBy(cx - lastPanTouchRef.current.x, cy - lastPanTouchRef.current.y);
+        lastPanTouchRef.current = { x: cx, y: cy };
+      } else {
+        draw(e);
+      }
+    },
+    [draw, panBy]
+  );
 
   const clearCanvas = useCallback(() => {
     const ctx = ctxRef.current;
@@ -110,8 +153,8 @@ export default function DrawingBoard() {
         onMouseDown={startDraw}
         onMouseMove={draw}
         onMouseEnter={handleMouseEnter}
-        onTouchStart={startDraw}
-        onTouchMove={draw}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
       />
 
       <Toolbar

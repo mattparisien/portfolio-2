@@ -94,6 +94,8 @@ export function useDrawing({
 
   const startDraw = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
+      // Ignore multi-touch — two-finger gesture is handled by the parent (pan).
+      if ("touches" in e && (e as React.TouchEvent).touches.length > 1) return;
       const canvas = canvasRef.current;
       const ctx = ctxRef.current;
       if (!canvas || !ctx) return;
@@ -117,6 +119,8 @@ export function useDrawing({
 
   const draw = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
+      // Ignore multi-touch — two-finger gesture is handled by the parent (pan).
+      if ("touches" in e && (e as React.TouchEvent).touches.length > 1) return;
       if (!isDrawing.current || !ctxRef.current || !lastPoint.current || !lastMidpoint.current) return;
       e.preventDefault();
       const canvas = canvasRef.current!;
