@@ -1,7 +1,7 @@
 "use client";
 
 import type { Tool } from "../types";
-import { COLORS, BRUSH_SIZES } from "../constants";
+import { COLORS } from "../constants";
 
 interface ToolbarProps {
   tool: Tool;
@@ -69,26 +69,26 @@ export default function Toolbar({
         ))}
       </div>
 
-      {/* Brush sizes */}
+      {/* Brush size slider */}
       <div className="flex items-center gap-2 border-r border-gray-200 pr-3">
-        {BRUSH_SIZES.map((s) => (
-          <button
-            key={s}
-            title={`${s}px`}
-            onClick={() => onBrushSizeChange(s)}
-            className="flex items-center justify-center w-8 h-8 rounded-xl transition-all"
-            style={{ background: brushSize === s ? "#000" : "transparent" }}
-          >
-            <span
-              className="rounded-full block"
-              style={{
-                width: Math.min(s, 24),
-                height: Math.min(s, 24),
-                background: brushSize === s ? "#fff" : "#333",
-              }}
-            />
-          </button>
-        ))}
+        <span
+          className="rounded-full block flex-shrink-0"
+          style={{
+            width: Math.min(Math.max(brushSize, 4), 24),
+            height: Math.min(Math.max(brushSize, 4), 24),
+            background: "#333",
+          }}
+        />
+        <input
+          type="range"
+          min={1}
+          max={60}
+          value={brushSize}
+          onChange={(e) => onBrushSizeChange(Number(e.target.value))}
+          className="w-24 accent-black cursor-pointer"
+          title={`${brushSize}px`}
+        />
+        <span className="text-xs text-gray-500 w-6 text-right">{brushSize}</span>
       </div>
 
       {/* Clear */}

@@ -89,6 +89,7 @@ export function useDrawing({
       isDrawing.current = true;
       const pt = getPoint(e, canvas);
       lastPoint.current = pt;
+      lastMidpoint.current = pt;
       currentStrokePoints.current = [pt];
 
       ctx.beginPath();
@@ -104,7 +105,7 @@ export function useDrawing({
 
   const draw = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
-      if (!isDrawing.current || !ctxRef.current || !lastPoint.current) return;
+      if (!isDrawing.current || !ctxRef.current || !lastPoint.current || !lastMidpoint.current) return;
       e.preventDefault();
       const canvas = canvasRef.current!;
       const ctx = ctxRef.current;
@@ -120,7 +121,7 @@ export function useDrawing({
       };
 
       ctx.beginPath();
-      ctx.moveTo(lastMidpoint.current!.x, lastMidpoint.current!.y);
+      ctx.moveTo(lastMidpoint.current.x, lastMidpoint.current.y);
       ctx.quadraticCurveTo(
         lastPoint.current.x,
         lastPoint.current.y,
