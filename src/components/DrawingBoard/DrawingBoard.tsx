@@ -34,7 +34,7 @@ export default function DrawingBoard() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [zoom, setZoom] = useState(1);
 
-  const toolRef = useRef<Tool>("pencil");
+  const toolRef = useRef<Tool>("select");
   const colorRef = useRef("#000000");
   const brushSizeRef = useRef(5);
   toolRef.current = tool;
@@ -106,8 +106,8 @@ export default function DrawingBoard() {
       const fc = new Canvas(canvasEl, {
         width: window.innerWidth,
         height: window.innerHeight,
-        isDrawingMode: true,
-        selection: false,
+        isDrawingMode: false,
+        selection: true,
         backgroundColor: BG_COLOR,
       });
       fabricRef.current = fc;
