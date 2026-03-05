@@ -91,6 +91,10 @@ body {
   --color-5: #5266AB;
 }
 
+#liveblocks-badge {
+  display: none !important;
+}
+
 .font-mono {
   font-family: 'Maax Mono', monospace !important;
   font-weight: 300;

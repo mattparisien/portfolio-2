@@ -67,6 +67,7 @@ export function useFabricCanvas({
   broadcast,
 }: UseFabricCanvasOptions) {
   const modsRef = useRef<FabricMods | null>(null);
+  const clipboardRef = useRef<unknown[]>([]);
 
   useEffect(() => {
     const canvasEl = canvasElRef.current;
@@ -98,10 +99,56 @@ export function useFabricCanvas({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       const fc = fabricRef.current;
+      const mods = modsRef.current;
       if (!fc) return;
+
+      const isMod = e.metaKey || e.ctrlKey;
       const active = fc.getActiveObject();
+      const isEditingText = !!(active as { isEditing?: boolean } | null)?.isEditing;
+
+      // ── Copy ──────────────────────────────────────────────────────────
+      if (isMod && e.key === "c") {
+        if (!active || isEditingText) return;
+        e.preventDefault();
+        const objs = fc.getActiveObjects();
+        Promise.all(objs.map((o) => (o as unknown as { clone(): Promise<unknown> }).clone()))
+          .then((clones) => { clipboardRef.current = clones; });
+        return;
+      }
+
+      // ── Paste ──────────────────────────────────────────────────────────
+      if (isMod && e.key === "v") {
+        if (!clipboardRef.current.length || !mods) return;
+        if (isEditingText) return;
+        e.preventDefault();
+        const OFFSET = 20;
+        // Clone from clipboard so we can paste multiple times
+        Promise.all(clipboardRef.current.map((o) => (o as unknown as { clone(): Promise<unknown> }).clone()))
+          .then((clones) => {
+            fc.discardActiveObject();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (clones as any[]).forEach((clone) => {
+              delete clone.boardObjectId; // treat as new object
+              clone.set({ left: (clone.left ?? 0) + OFFSET, top: (clone.top ?? 0) + OFFSET });
+              fc.add(clone);
+              saveObject(clone as unknown as SaveableObj);
+            });
+            if (clones.length === 1) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              fc.setActiveObject(clones[0] as any);
+            } else {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const sel = new mods.ActiveSelection(clones as any, { canvas: fc });
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              fc.setActiveObject(sel as any);
+            }
+            fc.requestRenderAll();
+          });
+        return;
+      }
+
       // Never intercept while typing inside a text object
-      if (!active || (active as { isEditing?: boolean }).isEditing) return;
+      if (!active || isEditingText) return;
 
       // ── Layer order: [ = send to back, ] = bring to front ─────────────
       if (e.key === "[" || e.key === "]") {
@@ -175,8 +222,8 @@ export function useFabricCanvas({
     canvasEl.addEventListener("touchend",   onTouchEnd);
 
     // ── Fabric async init ─────────────────────────────────────────────────
-    import("fabric").then(({ Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, util }) => {
-      modsRef.current = { Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, util };
+    import("fabric").then(({ Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, ActiveSelection, util }) => {
+      modsRef.current = { Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, ActiveSelection, util };
 
       const fc = new Canvas(canvasEl, {
         width: window.innerWidth,
