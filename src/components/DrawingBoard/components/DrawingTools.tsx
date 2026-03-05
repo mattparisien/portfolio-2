@@ -118,19 +118,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
     return () => document.removeEventListener("mousedown", handler);
   }, [gifPinned]);
 
-  useEffect(() => {
-    if (!drawPinned) return;
-    const handler = (e: MouseEvent) => {
-      if (
-        !drawRef.current?.contains(e.target as Node) &&
-        !drawPopoverRef.current?.contains(e.target as Node)
-      ) {
-        setDrawPinned(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [drawPinned]);
+  // (draw popover is closed only via the ✕ button or by opening another section)
 
   // Stop canvas scroll/touch handlers stealing events inside GIF popover
   useEffect(() => {
@@ -215,10 +203,18 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
             className="absolute top-0 left-[calc(100%+10px)] flex gap-2 p-3 rounded-2xl shadow-xl"
             style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)" }}
           >
+            {/* Close button */}
+            <button
+              title="Close"
+              onClick={() => { setDrawPinned(false); setDrawHover(false); }}
+              className="absolute -top-2.5 -right-2.5 w-5 h-5 rounded-full bg-white text-gray-500 flex items-center justify-center text-[10px] leading-none cursor-pointer hover:text-black transition-colors z-10 shadow"
+            >
+              ✕
+            </button>
             {/* Pencil */}
             <button
               title="Pencil"
-              onClick={() => { onToolChange("pencil"); setDrawPinned(false); setDrawHover(false); }}
+              onClick={() => { onToolChange("pencil"); setDrawPinned(true); }}
               className="flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px] cursor-pointer"
               style={{ background: tool === "pencil" ? "#000" : "transparent", color: tool === "pencil" ? "#fff" : "#111" }}
               onMouseEnter={e => { if (tool !== "pencil") (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.07)"; }}
@@ -233,7 +229,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
             {/* Brush */}
             <button
               title="Brush"
-              onClick={() => { onToolChange("brush"); setDrawPinned(false); setDrawHover(false); }}
+              onClick={() => { onToolChange("brush"); setDrawPinned(true); }}
               className="flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px] cursor-pointer"
               style={{ background: tool === "brush" ? "#000" : "transparent", color: tool === "brush" ? "#fff" : "#111" }}
               onMouseEnter={e => { if (tool !== "brush") (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.07)"; }}
@@ -248,7 +244,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
             {/* Select */}
             <button
               title="Select"
-              onClick={() => { onToolChange("select"); setDrawPinned(false); setDrawHover(false); }}
+              onClick={() => { onToolChange("select"); setDrawPinned(true); }}
               className="flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px] cursor-pointer"
               style={{ background: tool === "select" ? "#000" : "transparent", color: tool === "select" ? "#fff" : "#111" }}
               onMouseEnter={e => { if (tool !== "select") (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.07)"; }}
