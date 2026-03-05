@@ -85,7 +85,7 @@ export default function GifPicker({ onSelect }: GifPickerProps) {
           <button
             key={t}
             onClick={() => switchTab(t)}
-            className="flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all"
+            className="flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
             style={{
               background: tab === t ? "#fff" : "transparent",
               color: tab === t ? "#000" : "#888",
@@ -110,7 +110,7 @@ export default function GifPicker({ onSelect }: GifPickerProps) {
         {query && (
           <button
             onClick={() => setQuery("")}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs cursor-pointer"
           >
             ✕
           </button>
@@ -140,7 +140,7 @@ export default function GifPicker({ onSelect }: GifPickerProps) {
                   key={gif.id}
                   title={gif.title}
                   onClick={() => onSelect(gif.id, gif.images.original.url)}
-                  className="rounded-lg overflow-hidden hover:opacity-80 active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-black mb-2 break-inside-avoid w-full"
+                  className="rounded-lg overflow-hidden hover:opacity-80 active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-black mb-2 break-inside-avoid w-full cursor-pointer"
                   style={{ display: "block" }}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}

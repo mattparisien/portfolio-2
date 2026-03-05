@@ -7,11 +7,8 @@ interface ToolbarProps {
   tool: Tool;
   color: string;
   brushSize: number;
-  zoom: number;
   onColorChange: (c: string) => void;
   onBrushSizeChange: (s: number) => void;
-  onZoomIn: () => void;
-  onZoomOut: () => void;
   onRecolorSelected: (c: string) => void;
 }
 
@@ -19,11 +16,8 @@ export default function Toolbar({
   tool,
   color,
   brushSize,
-  zoom,
   onColorChange,
   onBrushSizeChange,
-  onZoomIn,
-  onZoomOut,
   onRecolorSelected,
 }: ToolbarProps) {
   const isDrawing = tool === "pencil" || tool === "brush";
@@ -47,7 +41,7 @@ export default function Toolbar({
               onColorChange(c);
               if (!isDrawing) onRecolorSelected(c);
             }}
-            className="w-6 h-6 rounded-full transition-transform hover:scale-110"
+            className="w-6 h-6 rounded-full transition-transform hover:scale-110 cursor-pointer"
             style={{
               background: c,
               border: color === c ? "2px solid #333" : "1.5px solid #ccc",
@@ -84,29 +78,6 @@ export default function Toolbar({
           />
           <span className="text-xs text-gray-500 w-6 text-right">{brushSize}</span>
         </div>
-      </div>
-
-      {/* Zoom controls */}
-      <div className="flex items-center gap-1">
-        <button
-          onClick={onZoomOut}
-          title="Zoom out"
-          disabled={zoom <= 0.25}
-          className="w-7 h-7 rounded-lg flex items-center justify-center text-base font-bold transition-colors hover:bg-gray-100 disabled:opacity-30"
-        >
-          −
-        </button>
-        <span className="text-xs text-gray-600 w-10 text-center tabular-nums">
-          {Math.round(zoom * 100)}%
-        </span>
-        <button
-          onClick={onZoomIn}
-          title="Zoom in"
-          disabled={zoom >= 4}
-          className="w-7 h-7 rounded-lg flex items-center justify-center text-base font-bold transition-colors hover:bg-gray-100 disabled:opacity-30"
-        >
-          +
-        </button>
       </div>
     </div>
   );

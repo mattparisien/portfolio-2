@@ -40,6 +40,7 @@ interface UseFabricCanvasOptions {
   setVpt: (vpt: number[]) => void;
   setHasSelection: (v: boolean) => void;
   setSelectedIsText: (v: boolean) => void;
+  setSelectedIsGif: (v: boolean) => void;
   setTextProps: Dispatch<SetStateAction<TextProps>>;
   setIsSyncing: (v: boolean) => void;
   broadcast?: (event: RoomEvent) => void;
@@ -62,6 +63,7 @@ export function useFabricCanvas({
   setVpt,
   setHasSelection,
   setSelectedIsText,
+  setSelectedIsGif,
   setTextProps,
   setIsSyncing,
   broadcast,
@@ -386,7 +388,9 @@ export function useFabricCanvas({
         setHasSelection(true);
         const obj = fc.getActiveObject();
         const isText = !!obj && (obj as { type?: string }).type === "i-text";
+        const isGif  = !!obj && !!(obj as { giphyId?: string }).giphyId;
         setSelectedIsText(isText);
+        setSelectedIsGif(isGif);
         if (isText) setTextProps(extractTextProps(obj as IText));
       };
 
@@ -395,6 +399,7 @@ export function useFabricCanvas({
       fc.on("selection:cleared", () => {
         setHasSelection(false);
         setSelectedIsText(false);
+        setSelectedIsGif(false);
         if (!pendingMultiSave) return;
         const objs = pendingMultiSave;
         pendingMultiSave = null;
@@ -459,7 +464,7 @@ export function useFabricCanvas({
       fabricRef.current = null;
       modsRef.current   = null;
     };
-  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setVpt, setHasSelection, setSelectedIsText, setTextProps, setIsSyncing, broadcast]);
+  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setVpt, setHasSelection, setSelectedIsText, setSelectedIsGif, setTextProps, setIsSyncing, broadcast]);
 
   return { modsRef };
 }

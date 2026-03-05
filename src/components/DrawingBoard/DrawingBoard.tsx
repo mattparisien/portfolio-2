@@ -7,6 +7,7 @@ import TextToolbar from "./components/TextToolbar";
 import BoardHeader from "./components/BoardHeader";
 import DrawingTools from "./components/DrawingTools";
 import RemoteCursors from "./components/RemoteCursors";
+import ZoomNav from "./components/ZoomNav";
 import { useGifLoop } from "./hooks/useGifLoop";
 import { useBoardSync } from "./hooks/useBoardSync";
 import { useFabricCanvas } from "./hooks/useFabricCanvas";
@@ -39,6 +40,7 @@ function DrawingBoardInner() {
   const [vpt, setVpt]                     = useState<number[]>([1, 0, 0, 1, 0, 0]);
   const [hasSelection, setHasSelection]   = useState(false);
   const [selectedIsText, setSelectedIsText] = useState(false);
+  const [selectedIsGif, setSelectedIsGif]   = useState(false);
   const [textProps, setTextProps]         = useState<TextProps>(DEFAULT_TEXT_PROPS);
 
   // Keep refs in sync so async canvas callbacks always read the latest values
@@ -81,6 +83,7 @@ function DrawingBoardInner() {
     setVpt,
     setHasSelection,
     setSelectedIsText,
+    setSelectedIsGif,
     setTextProps,
     setIsSyncing,
     broadcast: broadcastEvent,
@@ -195,17 +198,14 @@ function DrawingBoardInner() {
         />
       )}
 
-      {/* Regular toolbar — drawing tools or non-text selections */}
-      {!selectedIsText && (hasSelection || tool === "pencil" || tool === "brush") && (
+      {/* Regular toolbar — drawing tools or non-text, non-gif selections */}
+      {!selectedIsText && !selectedIsGif && (hasSelection || tool === "pencil" || tool === "brush") && (
         <Toolbar
           tool={tool}
           color={color}
           brushSize={brushSize}
-          zoom={zoom}
           onColorChange={setColor}
           onBrushSizeChange={setBrushSize}
-          onZoomIn={zoomIn}
-          onZoomOut={zoomOut}
           onRecolorSelected={recolorSelected}
         />
       )}
@@ -217,6 +217,7 @@ function DrawingBoardInner() {
         onAddText={addText}
         onAddGif={addGif}
       />
+      <ZoomNav zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} />
       <BoardHeader isSyncing={isSyncing} />
     </div>
   );

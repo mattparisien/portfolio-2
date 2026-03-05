@@ -156,7 +156,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
     <button
       title={title}
       onClick={onClick}
-      className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110"
+      className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
       style={{
         background: active ? "#000" : "transparent",
         color: active ? "#fff" : "#111",
@@ -198,7 +198,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
             setDrawPinned(nowPinned);
             if (nowPinned) { setShapePinned(false); setShapeHover(false); setGifPinned(false); setGifHover(false); }
           }}
-          className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110"
+          className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
           style={{
             background: drawPinned ? "#000" : (tool === "pencil" || tool === "brush") && !drawOpen ? "#000" : drawHover ? "rgba(0,0,0,0.07)" : "transparent",
             color: drawPinned || ((tool === "pencil" || tool === "brush") && !drawOpen) ? "#fff" : "#111",
@@ -219,7 +219,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
             <button
               title="Pencil"
               onClick={() => { onToolChange("pencil"); setDrawPinned(false); setDrawHover(false); }}
-              className="flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px]"
+              className="flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px] cursor-pointer"
               style={{ background: tool === "pencil" ? "#000" : "transparent", color: tool === "pencil" ? "#fff" : "#111" }}
               onMouseEnter={e => { if (tool !== "pencil") (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.07)"; }}
               onMouseLeave={e => { if (tool !== "pencil") (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
@@ -234,7 +234,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
             <button
               title="Brush"
               onClick={() => { onToolChange("brush"); setDrawPinned(false); setDrawHover(false); }}
-              className="flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px]"
+              className="flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px] cursor-pointer"
               style={{ background: tool === "brush" ? "#000" : "transparent", color: tool === "brush" ? "#fff" : "#111" }}
               onMouseEnter={e => { if (tool !== "brush") (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.07)"; }}
               onMouseLeave={e => { if (tool !== "brush") (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
@@ -249,7 +249,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
             <button
               title="Select"
               onClick={() => { onToolChange("select"); setDrawPinned(false); setDrawHover(false); }}
-              className="flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px]"
+              className="flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px] cursor-pointer"
               style={{ background: tool === "select" ? "#000" : "transparent", color: tool === "select" ? "#fff" : "#111" }}
               onMouseEnter={e => { if (tool !== "select") (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.07)"; }}
               onMouseLeave={e => { if (tool !== "select") (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
@@ -279,7 +279,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
             setShapePinned(nowPinned);
             if (nowPinned) { setGifPinned(false); setGifHover(false); setDrawPinned(false); setDrawHover(false); onToolChange("shape"); }
           }}
-          className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110"
+          className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
           style={{
             background: shapePinned ? "#000" : shapeHover ? "rgba(0,0,0,0.07)" : "transparent",
             color: shapePinned ? "#fff" : "#111",
@@ -307,7 +307,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
                   setShapePinned(false);
                   setShapeHover(false);
                 }}
-                className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-gray-100 transition-colors flex-1"
+                className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-gray-100 transition-colors flex-1 cursor-pointer"
                 style={{ color }}
               >
                 {s.icon}
@@ -332,7 +332,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
             setGifPinned(nowPinned);
             if (nowPinned) { setShapePinned(false); setShapeHover(false); setDrawPinned(false); setDrawHover(false); }
           }}
-          className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110"
+          className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
           style={{
             background: gifPinned ? "#000" : gifHover ? "rgba(0,0,0,0.07)" : "transparent",
             color: gifPinned ? "#fff" : "#111",

@@ -42,7 +42,7 @@ function ToggleBtn({
       title={title}
       onClick={onClick}
       style={style}
-      className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm transition-colors select-none
+      className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm transition-colors select-none cursor-pointer
         ${active ? "bg-black text-white" : "hover:bg-gray-100 text-gray-700"}`}
     >
       {children}
@@ -99,7 +99,7 @@ export default function TextToolbar({ textProps, color, onColorChange, onApply }
       <div className="flex items-center gap-0.5 border-r border-gray-200 pr-2 mr-0.5 flex-shrink-0">
         <button
           onClick={() => { const i = FONT_SIZES.indexOf(fontSize); if (i > 0) onApply({ fontSize: FONT_SIZES[i - 1] }); }}
-          className="w-5 h-5 rounded flex items-center justify-center text-sm font-bold hover:bg-gray-100 transition-colors select-none"
+          className="w-5 h-5 rounded flex items-center justify-center text-sm font-bold hover:bg-gray-100 transition-colors select-none cursor-pointer"
         >−</button>
         <select
           value={fontSize}
@@ -112,7 +112,7 @@ export default function TextToolbar({ textProps, color, onColorChange, onApply }
         </select>
         <button
           onClick={() => { const i = FONT_SIZES.indexOf(fontSize); if (i < FONT_SIZES.length - 1) onApply({ fontSize: FONT_SIZES[i + 1] }); }}
-          className="w-5 h-5 rounded flex items-center justify-center text-sm font-bold hover:bg-gray-100 transition-colors select-none"
+          className="w-5 h-5 rounded flex items-center justify-center text-sm font-bold hover:bg-gray-100 transition-colors select-none cursor-pointer"
         >+</button>
       </div>
 
@@ -132,12 +132,12 @@ export default function TextToolbar({ textProps, color, onColorChange, onApply }
         <span className="text-gray-400 select-none" title="Line height" style={{ fontSize: 13 }}>↕</span>
         <button
           onClick={() => onApply({ lineHeight: Math.max(0.5, Math.round((lineHeight - 0.1) * 10) / 10) })}
-          className="w-5 h-5 rounded flex items-center justify-center text-sm font-bold hover:bg-gray-100 transition-colors select-none"
+          className="w-5 h-5 rounded flex items-center justify-center text-sm font-bold hover:bg-gray-100 transition-colors select-none cursor-pointer"
         >−</button>
         <span className="text-xs w-6 text-center tabular-nums">{lineHeight.toFixed(1)}</span>
         <button
           onClick={() => onApply({ lineHeight: Math.min(4, Math.round((lineHeight + 0.1) * 10) / 10) })}
-          className="w-5 h-5 rounded flex items-center justify-center text-sm font-bold hover:bg-gray-100 transition-colors select-none"
+          className="w-5 h-5 rounded flex items-center justify-center text-sm font-bold hover:bg-gray-100 transition-colors select-none cursor-pointer"
         >+</button>
       </div>
 
@@ -146,12 +146,12 @@ export default function TextToolbar({ textProps, color, onColorChange, onApply }
         <span className="text-gray-400 select-none" title="Letter spacing" style={{ fontSize: 13 }}>↔</span>
         <button
           onClick={() => onApply({ charSpacing: Math.max(-200, charSpacing - 25) })}
-          className="w-5 h-5 rounded flex items-center justify-center text-sm font-bold hover:bg-gray-100 transition-colors select-none"
+          className="w-5 h-5 rounded flex items-center justify-center text-sm font-bold hover:bg-gray-100 transition-colors select-none cursor-pointer"
         >−</button>
         <span className="text-xs w-7 text-center tabular-nums">{charSpacing}</span>
         <button
           onClick={() => onApply({ charSpacing: Math.min(1000, charSpacing + 25) })}
-          className="w-5 h-5 rounded flex items-center justify-center text-sm font-bold hover:bg-gray-100 transition-colors select-none"
+          className="w-5 h-5 rounded flex items-center justify-center text-sm font-bold hover:bg-gray-100 transition-colors select-none cursor-pointer"
         >+</button>
       </div>
     </div>
