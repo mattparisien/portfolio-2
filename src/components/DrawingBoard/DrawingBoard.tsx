@@ -13,12 +13,13 @@ import { useFabricCanvas } from "./hooks/useFabricCanvas";
 import { useCanvasActions } from "./hooks/useCanvasActions";
 import type { Tool, TextProps } from "./types";
 import { DEFAULT_TEXT_PROPS } from "./types";
-import { BG_COLOR, getOrCreateUser } from "./constants";
+import { BG_COLOR, getOrCreateUser, CURSOR_COLORS } from "./constants";
 import {
   RoomProvider as LiveblocksRoomProvider,
   useBroadcastEvent,
   useEventListener,
   useMyPresence,
+  useSelf,
 } from "@/liveblocks.config";
 
 // React 19 / Liveblocks JSX compat shim — remove once Liveblocks ships React 19 types
@@ -50,6 +51,16 @@ function DrawingBoardInner() {
   // ── Liveblocks ────────────────────────────────────────────────────────
   const broadcastEvent               = useBroadcastEvent();
   const [, updateMyPresence]         = useMyPresence();
+  const self                         = useSelf();
+
+  // Derive cursor color from connectionId so no two live sessions share a color.
+  // connectionId is a unique integer assigned by Liveblocks per connection.
+  useEffect(() => {
+    if (self?.connectionId == null) return;
+    const color = CURSOR_COLORS[self.connectionId % CURSOR_COLORS.length];
+    updateMyPresence({ color });
+  }, [self?.connectionId, updateMyPresence]);
+
   const { gifCountRef, startGifLoop, stopGifLoop } = useGifLoop(fabricRef);
 
   const { saveObject } = useBoardSync({ broadcast: broadcastEvent });
@@ -207,7 +218,7 @@ export default function DrawingBoard() {
   return (
     <RoomProvider
       id="main-board"
-      initialPresence={{ cursor: null, name: user.name, color: user.color }}
+      initialPresence={{ cursor: null, name: user.name, color: CURSOR_COLORS[0] }}
     >
       <DrawingBoardInner />
     </RoomProvider>

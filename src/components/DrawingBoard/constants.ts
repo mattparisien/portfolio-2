@@ -20,7 +20,7 @@ export const BG_COLOR = "#f5f0e8";
 // ── Presence / multiplayer ────────────────────────────────────────────────
 
 export const CURSOR_COLORS = [
-  "#359ED7", "#FE7336", "#68FFB0", "#E4FF98", "#C5B9FF",
+  "#359ED7", "#FE7336", "#68FFB0", "#E4FF98", "#6A7796",
   "#FF00E7", "#FEC8C2", "#FF3737", "#4D4BFD", "#711B1C",
 ] as const;
 
@@ -34,13 +34,12 @@ export const CURSOR_ANIMALS = [
   "Capybara", "Axolotl", "Quokka", "Lemur", "Tapir",
 ] as const;
 
-export function getOrCreateUser(): { name: string; color: string } {
-  if (typeof window === "undefined") return { name: "User", color: CURSOR_COLORS[0] };
+export function getOrCreateUser(): { name: string } {
+  if (typeof window === "undefined") return { name: "User" };
   const stored = sessionStorage.getItem("lb_user");
-  if (stored) return JSON.parse(stored) as { name: string; color: string };
-  const name  = `${CURSOR_ADJECTIVES[Math.floor(Math.random() * CURSOR_ADJECTIVES.length)]} ${CURSOR_ANIMALS[Math.floor(Math.random() * CURSOR_ANIMALS.length)]}`;
-  const color = CURSOR_COLORS[Math.floor(Math.random() * CURSOR_COLORS.length)];
-  const user  = { name, color };
+  if (stored) return JSON.parse(stored) as { name: string };
+  const name = `${CURSOR_ADJECTIVES[Math.floor(Math.random() * CURSOR_ADJECTIVES.length)]} ${CURSOR_ANIMALS[Math.floor(Math.random() * CURSOR_ANIMALS.length)]}`;
+  const user = { name };
   sessionStorage.setItem("lb_user", JSON.stringify(user));
   return user;
 }

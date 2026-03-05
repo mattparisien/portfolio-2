@@ -24,6 +24,7 @@ export const {
   RoomProvider,
   useMyPresence,
   useOthers,
+  useSelf,
   useBroadcastEvent,
   useEventListener,
 } = createRoomContext<
