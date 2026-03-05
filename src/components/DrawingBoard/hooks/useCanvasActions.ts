@@ -59,11 +59,10 @@ export function useCanvasActions({
       const b = new mods.PencilBrush(fc);
       b.color = color;
       if (tool === "brush") {
-        // Soft round brush: wider, semi-transparent
+        // Soft round brush: wider
         b.width = brushSize * 3;
         (b as unknown as Record<string, unknown>).strokeLineCap = "round";
         (b as unknown as Record<string, unknown>).strokeLineJoin = "round";
-        b.color = hexToRgba(color, 0.55);
       } else {
         b.width = brushSize;
       }
@@ -78,11 +77,9 @@ export function useCanvasActions({
       fc.discardActiveObject();
     }
     fc.defaultCursor =
-      tool === "eraser"               ? "cell"      :
-      tool === "text"                 ? "text"      :
+      tool === "text"                       ? "text"      :
       tool === "pencil" || tool === "brush" ? "crosshair" :
-      tool === "select" || tool === "shape" ? "default"   :
-      "crosshair";
+      "default";
     fc.requestRenderAll();
   }, [tool, color, brushSize, fabricRef, modsRef]);
 

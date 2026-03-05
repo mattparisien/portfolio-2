@@ -200,8 +200,8 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
           }}
           className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110"
           style={{
-            background: drawPinned ? "#000" : (tool === "pencil" || tool === "brush" || tool === "eraser") && !drawOpen ? "#000" : drawHover ? "rgba(0,0,0,0.07)" : "transparent",
-            color: drawPinned || ((tool === "pencil" || tool === "brush" || tool === "eraser") && !drawOpen) ? "#fff" : "#111",
+            background: drawPinned ? "#000" : (tool === "pencil" || tool === "brush") && !drawOpen ? "#000" : drawHover ? "rgba(0,0,0,0.07)" : "transparent",
+            color: drawPinned || ((tool === "pencil" || tool === "brush") && !drawOpen) ? "#fff" : "#111",
           }}
         >
           <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -260,18 +260,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
               <span className="text-[10px] text-gray-500 leading-none" style={{ color: tool === "select" ? "#fff" : undefined }}>Select</span>
             </button>
 
-            {/* Eraser */}
-            <button
-              title="Eraser"
-              onClick={() => { onToolChange("eraser"); setDrawPinned(false); setDrawHover(false); }}
-              className="flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px]"
-              style={{ background: tool === "eraser" ? "#000" : "transparent", color: tool === "eraser" ? "#fff" : "#111" }}
-              onMouseEnter={e => { if (tool !== "eraser") (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.07)"; }}
-              onMouseLeave={e => { if (tool !== "eraser") (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
-            >
-              <span className="text-xl leading-none">🧹</span>
-              <span className="text-[10px] text-gray-500 leading-none" style={{ color: tool === "eraser" ? "#fff" : undefined }}>Eraser</span>
-            </button>
+
           </div>
         )}
       </div>

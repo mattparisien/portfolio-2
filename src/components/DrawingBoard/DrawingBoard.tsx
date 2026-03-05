@@ -21,6 +21,8 @@ export default function DrawingBoard() {
   const [isSyncing, setIsSyncing]     = useState(false);
   const [zoom, setZoom]               = useState(1);
   const [hasSelection, setHasSelection] = useState(false);
+  const [selectedObjType, setSelectedObjType] = useState("");
+  const [cornerRadius, setCornerRadius] = useState(0);
 
   // Keep refs in sync so async canvas callbacks always read the latest values
   const toolRef      = useRef<Tool>("select");
@@ -46,10 +48,22 @@ export default function DrawingBoard() {
     setTool,
     setZoom,
     setHasSelection,
+    setSelectedObjType,
+    setCornerRadius,
     setIsSyncing,
   });
 
-  const { addText, addShape, addGif, recolorSelected, zoomIn, zoomOut, clearCanvas } =
+  const handleCornerRadius = (radius: number) => {
+    setCornerRadius(radius);
+    const obj = fabricRef.current?.getActiveObject();
+    if (!obj) return;
+    (obj as unknown as Record<string, unknown>).rx = radius;
+    (obj as unknown as Record<string, unknown>).ry = radius;
+    fabricRef.current?.requestRenderAll();
+    saveObject(obj as unknown as Parameters<typeof saveObject>[0]);
+  };
+
+  const { addText, addShape, addGif, recolorSelected, zoomIn, zoomOut } =
     useCanvasActions({
       fabricRef,
       modsRef,
@@ -79,8 +93,10 @@ export default function DrawingBoard() {
           onBrushSizeChange={setBrushSize}
           onZoomIn={zoomIn}
           onZoomOut={zoomOut}
-          onClear={clearCanvas}
           onRecolorSelected={recolorSelected}
+          selectedObjType={selectedObjType}
+          cornerRadius={cornerRadius}
+          onCornerRadiusChange={handleCornerRadius}
         />
       )}
       <DrawingTools

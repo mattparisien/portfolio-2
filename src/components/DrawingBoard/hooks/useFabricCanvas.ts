@@ -20,6 +20,8 @@ interface UseFabricCanvasOptions {
   setTool: (t: Tool) => void;
   setZoom: (z: number) => void;
   setHasSelection: (v: boolean) => void;
+  setSelectedObjType: (t: string) => void;
+  setCornerRadius: (r: number) => void;
   setIsSyncing: (v: boolean) => void;
 }
 
@@ -38,6 +40,8 @@ export function useFabricCanvas({
   setTool,
   setZoom,
   setHasSelection,
+  setSelectedObjType,
+  setCornerRadius,
   setIsSyncing,
 }: UseFabricCanvasOptions) {
   const modsRef = useRef<FabricMods | null>(null);
@@ -47,7 +51,6 @@ export function useFabricCanvas({
     if (!canvasEl) return;
 
     const pendingTextRef = { current: null as IText | null };
-    let isEraserDown = false;
     let pendingMultiSave: SaveableObj[] | null = null;
 
     // ── Window event handlers ──────────────────────────────────────────────
@@ -203,10 +206,23 @@ export function useFabricCanvas({
         saveObject(target);
       });
 
-      fc.on("selection:created", () => setHasSelection(true));
-      fc.on("selection:updated", () => setHasSelection(true));
+      fc.on("selection:created", (e) => {
+        setHasSelection(true);
+        const obj = e.selected?.[0];
+        const type = (obj as { type?: string })?.type ?? "";
+        setSelectedObjType(type);
+        if (type === "rect") setCornerRadius((obj as { rx?: number }).rx ?? 0);
+      });
+      fc.on("selection:updated", (e) => {
+        setHasSelection(true);
+        const obj = e.selected?.[0];
+        const type = (obj as { type?: string })?.type ?? "";
+        setSelectedObjType(type);
+        if (type === "rect") setCornerRadius((obj as { rx?: number }).rx ?? 0);
+      });
       fc.on("selection:cleared", () => {
         setHasSelection(false);
+        setSelectedObjType("");
         if (!pendingMultiSave) return;
         const objs = pendingMultiSave;
         pendingMultiSave = null;
@@ -219,12 +235,6 @@ export function useFabricCanvas({
       });
 
       fc.on("mouse:down", (e) => {
-        if (toolRef.current === "eraser") {
-          isEraserDown = true;
-          const target = fc.findTarget(e.e) as unknown as Parameters<typeof fc.remove>[0] | undefined;
-          if (target) { fc.remove(target); fc.requestRenderAll(); }
-          return;
-        }
         if (toolRef.current === "text") {
           const pointer = fc.getScenePoint(e.e);
           const txt = new IText("", {
@@ -241,14 +251,6 @@ export function useFabricCanvas({
           pendingTextRef.current = txt;
         }
       });
-
-      fc.on("mouse:move", (e) => {
-        if (!isEraserDown || toolRef.current !== "eraser") return;
-        const target = fc.findTarget(e.e) as unknown as Parameters<typeof fc.remove>[0] | undefined;
-        if (target) { fc.remove(target); fc.requestRenderAll(); }
-      });
-
-      fc.on("mouse:up", () => { isEraserDown = false; });
 
       fc.on("mouse:dblclick", (e) => {
         const target = e.target;
@@ -282,7 +284,7 @@ export function useFabricCanvas({
       fabricRef.current = null;
       modsRef.current   = null;
     };
-  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setHasSelection, setIsSyncing]);
+  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setHasSelection, setSelectedObjType, setCornerRadius, setIsSyncing]);
 
   return { modsRef };
 }

@@ -12,8 +12,10 @@ interface ToolbarProps {
   onBrushSizeChange: (s: number) => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
-  onClear: () => void;
   onRecolorSelected: (c: string) => void;
+  selectedObjType: string;
+  cornerRadius: number;
+  onCornerRadiusChange: (r: number) => void;
 }
 
 export default function Toolbar({
@@ -25,8 +27,10 @@ export default function Toolbar({
   onBrushSizeChange,
   onZoomIn,
   onZoomOut,
-  onClear,
   onRecolorSelected,
+  selectedObjType,
+  cornerRadius,
+  onCornerRadiusChange,
 }: ToolbarProps) {
   const isDrawing = tool === "pencil" || tool === "brush";
 
@@ -88,14 +92,26 @@ export default function Toolbar({
         </div>
       </div>
 
-      {/* Clear */}
-      <button
-        onClick={onClear}
-        title="Clear canvas"
-        className="w-9 h-9 rounded-xl flex items-center justify-center text-lg hover:bg-red-50 transition-colors border-r border-gray-200 pr-3 mr-0"
-      >
-        🗑️
-      </button>
+      {/* Corner radius — only for rects when not drawing */}
+      {!isDrawing && selectedObjType === "rect" && (
+        <div className="flex flex-col gap-1 border-r border-gray-200 pr-3">
+          <span className="text-[9px] font-semibold uppercase tracking-widest text-gray-400 text-center select-none">Corner</span>
+          <div className="flex items-center gap-2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 text-gray-400 flex-shrink-0">
+              <path d="M4 20 L4 8 Q4 4 8 4 L20 4" strokeLinecap="round"/>
+            </svg>
+            <input
+              type="range"
+              min={0}
+              max={120}
+              value={cornerRadius}
+              onChange={(e) => onCornerRadiusChange(Number(e.target.value))}
+              className="w-20 accent-black cursor-pointer"
+            />
+            <span className="text-xs text-gray-500 w-6 text-right">{cornerRadius}</span>
+          </div>
+        </div>
+      )}
 
       {/* Zoom controls */}
       <div className="flex items-center gap-1">
