@@ -206,7 +206,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
             {/* Close button */}
             <button
               title="Close"
-              onClick={() => { setDrawPinned(false); setDrawHover(false); }}
+              onClick={() => { setDrawPinned(false); setDrawHover(false); onToolChange("select"); }}
               className="absolute -top-2.5 -right-2.5 w-5 h-5 rounded-full bg-white text-gray-500 flex items-center justify-center text-[10px] leading-none cursor-pointer hover:text-black transition-colors z-10 shadow"
             >
               ✕
