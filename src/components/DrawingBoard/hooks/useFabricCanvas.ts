@@ -67,7 +67,12 @@ export function useFabricCanvas({
   broadcast,
 }: UseFabricCanvasOptions) {
   const modsRef = useRef<FabricMods | null>(null);
-  const clipboardRef = useRef<unknown[]>([]);
+  type GifMeta = {
+    giphyId: string; _gifUrl: string; _gifSpritesheet: HTMLCanvasElement;
+    _gifFrameWidth: number; _gifFrameHeight: number;
+    _gifTotalFrames: number; _gifDelays: number[];
+  };
+  const clipboardRef = useRef<{ clone: unknown; gifMeta?: GifMeta }[]>([]);
   const isPastingRef = useRef(false);
 
   useEffect(() => {
@@ -113,7 +118,24 @@ export function useFabricCanvas({
         e.preventDefault();
         const objs = fc.getActiveObjects();
         Promise.all(objs.map((o) => (o as unknown as { clone(): Promise<unknown> }).clone()))
-          .then((clones) => { clipboardRef.current = clones; });
+          .then((clones) => {
+            clipboardRef.current = clones.map((clone, i) => {
+              const src = objs[i] as unknown as Record<string, unknown>;
+              if (!src.giphyId) return { clone };
+              return {
+                clone,
+                gifMeta: {
+                  giphyId:          src.giphyId          as string,
+                  _gifUrl:          src._gifUrl          as string,
+                  _gifSpritesheet:  src._gifSpritesheet  as HTMLCanvasElement,
+                  _gifFrameWidth:   src._gifFrameWidth   as number,
+                  _gifFrameHeight:  src._gifFrameHeight  as number,
+                  _gifTotalFrames:  src._gifTotalFrames  as number,
+                  _gifDelays:       src._gifDelays       as number[],
+                },
+              };
+            });
+          });
         return;
       }
 
@@ -123,16 +145,44 @@ export function useFabricCanvas({
         if (isEditingText) return;
         e.preventDefault();
         const OFFSET = 20;
+        const BLANK_PX = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
         // Clone from clipboard so we can paste multiple times
-        Promise.all(clipboardRef.current.map((o) => (o as unknown as { clone(): Promise<unknown> }).clone()))
+        Promise.all(clipboardRef.current.map(({ clone }) => (clone as unknown as { clone(): Promise<unknown> }).clone()))
           .then((clones) => {
             isPastingRef.current = true;
             fc.discardActiveObject();
+            let hasNewGif = false;
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (clones as any[]).forEach((clone) => {
+            (clones as any[]).forEach((clone, i) => {
+              const { gifMeta } = clipboardRef.current[i];
               // Explicitly clear the old ID so saveObject assigns a fresh UUID
               (clone as Record<string, unknown>).boardObjectId = undefined;
               clone.set({ left: (clone.left ?? 0) + OFFSET, top: (clone.top ?? 0) + OFFSET });
+
+              // Re-attach GIF animation data
+              if (gifMeta) {
+                const o = clone as unknown as Record<string, unknown>;
+                o.giphyId           = gifMeta.giphyId;
+                o._gifUrl           = gifMeta._gifUrl;
+                o._gifSpritesheet   = gifMeta._gifSpritesheet;
+                o._gifFrameWidth    = gifMeta._gifFrameWidth;
+                o._gifFrameHeight   = gifMeta._gifFrameHeight;
+                o._gifTotalFrames   = gifMeta._gifTotalFrames;
+                o._gifDelays        = gifMeta._gifDelays;
+                o._gifCurrentFrame  = 0;
+                o._gifLastFrameTime = performance.now();
+                clone.set({ cropX: 0, objectCaching: false });
+                // Point element at the shared spritesheet canvas
+                (clone as unknown as { setElement: (el: HTMLCanvasElement) => void })
+                  .setElement(gifMeta._gifSpritesheet);
+                // Override toObject so it doesn't try to serialise the huge canvas
+                const _orig = clone.toObject.bind(clone);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (clone as Record<string, unknown>).toObject = (props?: any) => ({ ..._orig(props), src: BLANK_PX });
+                gifCountRef.current += 1;
+                hasNewGif = true;
+              }
+
               fc.add(clone);
               saveObject(clone as unknown as SaveableObj);
             });
@@ -147,6 +197,7 @@ export function useFabricCanvas({
             }
             fc.requestRenderAll();
             isPastingRef.current = false;
+            if (hasNewGif) startGifLoop();
           });
         return;
       }
