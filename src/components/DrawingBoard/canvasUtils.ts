@@ -17,26 +17,25 @@ export function applyRectCornerControl(
     cursorStyle: "crosshair",
     actionName: "cornerRadius",
 
-    // Move visually with rx so the handle sits right at the rounded corner
+    // dim.x = (width * scaleX) / 2, dim.y = (height * scaleY) / 2 — use
+    // these directly so the handle stays correct after resizing/scaling.
     positionHandler(dim, finalMatrix, fabricObject) {
       const obj = fabricObject as Rect;
-      const rx = obj.rx ?? 0;
-      const hw = (obj.width  ?? 0) / 2;
-      const hh = (obj.height ?? 0) / 2;
-      // Place handle on the top edge, rx pixels inward from right corner
-      const local = new Point(hw - rx, -hh);
-      return local.transform(finalMatrix);
+      // rx is in unscaled object-space; convert to screen-space with scaleX
+      const rxScaled = (obj.rx ?? 0) * (obj.scaleX ?? 1);
+      const clamped  = Math.min(rxScaled, dim.x, dim.y);
+      // Top edge, rxScaled pixels inward from the right corner
+      return new Point(dim.x - clamped, -dim.y).transform(finalMatrix);
     },
 
     actionHandler(_ev, transform, x, y) {
       const target = transform.target as Rect;
-      // Get pointer in local (center-origin) coords
+      // getLocalPoint returns unscaled object-space coords
       const local = controlsUtils.getLocalPoint(
         transform, "center", "center", x, y,
       );
       const maxR = Math.min(target.width ?? 0, target.height ?? 0) / 2;
-      // Distance from right edge gives the radius
-      const rx = Math.max(0, Math.min(maxR, (target.width ?? 0) / 2 - local.x));
+      const rx    = Math.max(0, Math.min(maxR, (target.width ?? 0) / 2 - local.x));
       target.set({ rx, ry: rx });
       return true;
     },
