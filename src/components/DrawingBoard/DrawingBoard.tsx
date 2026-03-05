@@ -3,13 +3,15 @@
 import { useRef, useState } from "react";
 import type { Canvas } from "fabric";
 import Toolbar from "./components/Toolbar";
+import TextToolbar from "./components/TextToolbar";
 import BoardHeader from "./components/BoardHeader";
 import DrawingTools from "./components/DrawingTools";
 import { useGifLoop } from "./hooks/useGifLoop";
 import { useBoardSync } from "./hooks/useBoardSync";
 import { useFabricCanvas } from "./hooks/useFabricCanvas";
 import { useCanvasActions } from "./hooks/useCanvasActions";
-import type { Tool } from "./types";
+import type { Tool, TextProps } from "./types";
+import { DEFAULT_TEXT_PROPS } from "./types";
 
 export default function DrawingBoard() {
   const canvasElRef = useRef<HTMLCanvasElement>(null);
@@ -18,9 +20,11 @@ export default function DrawingBoard() {
   const [tool, setTool]               = useState<Tool>("select");
   const [color, setColor]             = useState("#000000");
   const [brushSize, setBrushSize]     = useState(5);
-  const [isSyncing, setIsSyncing]     = useState(false);
-  const [zoom, setZoom]               = useState(1);
-  const [hasSelection, setHasSelection] = useState(false);
+  const [isSyncing, setIsSyncing]         = useState(false);
+  const [zoom, setZoom]                   = useState(1);
+  const [hasSelection, setHasSelection]   = useState(false);
+  const [selectedIsText, setSelectedIsText] = useState(false);
+  const [textProps, setTextProps]         = useState<TextProps>(DEFAULT_TEXT_PROPS);
 
   // Keep refs in sync so async canvas callbacks always read the latest values
   const toolRef      = useRef<Tool>("select");
@@ -46,10 +50,12 @@ export default function DrawingBoard() {
     setTool,
     setZoom,
     setHasSelection,
+    setSelectedIsText,
+    setTextProps,
     setIsSyncing,
   });
 
-  const { addText, addShape, addGif, recolorSelected, zoomIn, zoomOut } =
+  const { addText, addShape, addGif, recolorSelected, zoomIn, zoomOut, applyTextProp } =
     useCanvasActions({
       fabricRef,
       modsRef,
@@ -64,12 +70,25 @@ export default function DrawingBoard() {
       gifCountRef,
       setTool,
       setZoom,
+      setTextProps,
     });
 
   return (
     <div className="fixed inset-0 overflow-hidden" style={{ overscrollBehavior: "none" }}>
       <canvas ref={canvasElRef} className="absolute inset-0 touch-none" />
-      {(hasSelection || tool === "pencil" || tool === "brush") && (
+
+      {/* Text-specific toolbar — shown when an IText is the active selection */}
+      {selectedIsText && (
+        <TextToolbar
+          textProps={textProps}
+          color={color}
+          onColorChange={(c) => { setColor(c); recolorSelected(c); }}
+          onApply={applyTextProp}
+        />
+      )}
+
+      {/* Regular toolbar — shown for drawing tools or non-text selections */}
+      {!selectedIsText && (hasSelection || tool === "pencil" || tool === "brush") && (
         <Toolbar
           tool={tool}
           color={color}

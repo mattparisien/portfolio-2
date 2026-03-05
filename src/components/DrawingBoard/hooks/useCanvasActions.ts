@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from "react";
-import type { Canvas } from "fabric";
-import type { Tool, ShapeType, FabricMods } from "../types";
+import type { Dispatch, SetStateAction } from "react";
+import type { Canvas, IText } from "fabric";
+import type { Tool, ShapeType, FabricMods, TextProps } from "../types";
 import type { SaveableObj } from "./useBoardSync";
 import { BOARD_ID, BG_COLOR } from "../constants";
 import { decodeGif } from "../gifDecoder";
@@ -23,6 +24,7 @@ interface UseCanvasActionsOptions {
   gifCountRef: React.MutableRefObject<number>;
   setTool: (t: Tool) => void;
   setZoom: (z: number) => void;
+  setTextProps: Dispatch<SetStateAction<TextProps>>;
 }
 
 export function useCanvasActions({
@@ -39,6 +41,7 @@ export function useCanvasActions({
   gifCountRef,
   setTool,
   setZoom,
+  setTextProps,
 }: UseCanvasActionsOptions) {
 
   // ── Sync tool / color / brush → fabric ────────────────────────────────
@@ -96,9 +99,12 @@ export function useCanvasActions({
     });
     fc.add(txt);
     fc.setActiveObject(txt);
-    txt.enterEditing();
-    requestAnimationFrame(() => { txt.selectAll(); fc.requestRenderAll(); });
     fc.requestRenderAll();
+    requestAnimationFrame(() => {
+      txt.enterEditing();
+      txt.selectAll();
+      fc.requestRenderAll();
+    });
     setTool("text");
   }, [fabricRef, modsRef, colorRef, brushSizeRef, setTool]);
 
@@ -256,5 +262,41 @@ export function useCanvasActions({
     fetch(`/api/board-objects?boardId=${BOARD_ID}`, { method: "DELETE" }).catch(console.error);
   }, [fabricRef, gifCountRef, stopGifLoop]);
 
-  return { addText, addShape, addGif, recolorSelected, zoomIn, zoomOut, clearCanvas };
+  // ── Apply text property to active IText ───────────────────────────────
+  const applyTextProp = useCallback((updates: Partial<TextProps>) => {
+    const fc = fabricRef.current;
+    if (!fc) return;
+    const obj = fc.getActiveObject() as IText | null;
+    if (!obj || (obj as { type?: string }).type !== "i-text") return;
+
+    const fabricUpdates: Record<string, unknown> = {};
+    if (updates.fontFamily !== undefined) fabricUpdates.fontFamily = updates.fontFamily;
+    if (updates.fontSize   !== undefined) fabricUpdates.fontSize   = updates.fontSize;
+    if (updates.bold       !== undefined) fabricUpdates.fontWeight  = updates.bold ? "bold" : "normal";
+    if (updates.italic     !== undefined) fabricUpdates.fontStyle   = updates.italic ? "italic" : "normal";
+    if (updates.underline  !== undefined) fabricUpdates.underline   = updates.underline;
+    if (updates.linethrough !== undefined) fabricUpdates.linethrough = updates.linethrough;
+    if (updates.lineHeight !== undefined) fabricUpdates.lineHeight  = updates.lineHeight;
+    if (updates.charSpacing !== undefined) fabricUpdates.charSpacing = updates.charSpacing;
+
+    if (updates.uppercase !== undefined) {
+      const current = obj.text ?? "";
+      const wasUppercase = !!(obj as unknown as Record<string, unknown>)._uppercase;
+      (obj as unknown as Record<string, unknown>)._uppercase = updates.uppercase;
+      if (updates.uppercase && !wasUppercase) {
+        (obj as unknown as Record<string, unknown>)._originalText = current;
+        fabricUpdates.text = current.toUpperCase();
+      } else if (!updates.uppercase && wasUppercase) {
+        fabricUpdates.text = ((obj as unknown as Record<string, unknown>)._originalText as string) ?? current.toLowerCase();
+      }
+    }
+
+    obj.set(fabricUpdates as Parameters<typeof obj.set>[0]);
+    fc.requestRenderAll();
+    saveObject(obj);
+    // Reflect updated props back to state
+    setTextProps((prev: TextProps) => ({ ...prev, ...updates }));
+  }, [fabricRef, saveObject, setTextProps]);
+
+  return { addText, addShape, addGif, recolorSelected, zoomIn, zoomOut, clearCanvas, applyTextProp };
 }

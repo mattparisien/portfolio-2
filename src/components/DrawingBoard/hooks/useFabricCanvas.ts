@@ -1,9 +1,25 @@
 import { useRef, useEffect } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import type { Canvas, IText } from "fabric";
-import type { Tool, FabricMods } from "../types";
+import type { Tool, FabricMods, TextProps } from "../types";
+import { DEFAULT_TEXT_PROPS } from "../types";
 import type { SaveableObj } from "./useBoardSync";
 import { BOARD_ID, BG_COLOR } from "../constants";
 import { decodeGif } from "../gifDecoder";
+
+function extractTextProps(txt: IText): TextProps {
+  return {
+    fontFamily: (txt.fontFamily as string) || DEFAULT_TEXT_PROPS.fontFamily,
+    fontSize: (txt.fontSize as number) || DEFAULT_TEXT_PROPS.fontSize,
+    bold: txt.fontWeight === "bold" || txt.fontWeight === 700,
+    italic: txt.fontStyle === "italic",
+    underline: !!txt.underline,
+    linethrough: !!txt.linethrough,
+    uppercase: !!(txt as unknown as Record<string, unknown>)._uppercase,
+    lineHeight: (txt.lineHeight as number) || DEFAULT_TEXT_PROPS.lineHeight,
+    charSpacing: (txt.charSpacing as number) ?? DEFAULT_TEXT_PROPS.charSpacing,
+  };
+}
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 4;
@@ -21,6 +37,8 @@ interface UseFabricCanvasOptions {
   setTool: (t: Tool) => void;
   setZoom: (z: number) => void;
   setHasSelection: (v: boolean) => void;
+  setSelectedIsText: (v: boolean) => void;
+  setTextProps: Dispatch<SetStateAction<TextProps>>;
   setIsSyncing: (v: boolean) => void;
 }
 
@@ -39,6 +57,8 @@ export function useFabricCanvas({
   setTool,
   setZoom,
   setHasSelection,
+  setSelectedIsText,
+  setTextProps,
   setIsSyncing,
 }: UseFabricCanvasOptions) {
   const modsRef = useRef<FabricMods | null>(null);
@@ -93,10 +113,9 @@ export function useFabricCanvas({
       if (e.key !== "Delete" && e.key !== "Backspace") return;
       e.preventDefault();
       pendingMultiSave = null;
-      const isMulti = (active as { type?: string }).type === "activeSelection";
-      const members: SaveableObj[] = isMulti
-        ? (active as unknown as { getObjects(): SaveableObj[] }).getObjects().slice()
-        : [active as unknown as SaveableObj];
+      // getActiveObjects() returns a flat array for both single and multi-select
+      const members = fc.getActiveObjects().slice() as unknown as SaveableObj[];
+      fc.discardActiveObject();
       members.forEach((obj) => {
         fc.remove(obj as unknown as Parameters<typeof fc.remove>[0]);
         const oid = (obj as { boardObjectId?: string }).boardObjectId;
@@ -110,7 +129,6 @@ export function useFabricCanvas({
           if (gifCountRef.current === 0) stopGifLoop();
         }
       });
-      fc.discardActiveObject();
       fc.requestRenderAll();
     };
 
@@ -251,14 +269,19 @@ export function useFabricCanvas({
         saveObject(target);
       });
 
-      fc.on("selection:created", (e) => {
+      const handleSelectionChange = () => {
         setHasSelection(true);
-      });
-      fc.on("selection:updated", (e) => {
-        setHasSelection(true);
-      });
+        const obj = fc.getActiveObject();
+        const isText = !!obj && (obj as { type?: string }).type === "i-text";
+        setSelectedIsText(isText);
+        if (isText) setTextProps(extractTextProps(obj as IText));
+      };
+
+      fc.on("selection:created", handleSelectionChange);
+      fc.on("selection:updated", handleSelectionChange);
       fc.on("selection:cleared", () => {
         setHasSelection(false);
+        setSelectedIsText(false);
         if (!pendingMultiSave) return;
         const objs = pendingMultiSave;
         pendingMultiSave = null;
@@ -272,6 +295,9 @@ export function useFabricCanvas({
 
       fc.on("mouse:down", (e) => {
         if (toolRef.current === "text") {
+          // If a text object is already pending/editing, don't spawn another.
+          if (pendingTextRef.current !== null) return;
+
           const pointer = fc.getScenePoint(e.e);
           const txt = new IText("", {
             left: pointer.x,
@@ -320,7 +346,7 @@ export function useFabricCanvas({
       fabricRef.current = null;
       modsRef.current   = null;
     };
-  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setHasSelection, setIsSyncing]);
+  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setHasSelection, setSelectedIsText, setTextProps, setIsSyncing]);
 
   return { modsRef };
 }

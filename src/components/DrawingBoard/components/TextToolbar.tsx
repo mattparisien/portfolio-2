@@ -1,0 +1,171 @@
+"use client";
+
+import type { TextProps } from "../types";
+
+const FONT_FAMILIES = [
+  "sans-serif",
+  "serif",
+  "monospace",
+  "Arial",
+  "Georgia",
+  "Impact",
+  "Courier New",
+  "Trebuchet MS",
+  "Comic Sans MS",
+  "Palatino",
+];
+
+const FONT_SIZES = [10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72, 96, 128];
+
+interface TextToolbarProps {
+  textProps: TextProps;
+  color: string;
+  onColorChange: (c: string) => void;
+  onApply: (updates: Partial<TextProps>) => void;
+}
+
+function ToggleBtn({
+  active,
+  title,
+  onClick,
+  children,
+  style,
+}: {
+  active: boolean;
+  title: string;
+  onClick: () => void;
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <button
+      title={title}
+      onClick={onClick}
+      style={style}
+      className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm transition-colors select-none
+        ${active ? "bg-black text-white" : "hover:bg-gray-100 text-gray-700"}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+export default function TextToolbar({ textProps, color, onColorChange, onApply }: TextToolbarProps) {
+  const { fontFamily, fontSize, bold, italic, underline, linethrough, uppercase, lineHeight, charSpacing } = textProps;
+
+  return (
+    <div
+      className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2.5 rounded-2xl shadow-xl flex-wrap justify-center"
+      style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(12px)", maxWidth: "calc(100vw - 32px)" }}
+    >
+      {/* Color dot */}
+      <div className="flex items-center gap-1.5 border-r border-gray-200 pr-3">
+        <span className="text-[9px] font-semibold uppercase tracking-widest text-gray-400 select-none">Color</span>
+        <label
+          title="Text color"
+          className="w-6 h-6 rounded-full cursor-pointer flex-shrink-0"
+          style={{ background: color, border: "1.5px solid #ccc", display: "block" }}
+        >
+          <input
+            type="color"
+            value={color}
+            onChange={(e) => onColorChange(e.target.value)}
+            className="opacity-0 w-0 h-0 absolute"
+          />
+        </label>
+      </div>
+
+      {/* Font family */}
+      <div className="flex items-center gap-1 border-r border-gray-200 pr-3">
+        <select
+          value={fontFamily}
+          onChange={(e) => onApply({ fontFamily: e.target.value })}
+          className="text-xs rounded-lg border border-gray-200 px-1.5 py-1 bg-white cursor-pointer outline-none hover:border-gray-400 transition-colors"
+          style={{ fontFamily, maxWidth: 130 }}
+        >
+          {FONT_FAMILIES.map((f) => (
+            <option key={f} value={f} style={{ fontFamily: f }}>
+              {f}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Font size */}
+      <div className="flex items-center gap-1 border-r border-gray-200 pr-3">
+        <button
+          onClick={() => {
+            const idx = FONT_SIZES.indexOf(fontSize);
+            if (idx > 0) onApply({ fontSize: FONT_SIZES[idx - 1] });
+          }}
+          className="w-6 h-6 rounded-lg flex items-center justify-center text-base font-bold hover:bg-gray-100 transition-colors select-none"
+        >
+          −
+        </button>
+        <select
+          value={fontSize}
+          onChange={(e) => onApply({ fontSize: Number(e.target.value) })}
+          className="text-xs rounded-lg border border-gray-200 px-1 py-1 bg-white cursor-pointer outline-none hover:border-gray-400 transition-colors w-14 text-center"
+        >
+          {FONT_SIZES.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
+        <button
+          onClick={() => {
+            const idx = FONT_SIZES.indexOf(fontSize);
+            if (idx < FONT_SIZES.length - 1) onApply({ fontSize: FONT_SIZES[idx + 1] });
+          }}
+          className="w-6 h-6 rounded-lg flex items-center justify-center text-base font-bold hover:bg-gray-100 transition-colors select-none"
+        >
+          +
+        </button>
+      </div>
+
+      {/* Style toggles */}
+      <div className="flex items-center gap-0.5 border-r border-gray-200 pr-3">
+        <ToggleBtn active={bold} title="Bold" onClick={() => onApply({ bold: !bold })}
+          style={{ fontWeight: "bold" }}>B</ToggleBtn>
+        <ToggleBtn active={italic} title="Italic" onClick={() => onApply({ italic: !italic })}
+          style={{ fontStyle: "italic" }}>I</ToggleBtn>
+        <ToggleBtn active={underline} title="Underline" onClick={() => onApply({ underline: !underline })}
+          style={{ textDecoration: "underline" }}>U</ToggleBtn>
+        <ToggleBtn active={linethrough} title="Strikethrough" onClick={() => onApply({ linethrough: !linethrough })}
+          style={{ textDecoration: "line-through" }}>S</ToggleBtn>
+        <ToggleBtn active={uppercase} title="Uppercase" onClick={() => onApply({ uppercase: !uppercase })}>
+          <span className="text-[10px] font-bold tracking-wider">AA</span>
+        </ToggleBtn>
+      </div>
+
+      {/* Line height */}
+      <div className="flex items-center gap-1 border-r border-gray-200 pr-3">
+        <span className="text-[9px] font-semibold uppercase tracking-widest text-gray-400 select-none">Leading</span>
+        <button
+          onClick={() => onApply({ lineHeight: Math.max(0.5, Math.round((lineHeight - 0.1) * 10) / 10) })}
+          className="w-5 h-5 rounded flex items-center justify-center text-sm font-bold hover:bg-gray-100 transition-colors select-none"
+        >−</button>
+        <span className="text-xs w-7 text-center tabular-nums">{lineHeight.toFixed(1)}</span>
+        <button
+          onClick={() => onApply({ lineHeight: Math.min(4, Math.round((lineHeight + 0.1) * 10) / 10) })}
+          className="w-5 h-5 rounded flex items-center justify-center text-sm font-bold hover:bg-gray-100 transition-colors select-none"
+        >+</button>
+      </div>
+
+      {/* Letter spacing */}
+      <div className="flex items-center gap-1">
+        <span className="text-[9px] font-semibold uppercase tracking-widest text-gray-400 select-none">Spacing</span>
+        <button
+          onClick={() => onApply({ charSpacing: Math.max(-200, charSpacing - 25) })}
+          className="w-5 h-5 rounded flex items-center justify-center text-sm font-bold hover:bg-gray-100 transition-colors select-none"
+        >−</button>
+        <span className="text-xs w-8 text-center tabular-nums">{charSpacing}</span>
+        <button
+          onClick={() => onApply({ charSpacing: Math.min(1000, charSpacing + 25) })}
+          className="w-5 h-5 rounded flex items-center justify-center text-sm font-bold hover:bg-gray-100 transition-colors select-none"
+        >+</button>
+      </div>
+    </div>
+  );
+}
