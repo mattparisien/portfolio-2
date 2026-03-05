@@ -13,7 +13,6 @@ interface ToolbarProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onRecolorSelected: (c: string) => void;
-  selectedObjType: string;
 }
 
 export default function Toolbar({
@@ -26,7 +25,6 @@ export default function Toolbar({
   onZoomIn,
   onZoomOut,
   onRecolorSelected,
-  selectedObjType,
 }: ToolbarProps) {
   const isDrawing = tool === "pencil" || tool === "brush";
 

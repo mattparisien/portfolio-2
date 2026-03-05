@@ -21,7 +21,6 @@ export default function DrawingBoard() {
   const [isSyncing, setIsSyncing]     = useState(false);
   const [zoom, setZoom]               = useState(1);
   const [hasSelection, setHasSelection] = useState(false);
-  const [selectedObjType, setSelectedObjType] = useState("");
 
   // Keep refs in sync so async canvas callbacks always read the latest values
   const toolRef      = useRef<Tool>("select");
@@ -47,7 +46,6 @@ export default function DrawingBoard() {
     setTool,
     setZoom,
     setHasSelection,
-    setSelectedObjType,
     setIsSyncing,
   });
 
@@ -82,7 +80,6 @@ export default function DrawingBoard() {
           onZoomIn={zoomIn}
           onZoomOut={zoomOut}
           onRecolorSelected={recolorSelected}
-          selectedObjType={selectedObjType}
         />
       )}
       <DrawingTools

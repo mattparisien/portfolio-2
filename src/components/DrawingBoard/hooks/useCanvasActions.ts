@@ -3,7 +3,6 @@ import type { Canvas } from "fabric";
 import type { Tool, ShapeType, FabricMods } from "../types";
 import type { SaveableObj } from "./useBoardSync";
 import { BOARD_ID, BG_COLOR } from "../constants";
-import { applyRectCornerControl } from "../canvasUtils";
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 4;
@@ -133,8 +132,7 @@ export function useCanvasActions({
     let obj;
     switch (shapeType) {
       case "rect":
-        obj = new mods.Rect({ ...common, width: 140, height: 90, rx: 6, ry: 6 });
-        applyRectCornerControl(obj, mods);
+        obj = new mods.Rect({ ...common, width: 140, height: 90 });
         break;
       case "circle":
         obj = new mods.Circle({ ...common, radius: 65 });

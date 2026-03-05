@@ -3,7 +3,6 @@ import type { Canvas, IText } from "fabric";
 import type { Tool, FabricMods } from "../types";
 import type { SaveableObj } from "./useBoardSync";
 import { BOARD_ID, BG_COLOR } from "../constants";
-import { applyRectCornerControl } from "../canvasUtils";
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 4;
@@ -21,7 +20,6 @@ interface UseFabricCanvasOptions {
   setTool: (t: Tool) => void;
   setZoom: (z: number) => void;
   setHasSelection: (v: boolean) => void;
-  setSelectedObjType: (t: string) => void;
   setIsSyncing: (v: boolean) => void;
 }
 
@@ -40,7 +38,6 @@ export function useFabricCanvas({
   setTool,
   setZoom,
   setHasSelection,
-  setSelectedObjType,
   setIsSyncing,
 }: UseFabricCanvasOptions) {
   const modsRef = useRef<FabricMods | null>(null);
@@ -78,13 +75,14 @@ export function useFabricCanvas({
       // Never intercept while typing inside a text object
       if (!active || (active as { isEditing?: boolean }).isEditing) return;
 
-      // ── Layer order: [ = send backward, ] = bring forward ──────────────
+      // ── Layer order: [ = send to back, ] = bring to front ─────────────
       if (e.key === "[" || e.key === "]") {
         e.preventDefault();
+        const objects = fc.getObjects();
         if (e.key === "]") {
-          e.shiftKey ? fc.bringObjectToFront(active) : fc.bringObjectForward(active);
+          fc.moveObjectTo(active, objects.length - 1);
         } else {
-          e.shiftKey ? fc.sendObjectToBack(active) : fc.sendObjectBackwards(active);
+          fc.moveObjectTo(active, 0);
         }
         fc.requestRenderAll();
         saveObject(active as unknown as SaveableObj);
@@ -148,8 +146,8 @@ export function useFabricCanvas({
     canvasEl.addEventListener("touchend",   onTouchEnd);
 
     // ── Fabric async init ─────────────────────────────────────────────────
-    import("fabric").then(({ Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, Control, controlsUtils, util }) => {
-      modsRef.current = { Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, Control, controlsUtils, util };
+    import("fabric").then(({ Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, util }) => {
+      modsRef.current = { Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, util };
 
       const fc = new Canvas(canvasEl, {
         width: window.innerWidth,
@@ -185,13 +183,6 @@ export function useFabricCanvas({
               (obj as Record<string, unknown>).giphyId = src.giphyId;
               gifCountRef.current += 1;
             }
-            // Re-attach corner handle for persisted rects
-            if ((obj as { type?: string }).type === "rect") {
-              applyRectCornerControl(
-                obj as import("fabric").Rect,
-                { Control, controlsUtils, Point },
-              );
-            }
             fc.add(obj as Parameters<typeof fc.add>[0]);
           });
           if (gifCountRef.current > 0) startGifLoop();
@@ -214,19 +205,12 @@ export function useFabricCanvas({
 
       fc.on("selection:created", (e) => {
         setHasSelection(true);
-        const obj = e.selected?.[0];
-        const type = (obj as { type?: string })?.type ?? "";
-        setSelectedObjType(type);
       });
       fc.on("selection:updated", (e) => {
         setHasSelection(true);
-        const obj = e.selected?.[0];
-        const type = (obj as { type?: string })?.type ?? "";
-        setSelectedObjType(type);
       });
       fc.on("selection:cleared", () => {
         setHasSelection(false);
-        setSelectedObjType("");
         if (!pendingMultiSave) return;
         const objs = pendingMultiSave;
         pendingMultiSave = null;
@@ -288,7 +272,7 @@ export function useFabricCanvas({
       fabricRef.current = null;
       modsRef.current   = null;
     };
-  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setHasSelection, setSelectedObjType, setIsSyncing]);
+  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setHasSelection, setIsSyncing]);
 
   return { modsRef };
 }
