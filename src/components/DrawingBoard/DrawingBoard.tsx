@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useEffect } from "react";
 import type { Canvas } from "fabric";
 import Toolbar from "./components/Toolbar";
 import TextToolbar from "./components/TextToolbar";
@@ -13,7 +13,7 @@ import { useFabricCanvas } from "./hooks/useFabricCanvas";
 import { useCanvasActions } from "./hooks/useCanvasActions";
 import type { Tool, TextProps } from "./types";
 import { DEFAULT_TEXT_PROPS } from "./types";
-import { BG_COLOR } from "./constants";
+import { BG_COLOR, getOrCreateUser } from "./constants";
 import {
   RoomProvider as LiveblocksRoomProvider,
   useBroadcastEvent,
@@ -24,25 +24,6 @@ import {
 // React 19 / Liveblocks JSX compat shim — remove once Liveblocks ships React 19 types
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const RoomProvider = LiveblocksRoomProvider as any;
-
-// ── Per-session user identity ─────────────────────────────────────────────
-const CURSOR_COLORS = [
-  "#E63946", "#2A9D8F", "#E9C46A", "#F4A261", "#A8DADC",
-  "#6A4C93", "#1982C4", "#8AC926", "#FF595E", "#6A0572",
-];
-const ADJECTIVES = ["Cosmic", "Sleepy", "Bouncy", "Fuzzy", "Glitchy", "Sneaky", "Turbo", "Neon", "Silent", "Wobbly"];
-const ANIMALS    = ["Panda", "Walrus", "Ferret", "Gecko", "Narwhal", "Capybara", "Axolotl", "Quokka", "Lemur", "Tapir"];
-
-function getOrCreateUser(): { name: string; color: string } {
-  if (typeof window === "undefined") return { name: "User", color: CURSOR_COLORS[0] };
-  const stored = sessionStorage.getItem("lb_user");
-  if (stored) return JSON.parse(stored);
-  const name  = `${ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]} ${ANIMALS[Math.floor(Math.random() * ANIMALS.length)]}`;
-  const color = CURSOR_COLORS[Math.floor(Math.random() * CURSOR_COLORS.length)];
-  const user  = { name, color };
-  sessionStorage.setItem("lb_user", JSON.stringify(user));
-  return user;
-}
 
 // ── Inner board — uses Liveblocks hooks (must be inside RoomProvider) ─────
 function DrawingBoardInner() {
@@ -158,20 +139,25 @@ function DrawingBoardInner() {
   });
 
   // ── Track local cursor for other users to see ─────────────────────────
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    updateMyPresence({ cursor: { x: e.clientX, y: e.clientY } });
-  }, [updateMyPresence]);
-
-  const handleMouseLeave = useCallback(() => {
-    updateMyPresence({ cursor: null });
+  // Use a window-level listener so Fabric's canvas event interception
+  // doesn't swallow the events before React sees them.
+  useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      updateMyPresence({ cursor: { x: e.clientX, y: e.clientY } });
+    };
+    const onLeave = () => updateMyPresence({ cursor: null });
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerleave", onLeave);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerleave", onLeave);
+    };
   }, [updateMyPresence]);
 
   return (
     <div
       className="fixed inset-0 overflow-hidden"
       style={{ overscrollBehavior: "none" }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
     >
       <canvas ref={canvasElRef} className="absolute inset-0 touch-none" />
 
