@@ -71,11 +71,9 @@ export default function DrawingBoard() {
       <canvas ref={canvasElRef} className="absolute inset-0 touch-none" />
       {hasSelection && (
         <Toolbar
-          tool={tool}
           color={color}
           brushSize={brushSize}
           zoom={zoom}
-          onToolChange={setTool}
           onColorChange={setColor}
           onBrushSizeChange={setBrushSize}
           onZoomIn={zoomIn}

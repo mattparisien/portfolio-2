@@ -64,24 +64,30 @@ interface DrawingToolsProps {
 export default function DrawingTools({ tool, color, onToolChange, onAddShape, onAddText, onAddGif }: DrawingToolsProps) {
   // pinned = user clicked to keep open; hover = mouse is over trigger or popover
   const [shapePinned, setShapePinned] = useState(false);
-  const [shapeHover, setShapeHover] = useState(false);
-  const [gifPinned, setGifPinned] = useState(false);
-  const [gifHover, setGifHover] = useState(false);
+  const [shapeHover, setShapeHover]   = useState(false);
+  const [gifPinned, setGifPinned]     = useState(false);
+  const [gifHover, setGifHover]       = useState(false);
+  const [drawPinned, setDrawPinned]   = useState(false);
+  const [drawHover, setDrawHover]     = useState(false);
 
   const shapeOpen = shapePinned || shapeHover;
-  const gifOpen = gifPinned || gifHover;
+  const gifOpen   = gifPinned   || gifHover;
+  const drawOpen  = drawPinned  || drawHover;
 
-  const shapeRef = useRef<HTMLButtonElement>(null);
-  const popoverRef = useRef<HTMLDivElement>(null);
-  const gifRef = useRef<HTMLButtonElement>(null);
+  const shapeRef      = useRef<HTMLButtonElement>(null);
+  const popoverRef    = useRef<HTMLDivElement>(null);
+  const gifRef        = useRef<HTMLButtonElement>(null);
   const gifPopoverRef = useRef<HTMLDivElement>(null);
+  const drawRef       = useRef<HTMLButtonElement>(null);
+  const drawPopoverRef= useRef<HTMLDivElement>(null);
 
-  // hover delay timers so moving into the popover doesn't flicker it closed
   const shapeLeaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const gifLeaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const gifLeaveTimer   = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const drawLeaveTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cancelShapeLeave = () => { if (shapeLeaveTimer.current) clearTimeout(shapeLeaveTimer.current); };
   const cancelGifLeave   = () => { if (gifLeaveTimer.current)   clearTimeout(gifLeaveTimer.current); };
+  const cancelDrawLeave  = () => { if (drawLeaveTimer.current)  clearTimeout(drawLeaveTimer.current); };
 
   // click-outside dismisses only when pinned
   useEffect(() => {
@@ -111,6 +117,20 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [gifPinned]);
+
+  useEffect(() => {
+    if (!drawPinned) return;
+    const handler = (e: MouseEvent) => {
+      if (
+        !drawRef.current?.contains(e.target as Node) &&
+        !drawPopoverRef.current?.contains(e.target as Node)
+      ) {
+        setDrawPinned(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [drawPinned]);
 
   // Stop canvas scroll/touch handlers stealing events inside GIF popover
   useEffect(() => {
@@ -164,15 +184,97 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
         </svg>,
       )}
 
-      {/* Draw (pencil) */}
-      {toolBtn(
-        tool === "pencil",
-        () => onToolChange("pencil"),
-        "Draw",
-        <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm2.92 1.5H5v-.92l9.06-9.06.92.92-9.06 9.06zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-        </svg>,
-      )}
+      {/* Draw popover: pencil, brush, select */}
+      <div
+        className="relative"
+        onMouseEnter={() => { cancelDrawLeave(); setDrawHover(true); }}
+        onMouseLeave={() => { drawLeaveTimer.current = setTimeout(() => setDrawHover(false), 120); }}
+      >
+        <button
+          ref={drawRef}
+          title="Draw"
+          onClick={() => {
+            const nowPinned = !drawPinned;
+            setDrawPinned(nowPinned);
+            if (nowPinned) { setShapePinned(false); setShapeHover(false); setGifPinned(false); setGifHover(false); }
+          }}
+          className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110"
+          style={{
+            background: drawPinned ? "#000" : (tool === "pencil" || tool === "brush" || tool === "eraser") && !drawOpen ? "#000" : drawHover ? "rgba(0,0,0,0.07)" : "transparent",
+            color: drawPinned || ((tool === "pencil" || tool === "brush" || tool === "eraser") && !drawOpen) ? "#fff" : "#111",
+          }}
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm2.92 1.5H5v-.92l9.06-9.06.92.92-9.06 9.06zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+          </svg>
+        </button>
+
+        {drawOpen && (
+          <div
+            ref={drawPopoverRef}
+            className="absolute top-0 left-[calc(100%+10px)] flex gap-2 p-3 rounded-2xl shadow-xl"
+            style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)" }}
+          >
+            {/* Pencil */}
+            <button
+              title="Pencil"
+              onClick={() => { onToolChange("pencil"); setDrawPinned(false); setDrawHover(false); }}
+              className="flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px]"
+              style={{ background: tool === "pencil" ? "#000" : "transparent", color: tool === "pencil" ? "#fff" : "#111" }}
+              onMouseEnter={e => { if (tool !== "pencil") (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.07)"; }}
+              onMouseLeave={e => { if (tool !== "pencil") (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm2.92 1.5H5v-.92l9.06-9.06.92.92-9.06 9.06zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+              </svg>
+              <span className="text-[10px] text-gray-500 leading-none" style={{ color: tool === "pencil" ? "#fff" : undefined }}>Pencil</span>
+            </button>
+
+            {/* Brush */}
+            <button
+              title="Brush"
+              onClick={() => { onToolChange("brush"); setDrawPinned(false); setDrawHover(false); }}
+              className="flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px]"
+              style={{ background: tool === "brush" ? "#000" : "transparent", color: tool === "brush" ? "#fff" : "#111" }}
+              onMouseEnter={e => { if (tool !== "brush") (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.07)"; }}
+              onMouseLeave={e => { if (tool !== "brush") (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                <path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34a1 1 0 0 0-1.41 0L9 12.25 11.75 15l8.96-8.96a1 1 0 0 0 0-1.41z"/>
+              </svg>
+              <span className="text-[10px] text-gray-500 leading-none" style={{ color: tool === "brush" ? "#fff" : undefined }}>Brush</span>
+            </button>
+
+            {/* Select */}
+            <button
+              title="Select"
+              onClick={() => { onToolChange("select"); setDrawPinned(false); setDrawHover(false); }}
+              className="flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px]"
+              style={{ background: tool === "select" ? "#000" : "transparent", color: tool === "select" ? "#fff" : "#111" }}
+              onMouseEnter={e => { if (tool !== "select") (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.07)"; }}
+              onMouseLeave={e => { if (tool !== "select") (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                <path d="M4 2 L4 18 L8.5 13.5 L11.5 20 L13.5 19 L10.5 12.5 L16 12.5 Z" />
+              </svg>
+              <span className="text-[10px] text-gray-500 leading-none" style={{ color: tool === "select" ? "#fff" : undefined }}>Select</span>
+            </button>
+
+            {/* Eraser */}
+            <button
+              title="Eraser"
+              onClick={() => { onToolChange("eraser"); setDrawPinned(false); setDrawHover(false); }}
+              className="flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px]"
+              style={{ background: tool === "eraser" ? "#000" : "transparent", color: tool === "eraser" ? "#fff" : "#111" }}
+              onMouseEnter={e => { if (tool !== "eraser") (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.07)"; }}
+              onMouseLeave={e => { if (tool !== "eraser") (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+            >
+              <span className="text-xl leading-none">🧹</span>
+              <span className="text-[10px] text-gray-500 leading-none" style={{ color: tool === "eraser" ? "#fff" : undefined }}>Eraser</span>
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Shapes */}
       <div
@@ -186,7 +288,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
           onClick={() => {
             const nowPinned = !shapePinned;
             setShapePinned(nowPinned);
-            if (nowPinned) { setGifPinned(false); setGifHover(false); onToolChange("shape"); }
+            if (nowPinned) { setGifPinned(false); setGifHover(false); setDrawPinned(false); setDrawHover(false); onToolChange("shape"); }
           }}
           className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110"
           style={{
@@ -239,7 +341,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
           onClick={() => {
             const nowPinned = !gifPinned;
             setGifPinned(nowPinned);
-            if (nowPinned) { setShapePinned(false); setShapeHover(false); }
+            if (nowPinned) { setShapePinned(false); setShapeHover(false); setDrawPinned(false); setDrawHover(false); }
           }}
           className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110"
           style={{

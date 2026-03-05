@@ -8,6 +8,14 @@ const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 4;
 const ZOOM_STEP = 0.1;
 
+function hexToRgba(hex: string, alpha: number): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.substring(0, 2), 16);
+  const g = parseInt(h.substring(2, 4), 16);
+  const b = parseInt(h.substring(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
 interface UseCanvasActionsOptions {
   fabricRef: React.MutableRefObject<Canvas | null>;
   modsRef: React.MutableRefObject<FabricMods | null>;
@@ -45,13 +53,21 @@ export function useCanvasActions({
     const fc = fabricRef.current;
     const mods = modsRef.current;
     if (!fc || !mods) return;
-    if (tool === "pencil") {
+    if (tool === "pencil" || tool === "brush") {
       fc.isDrawingMode = true;
       fc.selection = false;
-      const brush = new mods.PencilBrush(fc);
-      brush.color = color;
-      brush.width = brushSize;
-      fc.freeDrawingBrush = brush;
+      const b = new mods.PencilBrush(fc);
+      b.color = color;
+      if (tool === "brush") {
+        // Soft round brush: wider, semi-transparent
+        b.width = brushSize * 3;
+        (b as unknown as Record<string, unknown>).strokeLineCap = "round";
+        (b as unknown as Record<string, unknown>).strokeLineJoin = "round";
+        b.color = hexToRgba(color, 0.55);
+      } else {
+        b.width = brushSize;
+      }
+      fc.freeDrawingBrush = b;
     } else if (tool === "select" || tool === "shape") {
       fc.isDrawingMode = false;
       fc.selection = true;
@@ -62,9 +78,10 @@ export function useCanvasActions({
       fc.discardActiveObject();
     }
     fc.defaultCursor =
-      tool === "eraser" ? "cell" :
-      tool === "text"   ? "text" :
-      tool === "select" || tool === "shape" ? "default" :
+      tool === "eraser"               ? "cell"      :
+      tool === "text"                 ? "text"      :
+      tool === "pencil" || tool === "brush" ? "crosshair" :
+      tool === "select" || tool === "shape" ? "default"   :
       "crosshair";
     fc.requestRenderAll();
   }, [tool, color, brushSize, fabricRef, modsRef]);

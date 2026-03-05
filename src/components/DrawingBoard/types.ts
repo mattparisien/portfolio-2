@@ -1,6 +1,6 @@
 import type { Canvas, PencilBrush, IText, Point as FabricPoint, Rect, Circle, Triangle, Path, FabricImage } from "fabric";
 
-export type Tool = "pencil" | "eraser" | "text" | "shape" | "select";
+export type Tool = "pencil" | "brush" | "eraser" | "text" | "shape" | "select";
 
 export type FabricMods = {
   Canvas: typeof Canvas;
