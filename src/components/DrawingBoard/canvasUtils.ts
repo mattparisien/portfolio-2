@@ -1,5 +1,71 @@
-import type { Tool, StrokeRecord } from "./types";
+import type { Tool, StrokeRecord, FabricMods } from "./types";
 import { BG_COLOR } from "./constants";
+import type { Rect } from "fabric";
+
+/** Attaches a corner-radius drag handle to a Fabric Rect.
+ *  The handle lives at the top-right corner and follows rx visually.
+ */
+export function applyRectCornerControl(
+  rect: Rect,
+  mods: Pick<FabricMods, "Control" | "controlsUtils" | "Point">,
+) {
+  const { Control, controlsUtils, Point } = mods;
+
+  const cornerControl = new Control({
+    x: 0.5,
+    y: -0.5,
+    cursorStyle: "crosshair",
+    actionName: "cornerRadius",
+
+    // Move visually with rx so the handle sits right at the rounded corner
+    positionHandler(dim, finalMatrix, fabricObject) {
+      const obj = fabricObject as Rect;
+      const rx = obj.rx ?? 0;
+      const hw = (obj.width  ?? 0) / 2;
+      const hh = (obj.height ?? 0) / 2;
+      // Place handle on the top edge, rx pixels inward from right corner
+      const local = new Point(hw - rx, -hh);
+      return local.transform(finalMatrix);
+    },
+
+    actionHandler(_ev, transform, x, y) {
+      const target = transform.target as Rect;
+      // Get pointer in local (center-origin) coords
+      const local = controlsUtils.getLocalPoint(
+        transform, "center", "center", x, y,
+      );
+      const maxR = Math.min(target.width ?? 0, target.height ?? 0) / 2;
+      // Distance from right edge gives the radius
+      const rx = Math.max(0, Math.min(maxR, (target.width ?? 0) / 2 - local.x));
+      target.set({ rx, ry: rx });
+      return true;
+    },
+
+    render(ctx, left, top) {
+      const size = 10;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(left, top, size / 2, 0, Math.PI * 2);
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = "#4f8ef7";
+      ctx.lineWidth = 2;
+      ctx.fill();
+      ctx.stroke();
+      // mini arc glyph
+      ctx.beginPath();
+      ctx.arc(left + 1, top + 1, 2.5, Math.PI, Math.PI * 1.5);
+      ctx.strokeStyle = "#4f8ef7";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.restore();
+    },
+  });
+
+  rect.controls = {
+    ...rect.controls,
+    cornerRadius: cornerControl,
+  };
+}
 
 export function applyCtxStyles(
   ctx: CanvasRenderingContext2D,

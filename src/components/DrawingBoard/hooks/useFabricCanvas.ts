@@ -3,6 +3,7 @@ import type { Canvas, IText } from "fabric";
 import type { Tool, FabricMods } from "../types";
 import type { SaveableObj } from "./useBoardSync";
 import { BOARD_ID, BG_COLOR } from "../constants";
+import { applyRectCornerControl } from "../canvasUtils";
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 4;
@@ -21,7 +22,6 @@ interface UseFabricCanvasOptions {
   setZoom: (z: number) => void;
   setHasSelection: (v: boolean) => void;
   setSelectedObjType: (t: string) => void;
-  setCornerRadius: (r: number) => void;
   setIsSyncing: (v: boolean) => void;
 }
 
@@ -41,7 +41,6 @@ export function useFabricCanvas({
   setZoom,
   setHasSelection,
   setSelectedObjType,
-  setCornerRadius,
   setIsSyncing,
 }: UseFabricCanvasOptions) {
   const modsRef = useRef<FabricMods | null>(null);
@@ -149,8 +148,8 @@ export function useFabricCanvas({
     canvasEl.addEventListener("touchend",   onTouchEnd);
 
     // ── Fabric async init ─────────────────────────────────────────────────
-    import("fabric").then(({ Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, util }) => {
-      modsRef.current = { Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, util };
+    import("fabric").then(({ Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, Control, controlsUtils, util }) => {
+      modsRef.current = { Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, Control, controlsUtils, util };
 
       const fc = new Canvas(canvasEl, {
         width: window.innerWidth,
@@ -186,6 +185,13 @@ export function useFabricCanvas({
               (obj as Record<string, unknown>).giphyId = src.giphyId;
               gifCountRef.current += 1;
             }
+            // Re-attach corner handle for persisted rects
+            if ((obj as { type?: string }).type === "rect") {
+              applyRectCornerControl(
+                obj as import("fabric").Rect,
+                { Control, controlsUtils, Point },
+              );
+            }
             fc.add(obj as Parameters<typeof fc.add>[0]);
           });
           if (gifCountRef.current > 0) startGifLoop();
@@ -211,14 +217,12 @@ export function useFabricCanvas({
         const obj = e.selected?.[0];
         const type = (obj as { type?: string })?.type ?? "";
         setSelectedObjType(type);
-        if (type === "rect") setCornerRadius((obj as { rx?: number }).rx ?? 0);
       });
       fc.on("selection:updated", (e) => {
         setHasSelection(true);
         const obj = e.selected?.[0];
         const type = (obj as { type?: string })?.type ?? "";
         setSelectedObjType(type);
-        if (type === "rect") setCornerRadius((obj as { rx?: number }).rx ?? 0);
       });
       fc.on("selection:cleared", () => {
         setHasSelection(false);
@@ -284,7 +288,7 @@ export function useFabricCanvas({
       fabricRef.current = null;
       modsRef.current   = null;
     };
-  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setHasSelection, setSelectedObjType, setCornerRadius, setIsSyncing]);
+  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setHasSelection, setSelectedObjType, setIsSyncing]);
 
   return { modsRef };
 }

@@ -1,4 +1,4 @@
-import type { Canvas, PencilBrush, IText, Point as FabricPoint, Rect, Circle, Triangle, Path, FabricImage } from "fabric";
+import type { Canvas, PencilBrush, IText, Point as FabricPoint, Rect, Circle, Triangle, Path, FabricImage, Control } from "fabric";
 
 export type Tool = "pencil" | "brush" | "text" | "shape" | "select";
 
@@ -12,6 +12,8 @@ export type FabricMods = {
   Triangle: typeof Triangle;
   Path: typeof Path;
   FabricImage: typeof FabricImage;
+  Control: typeof Control;
+  controlsUtils: (typeof import("fabric"))["controlsUtils"];
   util: (typeof import("fabric"))["util"];
 };
 
