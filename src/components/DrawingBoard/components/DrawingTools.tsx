@@ -170,7 +170,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
 
   return (
     <div
-      className="absolute top-5 left-5 flex flex-col gap-1 p-2 rounded-2xl shadow-xl"
+      className="absolute top-5 left-5 flex flex-col gap-1 p-2 rounded-2xl shadow-xl z-[200]"
       style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(12px)" }}
     >
       {/* Text */}

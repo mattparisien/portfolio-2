@@ -20,8 +20,8 @@ export const BG_COLOR = "#f5f0e8";
 // ── Presence / multiplayer ────────────────────────────────────────────────
 
 export const CURSOR_COLORS = [
-  "#E63946", "#2A9D8F", "#E9C46A", "#F4A261", "#A8DADC",
-  "#6A4C93", "#1982C4", "#8AC926", "#FF595E", "#6A0572",
+  "#359ED7", "#FE7336", "#68FFB0", "#E4FF98", "#C5B9FF",
+  "#FF00E7", "#FEC8C2", "#FF3737", "#4D4BFD", "#711B1C",
 ] as const;
 
 export const CURSOR_ADJECTIVES = [

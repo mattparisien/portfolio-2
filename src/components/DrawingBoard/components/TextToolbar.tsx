@@ -55,7 +55,7 @@ export default function TextToolbar({ textProps, color, onColorChange, onApply }
 
   return (
     <div
-      className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-2 rounded-2xl shadow-xl overflow-x-auto"
+      className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-2 rounded-2xl shadow-xl overflow-x-auto z-[200]"
       style={{
         background: "rgba(255,255,255,0.92)",
         backdropFilter: "blur(12px)",

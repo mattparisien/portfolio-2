@@ -30,7 +30,7 @@ export default function Toolbar({
 
   return (
     <div
-      className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl"
+      className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl z-[200]"
       style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(12px)" }}
     >
       {/* Color swatches */}

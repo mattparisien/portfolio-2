@@ -6,7 +6,7 @@ import { useOthers } from "@/liveblocks.config";
 function Cursor({ x, y, name, color }: { x: number; y: number; name: string; color: string }) {
   return (
     <div
-      className="pointer-events-none fixed z-[9999]"
+      className="pointer-events-none fixed z-[100]"
       style={{
         left: x,
         top: y,
