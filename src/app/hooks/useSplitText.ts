@@ -73,7 +73,7 @@ export function useSplitText<T extends HTMLElement = HTMLElement>(
     setResult({
       chars: instance.chars as Element[],
       words: instance.words as Element[],
-      wnes: instance.lines as Element[],
+      wwnes: instance.lines as Element[],
       splitInstance: instance,
       isReady: true,
     });
