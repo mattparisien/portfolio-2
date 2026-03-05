@@ -70,11 +70,26 @@ export function useFabricCanvas({
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "Delete" && e.key !== "Backspace") return;
       const fc = fabricRef.current;
       if (!fc) return;
       const active = fc.getActiveObject();
+      // Never intercept while typing inside a text object
       if (!active || (active as { isEditing?: boolean }).isEditing) return;
+
+      // ── Layer order: [ = send backward, ] = bring forward ──────────────
+      if (e.key === "[" || e.key === "]") {
+        e.preventDefault();
+        if (e.key === "]") {
+          e.shiftKey ? fc.bringObjectToFront(active) : fc.bringObjectForward(active);
+        } else {
+          e.shiftKey ? fc.sendObjectToBack(active) : fc.sendObjectBackwards(active);
+        }
+        fc.requestRenderAll();
+        saveObject(active as unknown as SaveableObj);
+        return;
+      }
+
+      if (e.key !== "Delete" && e.key !== "Backspace") return;
       e.preventDefault();
       pendingMultiSave = null;
       const isMulti = (active as { type?: string }).type === "activeSelection";
