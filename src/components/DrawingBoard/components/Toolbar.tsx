@@ -1,8 +1,10 @@
 "use client";
 
+import type { Tool } from "../types";
 import { COLORS } from "../constants";
 
 interface ToolbarProps {
+  tool: Tool;
   color: string;
   brushSize: number;
   zoom: number;
@@ -15,6 +17,7 @@ interface ToolbarProps {
 }
 
 export default function Toolbar({
+  tool,
   color,
   brushSize,
   zoom,
@@ -25,6 +28,7 @@ export default function Toolbar({
   onClear,
   onRecolorSelected,
 }: ToolbarProps) {
+  const isDrawing = tool === "pencil" || tool === "brush";
 
   return (
     <div
@@ -32,14 +36,18 @@ export default function Toolbar({
       style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(12px)" }}
     >
       {/* Color swatches */}
-      <div className="flex gap-1.5 border-r border-gray-200 pr-3">
+      <div className="flex flex-col gap-1.5 border-r border-gray-200 pr-3">
+        {isDrawing && (
+          <span className="text-[9px] font-semibold uppercase tracking-widest text-gray-400 text-center select-none">Stroke</span>
+        )}
+        <div className="flex gap-1.5">
         {COLORS.map((c) => (
           <button
             key={c}
             title={c}
             onClick={() => {
               onColorChange(c);
-              onRecolorSelected(c);
+              if (!isDrawing) onRecolorSelected(c);
             }}
             className="w-6 h-6 rounded-full transition-transform hover:scale-110"
             style={{
@@ -49,28 +57,35 @@ export default function Toolbar({
             }}
           />
         ))}
+        </div>
       </div>
 
       {/* Brush size slider */}
-      <div className="flex items-center gap-2 border-r border-gray-200 pr-3">
-        <span
-          className="rounded-full block flex-shrink-0"
-          style={{
-            width: Math.min(Math.max(brushSize, 4), 24),
-            height: Math.min(Math.max(brushSize, 4), 24),
-            background: "#333",
-          }}
-        />
-        <input
-          type="range"
-          min={1}
-          max={60}
-          value={brushSize}
-          onChange={(e) => onBrushSizeChange(Number(e.target.value))}
-          className="w-24 accent-black cursor-pointer"
-          title={`${brushSize}px`}
-        />
-        <span className="text-xs text-gray-500 w-6 text-right">{brushSize}</span>
+      <div className="flex flex-col gap-1 border-r border-gray-200 pr-3">
+        {isDrawing && (
+          <span className="text-[9px] font-semibold uppercase tracking-widest text-gray-400 text-center select-none">Weight</span>
+        )}
+        <div className="flex items-center gap-2">
+          <span
+            className="rounded-full block flex-shrink-0"
+            style={{
+              width: Math.min(Math.max(brushSize, 4), 24),
+              height: Math.min(Math.max(brushSize, 4), 24),
+              background: color,
+              border: "1px solid rgba(0,0,0,0.15)",
+            }}
+          />
+          <input
+            type="range"
+            min={1}
+            max={60}
+            value={brushSize}
+            onChange={(e) => onBrushSizeChange(Number(e.target.value))}
+            className="w-24 accent-black cursor-pointer"
+            title={`${brushSize}px`}
+          />
+          <span className="text-xs text-gray-500 w-6 text-right">{brushSize}</span>
+        </div>
       </div>
 
       {/* Clear */}

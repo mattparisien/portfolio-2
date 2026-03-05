@@ -69,8 +69,9 @@ export default function DrawingBoard() {
   return (
     <div className="fixed inset-0 overflow-hidden" style={{ overscrollBehavior: "none" }}>
       <canvas ref={canvasElRef} className="absolute inset-0 touch-none" />
-      {hasSelection && (
+      {(hasSelection || tool === "pencil" || tool === "brush") && (
         <Toolbar
+          tool={tool}
           color={color}
           brushSize={brushSize}
           zoom={zoom}
