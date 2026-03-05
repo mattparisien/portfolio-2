@@ -14,26 +14,18 @@ function Cursor({ x, y, name, color }: { x: number; y: number; name: string; col
         willChange: "left, top",
       }}
     >
-      {/* Cursor arrow — Figma-accurate shape, tip at 0,0 */}
+      {/* Custom cursor arrow */}
       <svg
         width="20"
-        height="24"
-        viewBox="0 0 20 24"
+        height="22"
+        viewBox="0 0 317 354"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        style={{ display: "block", filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.4))" }}
+        style={{ display: "block" }}
       >
         <path
-          d="M0 0 L0 20 L5 15 L8.5 23 L11 22 L7.5 14 L14 14 Z"
+          d="M0.222591 12C-1.53354 3.60665 7.45159 -2.92141 14.8914 1.34245L311.358 171.251C318.902 175.574 317.649 186.816 309.339 189.372L165.447 233.635C163.219 234.321 161.303 235.767 160.033 237.723L88.0181 348.658C83.1885 356.097 71.7717 353.964 69.9552 345.282L0.222591 12Z"
           fill={color}
-        />
-        <path
-          d="M0 0 L0 20 L5 15 L8.5 23 L11 22 L7.5 14 L14 14 Z"
-          fill="none"
-          stroke="white"
-          strokeWidth="1.25"
-          strokeLinejoin="round"
-          strokeLinecap="round"
         />
       </svg>
 
@@ -48,7 +40,6 @@ function Cursor({ x, y, name, color }: { x: number; y: number; name: string; col
           padding: "3px 8px",
           fontSize: 13,
           lineHeight: "18px",
-          boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
           letterSpacing: "0.01em",
         }}
       >
