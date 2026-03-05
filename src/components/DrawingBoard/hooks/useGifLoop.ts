@@ -10,10 +10,35 @@ export function useGifLoop(fabricRef: MutableRefObject<Canvas | null>) {
 
   const startGifLoop = useCallback(() => {
     if (gifRafRef.current !== null) return;
-    const loop = () => {
-      fabricRef.current?.requestRenderAll();
+
+    const loop = (timestamp: number) => {
+      const fc = fabricRef.current;
+      if (fc) {
+        fc.getObjects().forEach((obj) => {
+          const o = obj as unknown as Record<string, unknown>;
+          if (!o.giphyId) return;
+
+          const delays        = o._gifDelays       as number[];
+          const totalFrames   = o._gifTotalFrames  as number;
+          const frameWidth    = o._gifFrameWidth   as number;
+          const currentFrame  = (o._gifCurrentFrame  as number) ?? 0;
+          const lastFrameTime = (o._gifLastFrameTime as number) ?? 0;
+          const delay         = delays?.[currentFrame] ?? 100;
+
+          if (timestamp - lastFrameTime >= delay) {
+            const next = (currentFrame + 1) % totalFrames;
+            o._gifCurrentFrame  = next;
+            o._gifLastFrameTime = timestamp;
+            // Scroll the spritesheet to the new frame
+            (obj as unknown as { cropX: number }).cropX = next * frameWidth;
+            (obj as unknown as { dirty: boolean }).dirty = true;
+          }
+        });
+        fc.requestRenderAll();
+      }
       gifRafRef.current = requestAnimationFrame(loop);
     };
+
     gifRafRef.current = requestAnimationFrame(loop);
   }, [fabricRef]);
 

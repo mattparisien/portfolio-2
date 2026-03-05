@@ -3,18 +3,11 @@ import type { Canvas } from "fabric";
 import type { Tool, ShapeType, FabricMods } from "../types";
 import type { SaveableObj } from "./useBoardSync";
 import { BOARD_ID, BG_COLOR } from "../constants";
+import { decodeGif } from "../gifDecoder";
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 4;
 const ZOOM_STEP = 0.1;
-
-function hexToRgba(hex: string, alpha: number): string {
-  const h = hex.replace("#", "");
-  const r = parseInt(h.substring(0, 2), 16);
-  const g = parseInt(h.substring(2, 4), 16);
-  const b = parseInt(h.substring(4, 6), 16);
-  return `rgba(${r},${g},${b},${alpha})`;
-}
 
 interface UseCanvasActionsOptions {
   fabricRef: React.MutableRefObject<Canvas | null>;
@@ -160,44 +153,55 @@ export function useCanvasActions({
   }, [fabricRef, modsRef, colorRef, saveObject, setTool]);
 
   // ── Add GIF ────────────────────────────────────────────────────────────
-  // ── Add GIF ────────────────────────────────────────────────────────────
   const addGif = useCallback((giphyId: string, url: string) => {
     const fc = fabricRef.current;
     const mods = modsRef.current;
     if (!fc || !mods) return;
 
-    // Use a plain <img> element — the browser natively animates GIFs inside
-    // <img> tags. The RAF loop calls requestRenderAll() each tick, which calls
-    // ctx.drawImage(imgEl) and picks up whatever frame the browser is showing.
-    const imgEl = document.createElement("img");
-    imgEl.crossOrigin = "anonymous";
-    imgEl.onload = () => {
-      const vpt = fc.viewportTransform as number[];
-      const cx = (window.innerWidth  / 2 - vpt[4]) / vpt[0];
-      const cy = (window.innerHeight / 2 - vpt[5]) / vpt[3];
-      const scale = Math.min(1, 280 / (imgEl.naturalWidth || 280));
+    fetch(url)
+      .then((r) => r.arrayBuffer())
+      .then((buffer) => {
+        const { spritesheet, frameWidth, frameHeight, totalFrames, delays } = decodeGif(buffer);
 
-      const img = new mods.FabricImage(imgEl as unknown as HTMLImageElement, {
-        left: cx,
-        top:  cy,
-        originX: "center",
-        originY: "center",
-        scaleX: scale,
-        scaleY: scale,
-        selectable: true,
-        hasControls: true,
-      });
-      (img as unknown as Record<string, unknown>).giphyId = giphyId;
-      fc.add(img);
-      fc.setActiveObject(img);
-      fc.requestRenderAll();
-      saveObject(img);
-      setTool("select");
-      gifCountRef.current += 1;
-      startGifLoop();
-    };
-    imgEl.onerror = (e) => console.error("[GIF] failed to load image", e);
-    imgEl.src = url;
+        const vpt = fc.viewportTransform as number[];
+        const cx = (window.innerWidth  / 2 - vpt[4]) / vpt[0];
+        const cy = (window.innerHeight / 2 - vpt[5]) / vpt[3];
+        const scale = Math.min(1, 280 / frameWidth);
+
+        const img = new mods.FabricImage(spritesheet as unknown as HTMLImageElement, {
+          left: cx,
+          top:  cy,
+          originX: "center",
+          originY: "center",
+          scaleX: scale,
+          scaleY: scale,
+          cropX: 0,
+          cropY: 0,
+          width: frameWidth,
+          height: frameHeight,
+          objectCaching: false,
+          selectable: true,
+          hasControls: true,
+        });
+
+        const o = img as unknown as Record<string, unknown>;
+        o.giphyId           = giphyId;
+        o._gifFrameWidth    = frameWidth;
+        o._gifFrameHeight   = frameHeight;
+        o._gifTotalFrames   = totalFrames;
+        o._gifDelays        = delays;
+        o._gifCurrentFrame  = 0;
+        o._gifLastFrameTime = 0;
+
+        fc.add(img);
+        fc.setActiveObject(img);
+        fc.requestRenderAll();
+        saveObject(img);
+        setTool("select");
+        gifCountRef.current += 1;
+        startGifLoop();
+      })
+      .catch((e) => console.error("[GIF] failed to load:", e));
   }, [fabricRef, modsRef, saveObject, startGifLoop, gifCountRef, setTool]);
 
   // ── Recolor selected object ────────────────────────────────────────────
