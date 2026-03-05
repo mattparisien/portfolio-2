@@ -160,16 +160,24 @@ export function useCanvasActions({
   }, [fabricRef, modsRef, colorRef, saveObject, setTool]);
 
   // ── Add GIF ────────────────────────────────────────────────────────────
+  // ── Add GIF ────────────────────────────────────────────────────────────
   const addGif = useCallback((giphyId: string, url: string) => {
     const fc = fabricRef.current;
     const mods = modsRef.current;
     if (!fc || !mods) return;
-    mods.FabricImage.fromURL(url, { crossOrigin: "anonymous" }).then((img) => {
+
+    // Use a plain <img> element — the browser natively animates GIFs inside
+    // <img> tags. The RAF loop calls requestRenderAll() each tick, which calls
+    // ctx.drawImage(imgEl) and picks up whatever frame the browser is showing.
+    const imgEl = document.createElement("img");
+    imgEl.crossOrigin = "anonymous";
+    imgEl.onload = () => {
       const vpt = fc.viewportTransform as number[];
       const cx = (window.innerWidth  / 2 - vpt[4]) / vpt[0];
       const cy = (window.innerHeight / 2 - vpt[5]) / vpt[3];
-      const scale = Math.min(1, 280 / (img.width ?? 280));
-      img.set({
+      const scale = Math.min(1, 280 / (imgEl.naturalWidth || 280));
+
+      const img = new mods.FabricImage(imgEl as unknown as HTMLImageElement, {
         left: cx,
         top:  cy,
         originX: "center",
@@ -187,7 +195,9 @@ export function useCanvasActions({
       setTool("select");
       gifCountRef.current += 1;
       startGifLoop();
-    }).catch((e) => console.error("Failed to load GIF", e));
+    };
+    imgEl.onerror = (e) => console.error("[GIF] failed to load image", e);
+    imgEl.src = url;
   }, [fabricRef, modsRef, saveObject, startGifLoop, gifCountRef, setTool]);
 
   // ── Recolor selected object ────────────────────────────────────────────
