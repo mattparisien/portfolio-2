@@ -68,6 +68,7 @@ export function useFabricCanvas({
 }: UseFabricCanvasOptions) {
   const modsRef = useRef<FabricMods | null>(null);
   const clipboardRef = useRef<unknown[]>([]);
+  const isPastingRef = useRef(false);
 
   useEffect(() => {
     const canvasEl = canvasElRef.current;
@@ -125,10 +126,12 @@ export function useFabricCanvas({
         // Clone from clipboard so we can paste multiple times
         Promise.all(clipboardRef.current.map((o) => (o as unknown as { clone(): Promise<unknown> }).clone()))
           .then((clones) => {
+            isPastingRef.current = true;
             fc.discardActiveObject();
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (clones as any[]).forEach((clone) => {
-              delete clone.boardObjectId; // treat as new object
+              // Explicitly clear the old ID so saveObject assigns a fresh UUID
+              (clone as Record<string, unknown>).boardObjectId = undefined;
               clone.set({ left: (clone.left ?? 0) + OFFSET, top: (clone.top ?? 0) + OFFSET });
               fc.add(clone);
               saveObject(clone as unknown as SaveableObj);
@@ -143,6 +146,7 @@ export function useFabricCanvas({
               fc.setActiveObject(sel as any);
             }
             fc.requestRenderAll();
+            isPastingRef.current = false;
           });
         return;
       }
@@ -317,6 +321,7 @@ export function useFabricCanvas({
       fc.on("path:created", (e) => { saveObject(e.path); });
 
       fc.on("object:modified", (e) => {
+        if (isPastingRef.current) return; // don't double-save during paste
         const target = e.target;
         if (!target) return;
         if ((target as { type?: string }).type === "activeSelection") {
