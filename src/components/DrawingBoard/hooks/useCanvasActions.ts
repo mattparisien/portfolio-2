@@ -3,6 +3,7 @@ import type { Dispatch, SetStateAction } from "react";
 import type { Canvas, IText } from "fabric";
 import type { Tool, ShapeType, FabricMods, TextProps } from "../types";
 import type { SaveableObj } from "./useBoardSync";
+import type { RoomEvent } from "@/liveblocks.config";
 import { BOARD_ID, BG_COLOR } from "../constants";
 import { decodeGif } from "../gifDecoder";
 
@@ -25,6 +26,7 @@ interface UseCanvasActionsOptions {
   setTool: (t: Tool) => void;
   setZoom: (z: number) => void;
   setTextProps: Dispatch<SetStateAction<TextProps>>;
+  broadcast?: (event: RoomEvent) => void;
 }
 
 export function useCanvasActions({
@@ -42,6 +44,7 @@ export function useCanvasActions({
   setTool,
   setZoom,
   setTextProps,
+  broadcast,
 }: UseCanvasActionsOptions) {
 
   // ── Sync tool / color / brush → fabric ────────────────────────────────
@@ -259,8 +262,10 @@ export function useCanvasActions({
     fc.renderAll();
     gifCountRef.current = 0;
     stopGifLoop();
-    fetch(`/api/board-objects?boardId=${BOARD_ID}`, { method: "DELETE" }).catch(console.error);
-  }, [fabricRef, gifCountRef, stopGifLoop]);
+    fetch(`/api/board-objects?boardId=${BOARD_ID}`, { method: "DELETE" })
+      .then(() => broadcast?.({ type: "CANVAS_CLEARED" }))
+      .catch(console.error);
+  }, [fabricRef, gifCountRef, stopGifLoop, broadcast]);
 
   // ── Apply text property to active IText ───────────────────────────────
   const applyTextProp = useCallback((updates: Partial<TextProps>) => {

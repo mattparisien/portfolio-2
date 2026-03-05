@@ -6,6 +6,7 @@ import { DEFAULT_TEXT_PROPS } from "../types";
 import type { SaveableObj } from "./useBoardSync";
 import { BOARD_ID, BG_COLOR } from "../constants";
 import { decodeGif } from "../gifDecoder";
+import type { RoomEvent } from "@/liveblocks.config";
 
 function extractTextProps(txt: IText): TextProps {
   return {
@@ -40,6 +41,7 @@ interface UseFabricCanvasOptions {
   setSelectedIsText: (v: boolean) => void;
   setTextProps: Dispatch<SetStateAction<TextProps>>;
   setIsSyncing: (v: boolean) => void;
+  broadcast?: (event: RoomEvent) => void;
 }
 
 /** Initialises the Fabric canvas, registers all event listeners, loads
@@ -60,6 +62,7 @@ export function useFabricCanvas({
   setSelectedIsText,
   setTextProps,
   setIsSyncing,
+  broadcast,
 }: UseFabricCanvasOptions) {
   const modsRef = useRef<FabricMods | null>(null);
 
@@ -122,7 +125,9 @@ export function useFabricCanvas({
         if (oid) {
           fetch(`/api/board-objects?boardId=${BOARD_ID}&objectId=${encodeURIComponent(oid)}`, {
             method: "DELETE",
-          }).catch(console.error);
+          })
+            .then(() => broadcast?.({ type: "OBJECT_DELETED", objectId: oid }))
+            .catch(console.error);
         }
         if ((obj as { giphyId?: string }).giphyId) {
           gifCountRef.current = Math.max(0, gifCountRef.current - 1);
@@ -346,7 +351,7 @@ export function useFabricCanvas({
       fabricRef.current = null;
       modsRef.current   = null;
     };
-  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setHasSelection, setSelectedIsText, setTextProps, setIsSyncing]);
+  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setHasSelection, setSelectedIsText, setTextProps, setIsSyncing, broadcast]);
 
   return { modsRef };
 }
