@@ -1,6 +1,6 @@
 import { useRef, useCallback } from "react";
 import type { MutableRefObject } from "react";
-import type { Canvas } from "fabric";
+import type { Canvas, FabricObject } from "fabric";
 
 /** Runs a requestAnimationFrame loop that keeps calling requestRenderAll()
  *  so fabric repaints animated GIF frames each tick. */
@@ -21,6 +21,8 @@ export function useGifLoop(fabricRef: MutableRefObject<Canvas | null>) {
           const delays        = o._gifDelays       as number[];
           const totalFrames   = o._gifTotalFrames  as number;
           const frameWidth    = o._gifFrameWidth   as number;
+          // Skip objects whose metadata hasn't been decoded yet (e.g. during reload)
+          if (!delays || !totalFrames || !frameWidth) return;
           const currentFrame  = (o._gifCurrentFrame  as number) ?? 0;
           const lastFrameTime = (o._gifLastFrameTime as number) ?? 0;
           const delay         = delays?.[currentFrame] ?? 100;
@@ -29,8 +31,8 @@ export function useGifLoop(fabricRef: MutableRefObject<Canvas | null>) {
             const next = (currentFrame + 1) % totalFrames;
             o._gifCurrentFrame  = next;
             o._gifLastFrameTime = timestamp;
-            // Scroll the spritesheet to the new frame
-            (obj as unknown as { cropX: number }).cropX = next * frameWidth;
+            // Use obj.set() so Fabric tracks the change, then mark dirty
+            (obj as FabricObject).set({ cropX: next * frameWidth });
             (obj as unknown as { dirty: boolean }).dirty = true;
           }
         });

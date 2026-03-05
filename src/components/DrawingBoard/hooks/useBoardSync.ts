@@ -5,6 +5,7 @@ export type SaveableObj = {
   toObject: () => object;
   boardObjectId?: string;
   giphyId?: string;
+  _gifUrl?: string;
 };
 
 /** Persists a single Fabric object to the backend (upsert by boardObjectId). */
@@ -17,7 +18,8 @@ export function useBoardSync() {
     const fabricJSON = JSON.stringify({
       ...(obj.toObject()),
       boardObjectId: objectId,
-      ...(obj.giphyId ? { giphyId: obj.giphyId } : {}),
+      ...(obj.giphyId  ? { giphyId:  obj.giphyId  } : {}),
+      ...(obj._gifUrl  ? { _gifUrl:  obj._gifUrl  } : {}),
     });
     fetch("/api/board-objects", {
       method: "POST",

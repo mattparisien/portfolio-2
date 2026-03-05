@@ -3,6 +3,7 @@ import type { Canvas, IText } from "fabric";
 import type { Tool, FabricMods } from "../types";
 import type { SaveableObj } from "./useBoardSync";
 import { BOARD_ID, BG_COLOR } from "../constants";
+import { decodeGif } from "../gifDecoder";
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 4;
@@ -176,16 +177,63 @@ export function useFabricCanvas({
           const parsed = objects.map((o) => JSON.parse(o.fabricJSON)) as Record<string, unknown>[];
           parsed.forEach((o) => { if (o.type === "IText" || o.type === "i-text") o.editable = false; });
           const enlivened = await util.enlivenObjects(parsed);
+
+          // Separate GIF objects so we can re-decode them asynchronously
+          const gifRestorePromises: Promise<void>[] = [];
+
           (enlivened as unknown[]).forEach((obj, i) => {
             const src = parsed[i];
             if (src.boardObjectId) (obj as Record<string, unknown>).boardObjectId = src.boardObjectId;
-            if (src.giphyId) {
+
+            if (src.giphyId && src._gifUrl) {
+              // Stamp giphyId immediately so the loop guard recognises it
               (obj as Record<string, unknown>).giphyId = src.giphyId;
+              fc.add(obj as Parameters<typeof fc.add>[0]);
               gifCountRef.current += 1;
+
+              // Re-fetch + re-decode the GIF to restore the spritesheet & metadata
+              const gifUrl = src._gifUrl as string;
+              const promise = fetch(gifUrl)
+                .then((r) => r.arrayBuffer())
+                .then((buffer) => {
+                  const { spritesheet, frameWidth, frameHeight, totalFrames, delays } = decodeGif(buffer);
+                  const fabricImg = obj as unknown as {
+                    setElement: (el: HTMLCanvasElement) => void;
+                    set: (props: Record<string, unknown>) => void;
+                    dirty: boolean;
+                  };
+                  fabricImg.setElement(spritesheet);
+                  fabricImg.set({
+                    width: frameWidth,
+                    height: frameHeight,
+                    cropX: 0,
+                    cropY: 0,
+                    objectCaching: false,
+                  });
+                  const o = obj as unknown as Record<string, unknown>;
+                  o._gifUrl           = gifUrl;
+                  o._gifSpritesheet   = spritesheet;
+                  o._gifFrameWidth    = frameWidth;
+                  o._gifFrameHeight   = frameHeight;
+                  o._gifTotalFrames   = totalFrames;
+                  o._gifDelays        = delays;
+                  o._gifCurrentFrame  = 0;
+                  o._gifLastFrameTime = performance.now();
+                  fabricImg.dirty     = true;
+                  fc.requestRenderAll();
+                })
+                .catch((e) => console.error("[GIF] reload failed:", e));
+
+              gifRestorePromises.push(promise);
+            } else {
+              fc.add(obj as Parameters<typeof fc.add>[0]);
             }
-            fc.add(obj as Parameters<typeof fc.add>[0]);
           });
-          if (gifCountRef.current > 0) startGifLoop();
+
+          // Start the RAF loop once all GIFs have their metadata restored
+          if (gifCountRef.current > 0) {
+            Promise.allSettled(gifRestorePromises).then(() => startGifLoop());
+          }
         })
         .catch((e) => console.error("Failed to load board objects", e))
         .finally(() => { setIsSyncing(false); fc.renderAll(); });

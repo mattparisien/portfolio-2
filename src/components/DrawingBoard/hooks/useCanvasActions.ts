@@ -186,12 +186,24 @@ export function useCanvasActions({
 
         const o = img as unknown as Record<string, unknown>;
         o.giphyId           = giphyId;
+        o._gifUrl           = url;            // persisted so we can re-decode on reload
+        o._gifSpritesheet   = spritesheet;    // keep canvas alive (prevents GC)
         o._gifFrameWidth    = frameWidth;
         o._gifFrameHeight   = frameHeight;
         o._gifTotalFrames   = totalFrames;
         o._gifDelays        = delays;
         o._gifCurrentFrame  = 0;
-        o._gifLastFrameTime = 0;
+        o._gifLastFrameTime = performance.now();
+
+        // Replace toObject so Fabric serialises a tiny placeholder instead of
+        // the entire (potentially huge) spritesheet data URL.
+        const BLANK_PX = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+        const _origToObject = img.toObject.bind(img);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (img as unknown as Record<string, unknown>).toObject = (props?: any) => ({
+          ..._origToObject(props),
+          src: BLANK_PX,
+        });
 
         fc.add(img);
         fc.setActiveObject(img);
