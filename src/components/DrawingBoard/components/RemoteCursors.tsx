@@ -16,10 +16,10 @@ function Cursor({ x, y, name, color }: { x: number; y: number; name: string; col
     <div
       className="pointer-events-none fixed z-[100]"
       style={{
-        left: x,
-        top: y,
-        transition: "left 55ms linear, top 55ms linear",
-        willChange: "left, top",
+        left: 0,
+        top: 0,
+        transform: `translate(${x}px, ${y}px)`,
+        willChange: "transform",
       }}
     >
       {/* Custom cursor arrow */}
