@@ -37,6 +37,7 @@ interface UseFabricCanvasOptions {
   gifCountRef: React.MutableRefObject<number>;
   setTool: (t: Tool) => void;
   setZoom: (z: number) => void;
+  setVpt: (vpt: number[]) => void;
   setHasSelection: (v: boolean) => void;
   setSelectedIsText: (v: boolean) => void;
   setTextProps: Dispatch<SetStateAction<TextProps>>;
@@ -58,6 +59,7 @@ export function useFabricCanvas({
   gifCountRef,
   setTool,
   setZoom,
+  setVpt,
   setHasSelection,
   setSelectedIsText,
   setTextProps,
@@ -83,8 +85,10 @@ export function useFabricCanvas({
         const z = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, fc.getZoom() * (1 - e.deltaY * 0.001)));
         fc.zoomToPoint(new mods.Point(e.clientX, e.clientY), z);
         setZoom(z);
+        setVpt(fc.viewportTransform as number[]);
       } else {
         fc.relativePan(new mods.Point(-e.deltaX, -e.deltaY));
+        setVpt(fc.viewportTransform as number[]);
       }
     };
 
@@ -161,6 +165,7 @@ export function useFabricCanvas({
       const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
       const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
       fc.relativePan(new mods.Point(cx - lastTouchMid.x, cy - lastTouchMid.y));
+      setVpt(fc.viewportTransform as number[]);
       lastTouchMid = { x: cx, y: cy };
     };
     const onTouchEnd = () => { lastTouchMid = null; };
@@ -351,7 +356,7 @@ export function useFabricCanvas({
       fabricRef.current = null;
       modsRef.current   = null;
     };
-  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setHasSelection, setSelectedIsText, setTextProps, setIsSyncing, broadcast]);
+  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setVpt, setHasSelection, setSelectedIsText, setTextProps, setIsSyncing, broadcast]);
 
   return { modsRef };
 }

@@ -2,6 +2,14 @@
 
 import { useOthers } from "@/liveblocks.config";
 
+/** Convert canvas world coords → local screen coords using the local viewport transform. */
+function worldToScreen(wx: number, wy: number, vpt: number[]): { x: number; y: number } {
+  return {
+    x: wx * vpt[0] + vpt[4],
+    y: wy * vpt[3] + vpt[5],
+  };
+}
+
 /** Figma-style cursor: sharp arrow + rounded-rect name label. */
 function Cursor({ x, y, name, color }: { x: number; y: number; name: string; color: string }) {
   return (
@@ -29,7 +37,7 @@ function Cursor({ x, y, name, color }: { x: number; y: number; name: string; col
         />
       </svg>
 
-      {/* Name label — matches Figma's rounded-rect tag */}
+      {/* Name label */}
       <div
         className="absolute text-white font-semibold whitespace-nowrap select-none"
         style={{
@@ -49,18 +57,19 @@ function Cursor({ x, y, name, color }: { x: number; y: number; name: string; col
   );
 }
 
-export default function RemoteCursors() {
+export default function RemoteCursors({ vpt }: { vpt: number[] }) {
   const others = useOthers();
 
   return (
     <>
       {others.map(({ connectionId, presence }) => {
         if (!presence.cursor) return null;
+        const { x, y } = worldToScreen(presence.cursor.x, presence.cursor.y, vpt);
         return (
           <Cursor
             key={connectionId}
-            x={presence.cursor.x}
-            y={presence.cursor.y}
+            x={x}
+            y={y}
             name={presence.name}
             color={presence.color}
           />

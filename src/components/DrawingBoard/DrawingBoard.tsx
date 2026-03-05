@@ -36,6 +36,7 @@ function DrawingBoardInner() {
   const [brushSize, setBrushSize]         = useState(5);
   const [isSyncing, setIsSyncing]         = useState(false);
   const [zoom, setZoom]                   = useState(1);
+  const [vpt, setVpt]                     = useState<number[]>([1, 0, 0, 1, 0, 0]);
   const [hasSelection, setHasSelection]   = useState(false);
   const [selectedIsText, setSelectedIsText] = useState(false);
   const [textProps, setTextProps]         = useState<TextProps>(DEFAULT_TEXT_PROPS);
@@ -77,6 +78,7 @@ function DrawingBoardInner() {
     gifCountRef,
     setTool,
     setZoom,
+    setVpt,
     setHasSelection,
     setSelectedIsText,
     setTextProps,
@@ -99,6 +101,7 @@ function DrawingBoardInner() {
       gifCountRef,
       setTool,
       setZoom,
+      setVpt,
       setTextProps,
       broadcast: broadcastEvent,
     });
@@ -149,12 +152,19 @@ function DrawingBoardInner() {
     }
   });
 
-  // ── Track local cursor for other users to see ─────────────────────────
+  // ── Track local cursor — broadcast in world coordinates ─────────────
   // Use a window-level listener so Fabric's canvas event interception
   // doesn't swallow the events before React sees them.
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
-      updateMyPresence({ cursor: { x: e.clientX, y: e.clientY } });
+      const fc = fabricRef.current;
+      if (!fc) return;
+      const v = fc.viewportTransform as number[];
+      // Convert screen → canvas world space
+      updateMyPresence({ cursor: {
+        x: (e.clientX - v[4]) / v[0],
+        y: (e.clientY - v[5]) / v[3],
+      }});
     };
     const onLeave = () => updateMyPresence({ cursor: null });
     window.addEventListener("pointermove", onMove);
@@ -163,7 +173,7 @@ function DrawingBoardInner() {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerleave", onLeave);
     };
-  }, [updateMyPresence]);
+  }, [updateMyPresence, fabricRef]);
 
   return (
     <div
@@ -173,7 +183,7 @@ function DrawingBoardInner() {
       <canvas ref={canvasElRef} className="absolute inset-0 touch-none" />
 
       {/* Other users' cursors */}
-      <RemoteCursors />
+      <RemoteCursors vpt={vpt} />
 
       {/* Text-specific toolbar */}
       {selectedIsText && (

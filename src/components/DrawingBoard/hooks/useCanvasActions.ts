@@ -25,6 +25,7 @@ interface UseCanvasActionsOptions {
   gifCountRef: React.MutableRefObject<number>;
   setTool: (t: Tool) => void;
   setZoom: (z: number) => void;
+  setVpt: (vpt: number[]) => void;
   setTextProps: Dispatch<SetStateAction<TextProps>>;
   broadcast?: (event: RoomEvent) => void;
 }
@@ -43,6 +44,7 @@ export function useCanvasActions({
   gifCountRef,
   setTool,
   setZoom,
+  setVpt,
   setTextProps,
   broadcast,
 }: UseCanvasActionsOptions) {
@@ -243,7 +245,8 @@ export function useCanvasActions({
     const z = Math.min(MAX_ZOOM, fc.getZoom() + ZOOM_STEP);
     fc.zoomToPoint(new mods.Point(window.innerWidth / 2, window.innerHeight / 2), z);
     setZoom(z);
-  }, [fabricRef, modsRef, setZoom]);
+    setVpt(fc.viewportTransform as number[]);
+  }, [fabricRef, modsRef, setZoom, setVpt]);
 
   const zoomOut = useCallback(() => {
     const fc = fabricRef.current; const mods = modsRef.current;
@@ -251,7 +254,8 @@ export function useCanvasActions({
     const z = Math.max(MIN_ZOOM, fc.getZoom() - ZOOM_STEP);
     fc.zoomToPoint(new mods.Point(window.innerWidth / 2, window.innerHeight / 2), z);
     setZoom(z);
-  }, [fabricRef, modsRef, setZoom]);
+    setVpt(fc.viewportTransform as number[]);
+  }, [fabricRef, modsRef, setZoom, setVpt]);
 
   // ── Clear canvas ───────────────────────────────────────────────────────
   const clearCanvas = useCallback(() => {
