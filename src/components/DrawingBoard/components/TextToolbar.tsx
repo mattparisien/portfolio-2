@@ -52,7 +52,7 @@ function ToggleBtn({
 }
 
 export default function TextToolbar({ textProps, color, onColorChange, onApply }: TextToolbarProps) {
-  const { fontFamily, fontSize, bold, italic, underline, linethrough, uppercase, lineHeight, charSpacing } = textProps;
+  const { fontFamily, fontSize, bold, italic, underline, linethrough, uppercase, lineHeight, charSpacing, textAlign } = textProps;
 
   return (
     <div
@@ -129,6 +129,25 @@ export default function TextToolbar({ textProps, color, onColorChange, onApply }
           onClick={() => onApply({ lineHeight: Math.min(4, Math.round((lineHeight + 0.1) * 10) / 10) })}
           className="w-5 h-5 rounded flex items-center justify-center text-sm font-bold hover:bg-gray-100 transition-colors select-none cursor-pointer"
         >+</button>
+      </div>
+
+      {/* Text alignment */}
+      <div className="flex items-center gap-0.5 border-r border-gray-200 pr-2 mr-0.5 flex-shrink-0">
+        <ToggleBtn active={textAlign === "left"} title="Align left" onClick={() => onApply({ textAlign: "left" })}>
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+            <rect x="1" y="2" width="14" height="2" rx="1"/><rect x="1" y="6" width="9" height="2" rx="1"/><rect x="1" y="10" width="12" height="2" rx="1"/><rect x="1" y="14" width="7" height="2" rx="1"/>
+          </svg>
+        </ToggleBtn>
+        <ToggleBtn active={textAlign === "center"} title="Align center" onClick={() => onApply({ textAlign: "center" })}>
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+            <rect x="1" y="2" width="14" height="2" rx="1"/><rect x="3.5" y="6" width="9" height="2" rx="1"/><rect x="2" y="10" width="12" height="2" rx="1"/><rect x="4.5" y="14" width="7" height="2" rx="1"/>
+          </svg>
+        </ToggleBtn>
+        <ToggleBtn active={textAlign === "right"} title="Align right" onClick={() => onApply({ textAlign: "right" })}>
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+            <rect x="1" y="2" width="14" height="2" rx="1"/><rect x="6" y="6" width="9" height="2" rx="1"/><rect x="3" y="10" width="12" height="2" rx="1"/><rect x="8" y="14" width="7" height="2" rx="1"/>
+          </svg>
+        </ToggleBtn>
       </div>
 
       {/* Letter spacing */}

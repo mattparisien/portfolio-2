@@ -24,6 +24,7 @@ export const {
   RoomProvider,
   useMyPresence,
   useOthers,
+  useOthersListener,
   useSelf,
   useBroadcastEvent,
   useEventListener,

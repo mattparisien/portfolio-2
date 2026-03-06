@@ -9,6 +9,7 @@ import { decodeGif } from "../gifDecoder";
 import type { RoomEvent } from "@/liveblocks.config";
 
 function extractTextProps(txt: IText): TextProps {
+  const align = (txt.textAlign as string) || "left";
   return {
     fontFamily: (txt.fontFamily as string) || DEFAULT_TEXT_PROPS.fontFamily,
     fontSize: (txt.fontSize as number) || DEFAULT_TEXT_PROPS.fontSize,
@@ -19,6 +20,7 @@ function extractTextProps(txt: IText): TextProps {
     uppercase: !!(txt as unknown as Record<string, unknown>)._uppercase,
     lineHeight: (txt.lineHeight as number) || DEFAULT_TEXT_PROPS.lineHeight,
     charSpacing: (txt.charSpacing as number) ?? DEFAULT_TEXT_PROPS.charSpacing,
+    textAlign: (align === "center" || align === "right") ? align : "left",
   };
 }
 
@@ -42,6 +44,7 @@ interface UseFabricCanvasOptions {
   setSelectedIsText: (v: boolean) => void;
   setSelectedIsGif: (v: boolean) => void;
   setSelectedIsPath: (v: boolean) => void;
+  setSelectedIsLocked: (v: boolean) => void;
   setColor: (c: string) => void;
   setBrushSize: (s: number) => void;
   setOpacity: (v: number) => void;
@@ -70,6 +73,7 @@ export function useFabricCanvas({
   setSelectedIsText,
   setSelectedIsGif,
   setSelectedIsPath,
+  setSelectedIsLocked,
   setColor,
   setBrushSize,
   setOpacity,
@@ -456,6 +460,8 @@ export function useFabricCanvas({
           if (shapeObj.fill && typeof shapeObj.fill === "string") setColor(shapeObj.fill);
           if (shapeObj.opacity != null) setOpacity(shapeObj.opacity);
         }
+        // Lock state for the floating lock button
+        setSelectedIsLocked(!!(obj as unknown as Record<string, unknown>)?.lockMovementX);
       };
 
       fc.on("selection:created", handleSelectionChange);
@@ -465,6 +471,7 @@ export function useFabricCanvas({
         setSelectedIsText(false);
         setSelectedIsGif(false);
         setSelectedIsPath(false);
+        setSelectedIsLocked(false);
         if (!pendingMultiSave) return;
         const objs = pendingMultiSave;
         pendingMultiSave = null;
@@ -475,6 +482,8 @@ export function useFabricCanvas({
         if (!e.e.shiftKey || !e.target) return;
         e.target.set("angle", Math.round(e.target.angle! / 45) * 45);
       });
+
+      // Lock-button position — handled by ObjectLockButton's own RAF loop.
 
       fc.on("mouse:down", (e) => {
         if (toolRef.current === "text") {

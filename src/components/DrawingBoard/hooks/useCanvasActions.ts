@@ -312,8 +312,9 @@ export function useCanvasActions({
     if (updates.italic     !== undefined) fabricUpdates.fontStyle   = updates.italic ? "italic" : "normal";
     if (updates.underline  !== undefined) fabricUpdates.underline   = updates.underline;
     if (updates.linethrough !== undefined) fabricUpdates.linethrough = updates.linethrough;
-    if (updates.lineHeight !== undefined) fabricUpdates.lineHeight  = updates.lineHeight;
+    if (updates.lineHeight  !== undefined) fabricUpdates.lineHeight  = updates.lineHeight;
     if (updates.charSpacing !== undefined) fabricUpdates.charSpacing = updates.charSpacing;
+    if (updates.textAlign   !== undefined) fabricUpdates.textAlign   = updates.textAlign;
 
     if (updates.uppercase !== undefined) {
       const current = obj.text ?? "";
@@ -334,5 +335,23 @@ export function useCanvasActions({
     setTextProps((prev: TextProps) => ({ ...prev, ...updates }));
   }, [fabricRef, saveObject, setTextProps]);
 
-  return { addText, addShape, addGif, recolorSelected, reweightSelected, reOpacitySelected, zoomIn, zoomOut, clearCanvas, applyTextProp };
+  // ── Lock / unlock selected objects ────────────────────────────────────
+  const lockSelected = useCallback((locked: boolean) => {
+    const fc = fabricRef.current;
+    if (!fc) return;
+    fc.getActiveObjects().forEach((obj) => {
+      obj.set({
+        lockMovementX: locked,
+        lockMovementY: locked,
+        lockRotation:  locked,
+        lockScalingX:  locked,
+        lockScalingY:  locked,
+        hasControls:   !locked,
+      });
+      saveObject(obj as unknown as SaveableObj);
+    });
+    fc.requestRenderAll();
+  }, [fabricRef, saveObject]);
+
+  return { addText, addShape, addGif, recolorSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, clearCanvas, applyTextProp };
 }

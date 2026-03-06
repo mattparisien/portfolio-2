@@ -8,6 +8,8 @@ import BoardHeader from "./components/BoardHeader";
 import DrawingTools from "./components/DrawingTools";
 import RemoteCursors from "./components/RemoteCursors";
 import ZoomNav from "./components/ZoomNav";
+import ActiveUsers from "./components/ActiveUsers";
+import ObjectLockButton from "./components/ObjectLockButton";
 import { useGifLoop } from "./hooks/useGifLoop";
 import { useBoardSync } from "./hooks/useBoardSync";
 import { useFabricCanvas } from "./hooks/useFabricCanvas";
@@ -42,6 +44,7 @@ function DrawingBoardInner() {
   const [selectedIsText, setSelectedIsText] = useState(false);
   const [selectedIsGif, setSelectedIsGif]   = useState(false);
   const [selectedIsPath, setSelectedIsPath] = useState(false);
+  const [selectedIsLocked, setSelectedIsLocked] = useState(false);
   const [opacity, setOpacity]               = useState(1);
   const [textProps, setTextProps]         = useState<TextProps>(DEFAULT_TEXT_PROPS);
 
@@ -89,6 +92,7 @@ function DrawingBoardInner() {
     setSelectedIsText,
     setSelectedIsGif,
     setSelectedIsPath,
+    setSelectedIsLocked,
     setColor,
     setBrushSize,
     setOpacity,
@@ -98,7 +102,7 @@ function DrawingBoardInner() {
     broadcast: broadcastEvent,
   });
 
-  const { addText, addShape, addGif, recolorSelected, reweightSelected, reOpacitySelected, zoomIn, zoomOut, applyTextProp } =
+  const { addText, addShape, addGif, recolorSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, applyTextProp } =
     useCanvasActions({
       fabricRef,
       modsRef,
@@ -228,6 +232,19 @@ function DrawingBoardInner() {
       />
       <ZoomNav zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} />
       <BoardHeader isSyncing={isSyncing} />
+      <ActiveUsers />
+      {/* Lock/unlock button floats above the selected object — self-positions via RAF */}
+      {hasSelection && (
+        <ObjectLockButton
+          fabricRef={fabricRef}
+          locked={selectedIsLocked}
+          onToggle={() => {
+            const next = !selectedIsLocked;
+            setSelectedIsLocked(next);
+            lockSelected(next);
+          }}
+        />
+      )}
     </div>
   );
 }

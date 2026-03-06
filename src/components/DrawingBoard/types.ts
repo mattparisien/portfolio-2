@@ -33,6 +33,7 @@ export interface TextProps {
   uppercase: boolean;
   lineHeight: number;
   charSpacing: number;
+  textAlign: "left" | "center" | "right";
 }
 
 export const DEFAULT_TEXT_PROPS: TextProps = {
@@ -45,6 +46,7 @@ export const DEFAULT_TEXT_PROPS: TextProps = {
   uppercase: false,
   lineHeight: 1.16,
   charSpacing: 0,
+  textAlign: "left",
 };
 
 export interface StrokeRecord {
