@@ -41,6 +41,11 @@ interface UseFabricCanvasOptions {
   setHasSelection: (v: boolean) => void;
   setSelectedIsText: (v: boolean) => void;
   setSelectedIsGif: (v: boolean) => void;
+  setSelectedIsPath: (v: boolean) => void;
+  setColor: (c: string) => void;
+  setBrushSize: (s: number) => void;
+  setOpacity: (v: number) => void;
+  opacityRef: React.MutableRefObject<number>;
   setTextProps: Dispatch<SetStateAction<TextProps>>;
   setIsSyncing: (v: boolean) => void;
   broadcast?: (event: RoomEvent) => void;
@@ -64,6 +69,11 @@ export function useFabricCanvas({
   setHasSelection,
   setSelectedIsText,
   setSelectedIsGif,
+  setSelectedIsPath,
+  setColor,
+  setBrushSize,
+  setOpacity,
+  opacityRef,
   setTextProps,
   setIsSyncing,
   broadcast,
@@ -371,7 +381,11 @@ export function useFabricCanvas({
         .finally(() => { setIsSyncing(false); fc.renderAll(); });
 
       // ── Canvas events ──────────────────────────────────────────────────
-      fc.on("path:created", (e) => { saveObject(e.path); });
+      fc.on("path:created", (e) => {
+        e.path.set({ opacity: opacityRef.current });
+        fc.requestRenderAll();
+        saveObject(e.path);
+      });
 
       fc.on("object:modified", (e) => {
         if (isPastingRef.current) return; // don't double-save during paste
@@ -389,9 +403,17 @@ export function useFabricCanvas({
         const obj = fc.getActiveObject();
         const isText = !!obj && (obj as { type?: string }).type === "i-text";
         const isGif  = !!obj && !!(obj as { giphyId?: string }).giphyId;
+        const isPath = !!obj && (obj as { type?: string }).type === "path" && !(obj as { giphyId?: string }).giphyId;
         setSelectedIsText(isText);
         setSelectedIsGif(isGif);
+        setSelectedIsPath(isPath);
         if (isText) setTextProps(extractTextProps(obj as IText));
+        if (isPath) {
+          const pathObj = obj as unknown as { stroke?: string; strokeWidth?: number; opacity?: number };
+          if (pathObj.stroke) setColor(pathObj.stroke);
+          if (pathObj.strokeWidth != null) setBrushSize(pathObj.strokeWidth);
+          if (pathObj.opacity != null) setOpacity(pathObj.opacity);
+        }
       };
 
       fc.on("selection:created", handleSelectionChange);
@@ -400,6 +422,7 @@ export function useFabricCanvas({
         setHasSelection(false);
         setSelectedIsText(false);
         setSelectedIsGif(false);
+        setSelectedIsPath(false);
         if (!pendingMultiSave) return;
         const objs = pendingMultiSave;
         pendingMultiSave = null;
@@ -464,7 +487,7 @@ export function useFabricCanvas({
       fabricRef.current = null;
       modsRef.current   = null;
     };
-  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setVpt, setHasSelection, setSelectedIsText, setSelectedIsGif, setTextProps, setIsSyncing, broadcast]);
+  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, opacityRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setVpt, setHasSelection, setSelectedIsText, setSelectedIsGif, setSelectedIsPath, setColor, setBrushSize, setOpacity, setTextProps, setIsSyncing, broadcast]);
 
   return { modsRef };
 }

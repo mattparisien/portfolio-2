@@ -233,7 +233,34 @@ export function useCanvasActions({
     if (!fc) return;
     const obj = fc.getActiveObject();
     if (!obj) return;
-    obj.set({ fill: c });
+    // Pencil/brush paths store color on `stroke`; shapes store it on `fill`
+    if ((obj as { type?: string }).type === "path") {
+      obj.set({ stroke: c });
+    } else {
+      obj.set({ fill: c });
+    }
+    fc.requestRenderAll();
+    saveObject(obj);
+  }, [fabricRef, saveObject]);
+
+  // ── Reweight selected path ────────────────────────────────────────────
+  const reweightSelected = useCallback((size: number) => {
+    const fc = fabricRef.current;
+    if (!fc) return;
+    const obj = fc.getActiveObject();
+    if (!obj) return;
+    obj.set({ strokeWidth: size });
+    fc.requestRenderAll();
+    saveObject(obj);
+  }, [fabricRef, saveObject]);
+
+  // ── Reapply opacity to selected object ────────────────────────────────
+  const reOpacitySelected = useCallback((v: number) => {
+    const fc = fabricRef.current;
+    if (!fc) return;
+    const obj = fc.getActiveObject();
+    if (!obj) return;
+    obj.set({ opacity: v });
     fc.requestRenderAll();
     saveObject(obj);
   }, [fabricRef, saveObject]);
@@ -307,5 +334,5 @@ export function useCanvasActions({
     setTextProps((prev: TextProps) => ({ ...prev, ...updates }));
   }, [fabricRef, saveObject, setTextProps]);
 
-  return { addText, addShape, addGif, recolorSelected, zoomIn, zoomOut, clearCanvas, applyTextProp };
+  return { addText, addShape, addGif, recolorSelected, reweightSelected, reOpacitySelected, zoomIn, zoomOut, clearCanvas, applyTextProp };
 }

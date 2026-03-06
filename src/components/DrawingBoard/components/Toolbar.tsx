@@ -1,85 +1,85 @@
 "use client";
 
-import type { Tool } from "../types";
-import { COLORS } from "../constants";
+import { useRef, useState } from "react";
 
 interface ToolbarProps {
-  tool: Tool;
   color: string;
-  brushSize: number;
+  opacity: number;
   onColorChange: (c: string) => void;
-  onBrushSizeChange: (s: number) => void;
-  onRecolorSelected: (c: string) => void;
+  onOpacityChange: (v: number) => void;
 }
 
-export default function Toolbar({
-  tool,
-  color,
-  brushSize,
-  onColorChange,
-  onBrushSizeChange,
-  onRecolorSelected,
-}: ToolbarProps) {
-  const isDrawing = tool === "pencil" || tool === "brush";
+export default function Toolbar({ color, opacity, onColorChange, onOpacityChange }: ToolbarProps) {
+  const colorInputRef = useRef<HTMLInputElement>(null);
+  const [opacityOpen, setOpacityOpen] = useState(false);
 
   return (
     <div
-      className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl z-[200]"
-      style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(12px)" }}
+      className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-2.5 rounded-2xl shadow-xl z-[200]"
+      style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(14px)" }}
     >
-      {/* Color swatches */}
-      <div className="flex flex-col gap-1.5 border-r border-gray-200 pr-3">
-        {isDrawing && (
-          <span className="text-[9px] font-semibold uppercase tracking-widest text-gray-400 text-center select-none">Stroke</span>
-        )}
-        <div className="flex gap-1.5">
-        {COLORS.map((c) => (
-          <button
-            key={c}
-            title={c}
-            onClick={() => {
-              onColorChange(c);
-              if (!isDrawing) onRecolorSelected(c);
-            }}
-            className="w-6 h-6 rounded-full transition-transform hover:scale-110 cursor-pointer"
-            style={{
-              background: c,
-              border: color === c ? "2px solid #333" : "1.5px solid #ccc",
-              transform: color === c ? "scale(1.25)" : undefined,
-            }}
-          />
-        ))}
-        </div>
-      </div>
+      {/* Color circle — triggers the hidden native colour picker */}
+      <button
+        onClick={() => colorInputRef.current?.click()}
+        className="w-8 h-8 rounded-full flex-shrink-0 cursor-pointer transition-transform hover:scale-110"
+        style={{
+          background: color,
+          boxShadow: "0 0 0 2px #fff, 0 0 0 3.5px rgba(0,0,0,0.18)",
+        }}
+        title="Stroke colour"
+      />
+      <input
+        ref={colorInputRef}
+        type="color"
+        value={color}
+        onChange={(e) => onColorChange(e.target.value)}
+        className="absolute opacity-0 pointer-events-none w-0 h-0"
+        tabIndex={-1}
+      />
 
-      {/* Brush size slider */}
-      <div className="flex flex-col gap-1 border-r border-gray-200 pr-3">
-        {isDrawing && (
-          <span className="text-[9px] font-semibold uppercase tracking-widest text-gray-400 text-center select-none">Weight</span>
-        )}
-        <div className="flex items-center gap-2">
-          <span
-            className="rounded-full block flex-shrink-0"
+      {/* Opacity button + popover */}
+      <div className="relative">
+        <button
+          onClick={() => setOpacityOpen((v) => !v)}
+          className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-colors"
+          style={{ background: opacityOpen ? "rgba(0,0,0,0.08)" : "transparent" }}
+          title="Transparency"
+        >
+          <svg viewBox="0 0 20 20" width="18" height="18" fill="none">
+            <circle cx="10" cy="10" r="7.5" stroke="#555" strokeWidth="1.5" />
+            <path d="M10 2.5 a7.5 7.5 0 0 1 0 15" fill="#555" />
+          </svg>
+        </button>
+
+        {opacityOpen && (
+          <div
+            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-4 py-3 rounded-xl shadow-2xl"
             style={{
-              width: Math.min(Math.max(brushSize, 4), 24),
-              height: Math.min(Math.max(brushSize, 4), 24),
-              background: color,
-              border: "1px solid rgba(0,0,0,0.15)",
+              background: "rgba(255,255,255,0.97)",
+              backdropFilter: "blur(14px)",
+              width: 168,
+              border: "1px solid rgba(0,0,0,0.07)",
             }}
-          />
-          <input
-            type="range"
-            min={1}
-            max={60}
-            value={brushSize}
-            onChange={(e) => onBrushSizeChange(Number(e.target.value))}
-            className="w-24 accent-black cursor-pointer"
-            title={`${brushSize}px`}
-          />
-          <span className="text-xs text-gray-500 w-6 text-right">{brushSize}</span>
-        </div>
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[9px] font-semibold uppercase tracking-widest text-gray-400 select-none">
+                Opacity
+              </span>
+              <span className="text-xs font-semibold text-gray-600 tabular-nums">
+                {Math.round(opacity * 100)}%
+              </span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={Math.round(opacity * 100)}
+              onChange={(e) => onOpacityChange(Number(e.target.value) / 100)}
+              className="w-full accent-black cursor-pointer"
+            />
+          </div>
+        )}
       </div>
     </div>
   );
 }
-

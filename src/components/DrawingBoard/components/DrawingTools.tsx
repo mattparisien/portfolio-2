@@ -182,9 +182,14 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
           ref={drawRef}
           title="Draw"
           onClick={() => {
-            const nowPinned = !drawPinned;
-            setDrawPinned(nowPinned);
-            if (nowPinned) { setShapePinned(false); setShapeHover(false); setGifPinned(false); setGifHover(false); }
+            if (drawPinned) {
+              setDrawPinned(false);
+              setDrawHover(false);
+              onToolChange("select");
+            } else {
+              setDrawPinned(true);
+              setShapePinned(false); setShapeHover(false); setGifPinned(false); setGifHover(false);
+            }
           }}
           className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
           style={{

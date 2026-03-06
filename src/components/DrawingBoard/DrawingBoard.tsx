@@ -41,15 +41,19 @@ function DrawingBoardInner() {
   const [hasSelection, setHasSelection]   = useState(false);
   const [selectedIsText, setSelectedIsText] = useState(false);
   const [selectedIsGif, setSelectedIsGif]   = useState(false);
+  const [selectedIsPath, setSelectedIsPath] = useState(false);
+  const [opacity, setOpacity]               = useState(1);
   const [textProps, setTextProps]         = useState<TextProps>(DEFAULT_TEXT_PROPS);
 
   // Keep refs in sync so async canvas callbacks always read the latest values
   const toolRef      = useRef<Tool>("select");
   const colorRef     = useRef("#000000");
   const brushSizeRef = useRef(5);
+  const opacityRef   = useRef(1);
   toolRef.current      = tool;
   colorRef.current     = color;
   brushSizeRef.current = brushSize;
+  opacityRef.current   = opacity;
 
   // ── Liveblocks ────────────────────────────────────────────────────────
   const broadcastEvent               = useBroadcastEvent();
@@ -84,12 +88,17 @@ function DrawingBoardInner() {
     setHasSelection,
     setSelectedIsText,
     setSelectedIsGif,
+    setSelectedIsPath,
+    setColor,
+    setBrushSize,
+    setOpacity,
+    opacityRef,
     setTextProps,
     setIsSyncing,
     broadcast: broadcastEvent,
   });
 
-  const { addText, addShape, addGif, recolorSelected, zoomIn, zoomOut, applyTextProp } =
+  const { addText, addShape, addGif, recolorSelected, reOpacitySelected, zoomIn, zoomOut, applyTextProp } =
     useCanvasActions({
       fabricRef,
       modsRef,
@@ -198,15 +207,13 @@ function DrawingBoardInner() {
         />
       )}
 
-      {/* Regular toolbar — drawing tools or non-text, non-gif selections */}
-      {!selectedIsText && !selectedIsGif && (hasSelection || tool === "pencil" || tool === "brush") && (
+      {/* Stroke toolbar — active pencil/brush or selected path */}
+      {!selectedIsText && !selectedIsGif && (tool === "pencil" || tool === "brush" || selectedIsPath) && (
         <Toolbar
-          tool={tool}
           color={color}
-          brushSize={brushSize}
-          onColorChange={setColor}
-          onBrushSizeChange={setBrushSize}
-          onRecolorSelected={recolorSelected}
+          opacity={opacity}
+          onColorChange={(c) => { setColor(c); if (selectedIsPath) recolorSelected(c); }}
+          onOpacityChange={(v) => { setOpacity(v); if (selectedIsPath) reOpacitySelected(v); }}
         />
       )}
       <DrawingTools
