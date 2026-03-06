@@ -19,18 +19,20 @@ export const BG_COLOR = "#f5f0e8";
 
 // ── Presence / multiplayer ────────────────────────────────────────────────
 
-export const CURSOR_COLORS = [
-  "#7CD4FD", "#DC268F", "#009856", "#1570EF", "#DC6803", "#566079"
+export const CURSOR_COLORS= [
+  "#E4649D","#0053A3", "#00A23D", "#A0D921", "#FFABC2", "#F65C2C", "#5F2D3C", "#0E7AA9", "#328B77",
 ] as const;
 
 export const CURSOR_ADJECTIVES = [
-  "Cosmic", "Sleepy", "Bouncy", "Fuzzy", "Glitchy",
-  "Sneaky", "Turbo", "Neon", "Silent", "Wobbly",
+  "Sickening", "Gagged", "Snatched", "Fierce", "Serving",
+  "Campy", "Shady", "Iconic", "Lewky", "Extra",
+  "Delusional", "Unclocked", "Opulent", "Messy", "Legendary",
 ] as const;
 
 export const CURSOR_ANIMALS = [
-  "Panda", "Walrus", "Ferret", "Gecko", "Narwhal",
-  "Capybara", "Axolotl", "Quokka", "Lemur", "Tapir",
+  "Lewk", "Realness", "Moment", "Situation", "Fantasy",
+  "Villain", "Era", "Creature", "Bestie", "Legend",
+  "Diva", "Witch", "Slayful", "Gaggina", "Creature",
 ] as const;
 
 export function getOrCreateUser(): { name: string } {

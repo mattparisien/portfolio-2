@@ -98,6 +98,21 @@ export function useFabricCanvas({
     const pendingTextRef = { current: null as IText | null };
     let pendingMultiSave: SaveableObj[] | null = null;
 
+    // ── Undo stack ─────────────────────────────────────────────────────────
+    type UndoEntry =
+      | { type: "add";    objectId: string; serialized: object }
+      | { type: "delete"; serialized: object; wasGif: boolean }
+      | { type: "modify"; objectId: string; before: object };
+    const undoStack: UndoEntry[] = [];
+    const MAX_UNDO = 50;
+    const pushUndo = (entry: UndoEntry) => {
+      undoStack.push(entry);
+      if (undoStack.length > MAX_UNDO) undoStack.shift();
+    };
+    // Capture state before a user-initiated transform (move / resize / rotate)
+    const beforeTransformRef = { current: null as object | null };
+    const isUndoingRef = { current: false };
+
     // Track latest mouse screen position so 'T' can place text at cursor
     const lastMouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
     const trackMouse = (e: MouseEvent) => { lastMouse.x = e.clientX; lastMouse.y = e.clientY; };
@@ -223,6 +238,59 @@ export function useFabricCanvas({
         return;
       }
 
+      // ── Undo (Cmd/Ctrl+Z) ─────────────────────────────────────────────
+      if (isMod && !e.shiftKey && e.key === "z") {
+        if (isEditingText || !mods) return;
+        e.preventDefault();
+        const entry = undoStack.pop();
+        if (!entry) return;
+        isUndoingRef.current = true;
+        if (entry.type === "add") {
+          // Remove the added object
+          const obj = fc.getObjects().find(
+            (o) => (o as unknown as { boardObjectId?: string }).boardObjectId === entry.objectId
+          );
+          if (obj) {
+            fc.remove(obj);
+            fc.discardActiveObject();
+            fc.requestRenderAll();
+          }
+          if (entry.objectId) {
+            fetch(`/api/board-objects?boardId=${BOARD_ID}&objectId=${encodeURIComponent(entry.objectId)}`, {
+              method: "DELETE",
+            })
+              .then(() => broadcast?.({ type: "OBJECT_DELETED", objectId: entry.objectId }))
+              .catch(console.error);
+          }
+        } else if (entry.type === "delete") {
+          // Re-add the deleted object
+          mods.util.enlivenObjects([entry.serialized]).then((objs: unknown[]) => {
+            const obj = objs[0] as unknown as SaveableObj;
+            if (!obj) return;
+            fc.add(obj as Parameters<typeof fc.add>[0]);
+            fc.requestRenderAll();
+            saveObject(obj);
+            if (entry.wasGif) {
+              gifCountRef.current += 1;
+              startGifLoop();
+            }
+          }).catch(console.error);
+        } else if (entry.type === "modify") {
+          // Restore pre-transform state
+          const obj = fc.getObjects().find(
+            (o) => (o as unknown as { boardObjectId?: string }).boardObjectId === entry.objectId
+          );
+          if (obj) {
+            obj.set(entry.before as Parameters<typeof obj.set>[0]);
+            obj.setCoords();
+            fc.requestRenderAll();
+            saveObject(obj as unknown as SaveableObj);
+          }
+        }
+        isUndoingRef.current = false;
+        return;
+      }
+
       // ── Insert text at cursor ('T') ───────────────────────────────────
       if (e.key === "t" || e.key === "T") {
         if (isEditingText || !mods) return;
@@ -277,6 +345,8 @@ export function useFabricCanvas({
       const members = fc.getActiveObjects().slice() as unknown as SaveableObj[];
       fc.discardActiveObject();
       members.forEach((obj) => {
+        const isGif = !!(obj as { giphyId?: string }).giphyId;
+        pushUndo({ type: "delete", serialized: (obj as unknown as { toObject(): object }).toObject(), wasGif: isGif });
         fc.remove(obj as unknown as Parameters<typeof fc.remove>[0]);
         const oid = (obj as { boardObjectId?: string }).boardObjectId;
         if (oid) {
@@ -421,20 +491,38 @@ export function useFabricCanvas({
 
       // ── Canvas events ──────────────────────────────────────────────────
       fc.on("path:created", (e) => {
+        if (isUndoingRef.current) return;
         e.path.set({ opacity: opacityRef.current });
         fc.requestRenderAll();
         saveObject(e.path);
+        // Push after saveObject so boardObjectId is assigned
+        setTimeout(() => {
+          const oid = (e.path as unknown as { boardObjectId?: string }).boardObjectId;
+          if (oid) pushUndo({ type: "add", objectId: oid, serialized: (e.path as unknown as { toObject(): object }).toObject() });
+        }, 0);
       });
 
       fc.on("object:modified", (e) => {
         if (isPastingRef.current) return; // don't double-save during paste
         const target = e.target;
         if (!target) return;
+        if (!isUndoingRef.current && beforeTransformRef.current) {
+          const oid = (target as unknown as { boardObjectId?: string }).boardObjectId;
+          if (oid) pushUndo({ type: "modify", objectId: oid, before: beforeTransformRef.current });
+          beforeTransformRef.current = null;
+        }
         if ((target as { type?: string }).type === "activeSelection") {
           pendingMultiSave = (target as unknown as { getObjects(): SaveableObj[] }).getObjects().slice();
           return;
         }
         saveObject(target);
+      });
+
+      fc.on("before:transform", (e) => {
+        const target = (e as unknown as { transform?: { target?: unknown } }).transform?.target;
+        if (!target) return;
+        const o = target as unknown as { toObject(): object };
+        beforeTransformRef.current = o.toObject();
       });
 
       const handleSelectionChange = () => {
@@ -485,7 +573,59 @@ export function useFabricCanvas({
 
       // Lock-button position — handled by ObjectLockButton's own RAF loop.
 
+      // ── Eraser ───────────────────────────────────────────────────────────
+      const isEraserDownRef = { current: false };
+
+      function eraseObject(obj: unknown) {
+        const o = obj as unknown as SaveableObj & { giphyId?: string };
+        // Don't erase locked objects
+        if ((o as { lockMovementX?: boolean }).lockMovementX) return;
+        pushUndo({ type: "delete", serialized: (o as unknown as { toObject(): object }).toObject(), wasGif: !!o.giphyId });
+        fc.remove(obj as Parameters<typeof fc.remove>[0]);
+        fc.requestRenderAll();
+        const oid = (o as { boardObjectId?: string }).boardObjectId;
+        if (oid) {
+          fetch(`/api/board-objects?boardId=${BOARD_ID}&objectId=${encodeURIComponent(oid)}`, {
+            method: "DELETE",
+          })
+            .then(() => broadcast?.({ type: "OBJECT_DELETED", objectId: oid }))
+            .catch(console.error);
+        }
+        if (o.giphyId) {
+          gifCountRef.current = Math.max(0, gifCountRef.current - 1);
+          if (gifCountRef.current === 0) stopGifLoop();
+        }
+      }
+
+      function eraseAtEvent(e: { e: Event }) {
+        const pointer = fc.getScenePoint(e.e as MouseEvent);
+        const objects = fc.getObjects();
+        // Iterate top-most first so we erase the visually topmost object
+        for (let i = objects.length - 1; i >= 0; i--) {
+          const obj = objects[i] as unknown as { containsPoint: (p: unknown) => boolean };
+          if (obj.containsPoint(pointer)) {
+            eraseObject(objects[i]);
+            break;
+          }
+        }
+      }
+
+      fc.on("mouse:move", (e) => {
+        if (toolRef.current !== "eraser" || !isEraserDownRef.current) return;
+        eraseAtEvent(e);
+      });
+
+      fc.on("mouse:up", () => {
+        isEraserDownRef.current = false;
+      });
+
       fc.on("mouse:down", (e) => {
+        if (toolRef.current === "eraser") {
+          isEraserDownRef.current = true;
+          eraseAtEvent(e);
+          return;
+        }
+
         if (toolRef.current === "text") {
           // If a text object is already pending/editing, don't spawn another.
           if (pendingTextRef.current !== null) return;
@@ -521,7 +661,15 @@ export function useFabricCanvas({
         const isNew = txt === pendingTextRef.current;
         pendingTextRef.current = null;
         if (isNew && !txt.text?.trim()) { fc.remove(txt); fc.requestRenderAll(); }
-        else if (txt.text?.trim()) { saveObject(txt); }
+        else if (txt.text?.trim()) {
+          saveObject(txt);
+          if (isNew) {
+            setTimeout(() => {
+              const oid = (txt as unknown as { boardObjectId?: string }).boardObjectId;
+              if (oid) pushUndo({ type: "add", objectId: oid, serialized: (txt as unknown as { toObject(): object }).toObject() });
+            }, 0);
+          }
+        }
         setTool("select");
       });
     });

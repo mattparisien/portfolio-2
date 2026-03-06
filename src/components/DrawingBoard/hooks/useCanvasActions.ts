@@ -72,6 +72,12 @@ export function useCanvasActions({
       fc.isDrawingMode = false;
       fc.selection = true;
       fc.getObjects().forEach((o) => { o.selectable = true; o.evented = true; });
+    } else if (tool === "eraser") {
+      fc.isDrawingMode = false;
+      fc.selection = false;
+      fc.discardActiveObject();
+      // Keep objects evented so findTarget() can hit-test them
+      fc.getObjects().forEach((o) => { o.selectable = false; o.evented = true; });
     } else {
       fc.isDrawingMode = false;
       fc.selection = false;
@@ -80,6 +86,7 @@ export function useCanvasActions({
     fc.defaultCursor =
       tool === "text"                       ? "text"      :
       tool === "pencil" || tool === "brush" ? "crosshair" :
+      tool === "eraser"                     ? "cell"      :
       "default";
     fc.requestRenderAll();
   }, [tool, color, brushSize, fabricRef, modsRef]);

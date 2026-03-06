@@ -193,8 +193,8 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
           }}
           className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
           style={{
-            background: drawPinned ? "#000" : (tool === "pencil" || tool === "brush") && !drawOpen ? "#000" : drawHover ? "rgba(0,0,0,0.07)" : "transparent",
-            color: drawPinned || ((tool === "pencil" || tool === "brush") && !drawOpen) ? "#fff" : "#111",
+            background: drawPinned ? "#000" : (tool === "pencil" || tool === "brush" || tool === "eraser") && !drawOpen ? "#000" : drawHover ? "rgba(0,0,0,0.07)" : "transparent",
+            color: drawPinned || ((tool === "pencil" || tool === "brush" || tool === "eraser") && !drawOpen) ? "#fff" : "#111",
           }}
         >
           <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -261,6 +261,21 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
               <span className="text-[10px] text-gray-500 leading-none" style={{ color: tool === "select" ? "#fff" : undefined }}>Select</span>
             </button>
 
+            {/* Eraser */}
+            <button
+              title="Eraser"
+              onClick={() => { onToolChange("eraser"); setDrawPinned(true); }}
+              className="flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px] cursor-pointer"
+              style={{ background: tool === "eraser" ? "#000" : "transparent", color: tool === "eraser" ? "#fff" : "#111" }}
+              onMouseEnter={e => { if (tool !== "eraser") (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.07)"; }}
+              onMouseLeave={e => { if (tool !== "eraser") (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                <path d="M20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-9.5 9.5a1 1 0 0 0-.29.71V17a1 1 0 0 0 1 1h4a1 1 0 0 0 .71-.29l7.83-7.83zM10.88 16H9v-1.88l5.5-5.5 1.88 1.88L10.88 16z" />
+                <path d="M3 21h18v-2H3z" />
+              </svg>
+              <span className="text-[10px] text-gray-500 leading-none" style={{ color: tool === "eraser" ? "#fff" : undefined }}>Eraser</span>
+            </button>
 
           </div>
         )}
