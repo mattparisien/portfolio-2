@@ -21,6 +21,8 @@ import {
   RoomProvider as LiveblocksRoomProvider,
   useBroadcastEvent,
   useEventListener,
+  useErrorListener,
+  useStatus,
   useMyPresence,
   useSelf,
 } from "@/liveblocks.config";
@@ -28,6 +30,48 @@ import {
 // React 19 / Liveblocks JSX compat shim — remove once Liveblocks ships React 19 types
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const RoomProvider = LiveblocksRoomProvider as any;
+
+// ── Capacity wall — shown when max participants already in the room ────────
+function CapacityWall() {
+  const status = useStatus();
+  const [blocked, setBlocked] = useState(false);
+
+  useErrorListener((err) => {
+    // Liveblocks error codes 4xxx = connection rejected; 4005 = room full
+    const code = (err as unknown as { code?: number }).code ?? 0;
+    if (code >= 4000 && code < 5000) setBlocked(true);
+  });
+
+  // Also treat a hard-disconnected status (after initial connection never succeeded)
+  // as a capacity issue so we surface *something* rather than a silent blank screen.
+  const wasNeverConnected = status === "disconnected";
+
+  if (!blocked && !wasNeverConnected) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center"
+      style={{ backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", background: "rgba(255,255,255,0.35)" }}
+    >
+      <div className="bg-white/90 rounded-3xl shadow-2xl px-10 py-10 max-w-sm w-full mx-4 text-center flex flex-col items-center gap-4">
+        <span className="text-4xl select-none">🚫</span>
+        <h2 className="text-xl font-semibold tracking-tight text-gray-900 leading-snug">
+          The board is full right now
+        </h2>
+        <p className="text-sm text-gray-500 leading-relaxed">
+          There are too many people online at the moment.{" "}
+          Please check back in a little while — a spot should open up soon!
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-2 px-6 py-2.5 rounded-full bg-black text-white text-sm font-medium hover:bg-gray-800 active:scale-95 transition-all"
+        >
+          Try again
+        </button>
+      </div>
+    </div>
+  );
+}
 
 // ── Inner board — uses Liveblocks hooks (must be inside RoomProvider) ─────
 function DrawingBoardInner() {
@@ -48,6 +92,16 @@ function DrawingBoardInner() {
   const [shapeStrokeColor, setShapeStrokeColor] = useState("#000000");
   const [opacity, setOpacity]               = useState(1);
   const [textProps, setTextProps]         = useState<TextProps>(DEFAULT_TEXT_PROPS);
+
+  // Whenever any component opens a popover, we increment the other two signals
+  // so they close themselves — guaranteeing only one popover is ever visible.
+  const [drawingToolsClose, setDrawingToolsClose] = useState(0);
+  const [toolbarClose, setToolbarClose]           = useState(0);
+  const [textToolbarClose, setTextToolbarClose]   = useState(0);
+
+  const onDrawingToolsPopoverOpened = () => { setToolbarClose(n => n + 1); setTextToolbarClose(n => n + 1); };
+  const onToolbarPopoverOpened      = () => { setDrawingToolsClose(n => n + 1); setTextToolbarClose(n => n + 1); };
+  const onTextToolbarPopoverOpened  = () => { setDrawingToolsClose(n => n + 1); setToolbarClose(n => n + 1); };
 
   const selectedIsShape = hasSelection && !selectedIsText && !selectedIsGif && !selectedIsPath;
 
@@ -165,7 +219,8 @@ function DrawingBoardInner() {
       try { parsed = JSON.parse(event.fabricJSON); } catch { return; }
       // Skip GIF placeholders — they can't be re-instantiated without the buffer
       const BLANK_GIF = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
-      if (parsed.giphyId || parsed.src === BLANK_GIF) return;
+      // Never persist temporary Fabric multi-selection groups to other canvases
+      if (parsed.giphyId || parsed.src === BLANK_GIF || parsed.type === "activeselection") return;
 
       mods.util.enlivenObjects([parsed])
         .then((objects) => {
@@ -224,6 +279,8 @@ function DrawingBoardInner() {
           fabricRef={fabricRef}
           onColorChange={(c) => { setColor(c); recolorSelected(c); }}
           onApply={applyTextProp}
+          closeSignal={textToolbarClose}
+          onPopoverOpened={onTextToolbarPopoverOpened}
         />
       )}
 
@@ -238,6 +295,8 @@ function DrawingBoardInner() {
           onStrokeWeightChange={(v) => { setBrushSize(v); if (hasSelection) reweightSelected(v); }}
           strokeColor={selectedIsShape ? shapeStrokeColor : undefined}
           onStrokeColorChange={selectedIsShape ? (c) => { setShapeStrokeColor(c); restrokeSelected(c); } : undefined}
+          closeSignal={toolbarClose}
+          onPopoverOpened={onToolbarPopoverOpened}
         />
       )}
       <DrawingTools
@@ -247,6 +306,8 @@ function DrawingBoardInner() {
         onAddShape={addShape}
         onAddText={addText}
         onAddGif={addGif}
+        closeSignal={drawingToolsClose}
+        onPopoverOpened={onDrawingToolsPopoverOpened}
       />
       <ZoomNav zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} />
       <BoardHeader isSyncing={isSyncing} />
@@ -263,6 +324,7 @@ function DrawingBoardInner() {
           }}
         />
       )}
+      <CapacityWall />
     </div>
   );
 }

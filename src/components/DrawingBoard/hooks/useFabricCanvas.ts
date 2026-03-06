@@ -570,7 +570,8 @@ export function useFabricCanvas({
           if (oid) pushUndo({ type: "modify", objectId: oid, before: beforeTransformRef.current });
           beforeTransformRef.current = null;
         }
-        if ((target as { type?: string }).type === "activeSelection") {
+        // Fabric v6 uses the lowercase string "activeselection"
+        if ((target as { type?: string }).type === "activeselection") {
           pendingMultiSave = (target as unknown as { getObjects(): SaveableObj[] }).getObjects().slice();
           return;
         }

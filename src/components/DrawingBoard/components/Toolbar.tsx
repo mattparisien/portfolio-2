@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ColorButton from "./ColorButton";
 
 interface ToolbarProps {
@@ -13,13 +13,21 @@ interface ToolbarProps {
   /** When set, a second stroke color circle is shown (shapes only) */
   strokeColor?: string;
   onStrokeColorChange?: (c: string) => void;
+  closeSignal?: number;
+  onPopoverOpened?: () => void;
 }
 
-export default function Toolbar({ color, opacity, strokeWeight, onColorChange, onOpacityChange, onStrokeWeightChange, strokeColor, onStrokeColorChange }: ToolbarProps) {
+export default function Toolbar({ color, opacity, strokeWeight, onColorChange, onOpacityChange, onStrokeWeightChange, strokeColor, onStrokeColorChange, closeSignal, onPopoverOpened }: ToolbarProps) {
   const showDual = strokeColor !== undefined && onStrokeColorChange !== undefined;
   const [openPanel, setOpenPanel] = useState<"opacity" | "weight" | null>(null);
   const opacityOpen = openPanel === "opacity";
   const weightOpen  = openPanel === "weight";
+
+  // Close all when a sibling component opens a popover
+  useEffect(() => {
+    if (!closeSignal) return;
+    setOpenPanel(null);
+  }, [closeSignal]);
 
   return (
     <div
@@ -51,7 +59,7 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
       {/* Stroke weight button + popover */}
       <div className="relative">
         <button
-          onClick={() => setOpenPanel((v) => v === "weight" ? null : "weight")}
+          onClick={() => { setOpenPanel((v) => { const next = v === "weight" ? null : "weight"; if (next) onPopoverOpened?.(); return next; }); }}
           className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-colors hover:bg-black/[0.07]"
           style={{ background: weightOpen ? "rgba(0,0,0,0.08)" : "transparent" }}
           title="Stroke weight"
@@ -96,7 +104,7 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
       {/* Opacity button + popover */}
       <div className="relative">
         <button
-          onClick={() => setOpenPanel((v) => v === "opacity" ? null : "opacity")}
+          onClick={() => { setOpenPanel((v) => { const next = v === "opacity" ? null : "opacity"; if (next) onPopoverOpened?.(); return next; }); }}
           className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-colors hover:bg-black/[0.07]"
           style={{ background: opacityOpen ? "rgba(0,0,0,0.08)" : "transparent" }}
           title="Transparency"

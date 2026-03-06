@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { Canvas } from "fabric";
 import type { TextProps } from "../types";
 import ColorPopover from "./ColorPopover";
@@ -27,6 +27,8 @@ interface TextToolbarProps {
   fabricRef: React.MutableRefObject<Canvas | null>;
   onColorChange: (c: string) => void;
   onApply: (updates: Partial<TextProps>) => void;
+  closeSignal?: number;
+  onPopoverOpened?: () => void;
 }
 
 function ToggleBtn({
@@ -55,12 +57,19 @@ function ToggleBtn({
   );
 }
 
-export default function TextToolbar({ textProps, color, fabricRef, onColorChange, onApply }: TextToolbarProps) {
+export default function TextToolbar({ textProps, color, fabricRef, onColorChange, onApply, closeSignal, onPopoverOpened }: TextToolbarProps) {
   const { fontFamily, fontSize, bold, italic, underline, linethrough, uppercase, lineHeight, charSpacing, textAlign, gradient, effect } = textProps;
 
   const [colorOpen, setColorOpen] = useState(false);
   const [effectOpen, setEffectOpen] = useState(false);
   const colorTriggerRef = useRef<HTMLDivElement>(null);
+
+  // Close all when a sibling component opens a popover
+  useEffect(() => {
+    if (!closeSignal) return;
+    setColorOpen(false);
+    setEffectOpen(false);
+  }, [closeSignal]);
 
   // Determine display swatch — gradient pill or solid dot
   const swatchStyle: React.CSSProperties = (() => {
@@ -87,7 +96,7 @@ export default function TextToolbar({ textProps, color, fabricRef, onColorChange
       >
         <button
           title="Text color"
-          onClick={(e) => { e.stopPropagation(); setColorOpen((v) => !v); setEffectOpen(false); }}
+          onClick={(e) => { e.stopPropagation(); setColorOpen((v) => !v); setEffectOpen(false); onPopoverOpened?.(); }}
           className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-colors hover:bg-black/[0.07]"
           style={{ background: colorOpen ? "rgba(0,0,0,0.08)" : "transparent" }}
         >
@@ -110,7 +119,7 @@ export default function TextToolbar({ textProps, color, fabricRef, onColorChange
       <div className="relative flex items-center border-r border-gray-200 pr-2 mr-0.5 flex-shrink-0">
         <button
           title="Text effects"
-          onClick={(e) => { e.stopPropagation(); setEffectOpen((v) => !v); setColorOpen(false); }}
+          onClick={(e) => { e.stopPropagation(); setEffectOpen((v) => !v); setColorOpen(false); onPopoverOpened?.(); }}
           className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-colors hover:bg-black/[0.07] select-none"
           style={{
             background: effectOpen ? "rgba(0,0,0,0.08)" : effect ? "#000" : "transparent",

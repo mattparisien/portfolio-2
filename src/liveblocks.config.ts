@@ -29,6 +29,8 @@ export const {
   useSelf,
   useBroadcastEvent,
   useEventListener,
+  useErrorListener,
+  useStatus,
 } = createRoomContext<
   Presence,
   Record<string, never>,

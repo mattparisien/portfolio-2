@@ -59,9 +59,13 @@ interface DrawingToolsProps {
   onAddShape: (shape: ShapeType) => void;
   onAddText: () => void;
   onAddGif: (id: string, url: string) => void;
+  /** Incremented by the parent whenever another component opens a popover */
+  closeSignal?: number;
+  /** Called when this component opens any of its own popovers */
+  onPopoverOpened?: () => void;
 }
 
-export default function DrawingTools({ tool, color, onToolChange, onAddShape, onAddText, onAddGif }: DrawingToolsProps) {
+export default function DrawingTools({ tool, color, onToolChange, onAddShape, onAddText, onAddGif, closeSignal, onPopoverOpened }: DrawingToolsProps) {
   // pinned = user clicked to keep open; hover = mouse is over trigger or popover
   const [shapePinned, setShapePinned] = useState(false);
   const [shapeHover, setShapeHover]   = useState(false);
@@ -69,6 +73,14 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
   const [gifHover, setGifHover]       = useState(false);
   const [drawPinned, setDrawPinned]   = useState(false);
   const [drawHover, setDrawHover]     = useState(false);
+
+  // Close all when a sibling component opens a popover
+  useEffect(() => {
+    if (!closeSignal) return;
+    setShapePinned(false); setShapeHover(false);
+    setGifPinned(false);   setGifHover(false);
+    setDrawPinned(false);  setDrawHover(false);
+  }, [closeSignal]);
 
   const shapeOpen = shapePinned || shapeHover;
   const gifOpen   = gifPinned   || gifHover;
@@ -189,6 +201,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
             } else {
               setDrawPinned(true);
               setShapePinned(false); setShapeHover(false); setGifPinned(false); setGifHover(false);
+              onPopoverOpened?.();
             }
           }}
           className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
@@ -293,7 +306,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
           onClick={() => {
             const nowPinned = !shapePinned;
             setShapePinned(nowPinned);
-            if (nowPinned) { setGifPinned(false); setGifHover(false); setDrawPinned(false); setDrawHover(false); onToolChange("shape"); }
+            if (nowPinned) { setGifPinned(false); setGifHover(false); setDrawPinned(false); setDrawHover(false); onToolChange("shape"); onPopoverOpened?.(); }
           }}
           className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
           style={{
@@ -346,7 +359,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
           onClick={() => {
             const nowPinned = !gifPinned;
             setGifPinned(nowPinned);
-            if (nowPinned) { setShapePinned(false); setShapeHover(false); setDrawPinned(false); setDrawHover(false); }
+            if (nowPinned) { setShapePinned(false); setShapeHover(false); setDrawPinned(false); setDrawHover(false); onPopoverOpened?.(); }
           }}
           className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
           style={{

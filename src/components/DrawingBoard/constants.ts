@@ -26,13 +26,13 @@ export const CURSOR_COLORS= [
 export const CURSOR_ADJECTIVES = [
   "Sickening", "Gagged", "Snatched", "Fierce", "Serving",
   "Campy", "Shady", "Iconic", "Lewky", "Extra",
-  "Delusional", "Unclocked", "Opulent", "Messy", "Legendary",
+  "Delusional", "Unclocked", "Opulent", "Messy", "Legendary", "Questioning", "Anal", ""
 ] as const;
 
 export const CURSOR_ANIMALS = [
   "Lewk", "Realness", "Moment", "Situation", "Fantasy",
-  "Villain", "Era", "Creature", "Bestie", "Legend",
-  "Diva", "Witch", "Slayful", "Gaggina", "Creature",
+  "Queen", "Era", "Creature", "Bestie", "Legend",
+  "Diva", "Witch", "Slayful", "Gaggina", "Creature", "Top", "Bottom", "Unicorn", "Teaspill"
 ] as const;
 
 export function getOrCreateUser(): { name: string } {
