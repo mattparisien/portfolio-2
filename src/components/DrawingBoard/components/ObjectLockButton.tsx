@@ -76,7 +76,6 @@ export default function ObjectLockButton({ fabricRef, locked, onToggle }: Object
       title={locked ? "Unlock object" : "Lock object"}
     >
       <LockIcon open={!locked} />
-      <span>{locked ? "Locked" : "Lock"}</span>
     </button>
   );
 }
