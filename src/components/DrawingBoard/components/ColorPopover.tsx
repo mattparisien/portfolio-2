@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import type { Canvas } from "fabric";
 import type { TextGradient } from "../types";
 import { COLORS } from "../constants";
@@ -69,7 +70,7 @@ export default function ColorPopover({
     <p className="text-[9px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5 select-none">{label}</p>
   );
 
-  return (
+  return createPortal(
     <div
       ref={popoverRef}
       className="fixed top-5 left-[86px] p-3 rounded-2xl shadow-xl z-[300] w-56"
@@ -235,6 +236,7 @@ export default function ColorPopover({
           </div>
         </>
       )}
-    </div>
+    </div>,
+    document.body
   );
 }
