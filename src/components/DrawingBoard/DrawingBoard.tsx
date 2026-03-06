@@ -207,13 +207,13 @@ function DrawingBoardInner() {
         />
       )}
 
-      {/* Stroke toolbar — active pencil/brush or selected path */}
-      {!selectedIsText && !selectedIsGif && (tool === "pencil" || tool === "brush" || selectedIsPath) && (
+      {/* Stroke/fill toolbar — active pencil/brush or any non-text, non-gif selection */}
+      {!selectedIsText && !selectedIsGif && (tool === "pencil" || tool === "brush" || hasSelection) && (
         <Toolbar
           color={color}
           opacity={opacity}
-          onColorChange={(c) => { setColor(c); if (selectedIsPath) recolorSelected(c); }}
-          onOpacityChange={(v) => { setOpacity(v); if (selectedIsPath) reOpacitySelected(v); }}
+          onColorChange={(c) => { setColor(c); if (hasSelection) recolorSelected(c); }}
+          onOpacityChange={(v) => { setOpacity(v); if (hasSelection) reOpacitySelected(v); }}
         />
       )}
       <DrawingTools

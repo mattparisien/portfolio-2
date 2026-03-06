@@ -403,7 +403,9 @@ export function useFabricCanvas({
         const obj = fc.getActiveObject();
         const isText = !!obj && (obj as { type?: string }).type === "i-text";
         const isGif  = !!obj && !!(obj as { giphyId?: string }).giphyId;
-        const isPath = !!obj && (obj as { type?: string }).type === "path" && !(obj as { giphyId?: string }).giphyId;
+        const isPath  = !!obj && (obj as { type?: string }).type === "path" && !(obj as { giphyId?: string }).giphyId;
+        // Any non-text, non-gif, non-path object is a shape (rect, circle, etc.)
+        const isShape = !!obj && !isText && !isGif && !isPath;
         setSelectedIsText(isText);
         setSelectedIsGif(isGif);
         setSelectedIsPath(isPath);
@@ -413,6 +415,11 @@ export function useFabricCanvas({
           if (pathObj.stroke) setColor(pathObj.stroke);
           if (pathObj.strokeWidth != null) setBrushSize(pathObj.strokeWidth);
           if (pathObj.opacity != null) setOpacity(pathObj.opacity);
+        }
+        if (isShape) {
+          const shapeObj = obj as unknown as { fill?: string; opacity?: number };
+          if (shapeObj.fill && typeof shapeObj.fill === "string") setColor(shapeObj.fill);
+          if (shapeObj.opacity != null) setOpacity(shapeObj.opacity);
         }
       };
 

@@ -1,6 +1,7 @@
 "use client";
 
 import type { TextProps } from "../types";
+import ColorButton from "./ColorButton";
 
 const FONT_FAMILIES = [
   "sans-serif",
@@ -65,18 +66,7 @@ export default function TextToolbar({ textProps, color, onColorChange, onApply }
     >
       {/* Color dot */}
       <div className="flex items-center border-r border-gray-200 pr-2 mr-0.5 flex-shrink-0">
-        <label
-          title="Text color"
-          className="w-6 h-6 rounded-full cursor-pointer block flex-shrink-0"
-          style={{ background: color, border: "1.5px solid #ccc" }}
-        >
-          <input
-            type="color"
-            value={color}
-            onChange={(e) => onColorChange(e.target.value)}
-            className="opacity-0 w-0 h-0 absolute"
-          />
-        </label>
+        <ColorButton color={color} title="Text color" onChange={onColorChange} size={24} />
       </div>
 
       {/* Font family */}

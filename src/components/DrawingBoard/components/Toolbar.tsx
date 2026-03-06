@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
+import ColorButton from "./ColorButton";
 
 interface ToolbarProps {
   color: string;
@@ -10,7 +11,6 @@ interface ToolbarProps {
 }
 
 export default function Toolbar({ color, opacity, onColorChange, onOpacityChange }: ToolbarProps) {
-  const colorInputRef = useRef<HTMLInputElement>(null);
   const [opacityOpen, setOpacityOpen] = useState(false);
 
   return (
@@ -18,24 +18,8 @@ export default function Toolbar({ color, opacity, onColorChange, onOpacityChange
       className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-2.5 rounded-2xl shadow-xl z-[200]"
       style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(14px)" }}
     >
-      {/* Color circle — triggers the hidden native colour picker */}
-      <button
-        onClick={() => colorInputRef.current?.click()}
-        className="w-8 h-8 rounded-full flex-shrink-0 cursor-pointer transition-transform hover:scale-110"
-        style={{
-          background: color,
-          boxShadow: "0 0 0 2px #fff, 0 0 0 3.5px rgba(0,0,0,0.18)",
-        }}
-        title="Stroke colour"
-      />
-      <input
-        ref={colorInputRef}
-        type="color"
-        value={color}
-        onChange={(e) => onColorChange(e.target.value)}
-        className="absolute opacity-0 pointer-events-none w-0 h-0"
-        tabIndex={-1}
-      />
+      {/* Shared color circle */}
+      <ColorButton color={color} title="Stroke colour" onChange={onColorChange} size={28} />
 
       {/* Opacity button + popover */}
       <div className="relative">
