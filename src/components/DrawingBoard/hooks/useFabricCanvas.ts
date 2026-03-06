@@ -94,6 +94,11 @@ export function useFabricCanvas({
     const pendingTextRef = { current: null as IText | null };
     let pendingMultiSave: SaveableObj[] | null = null;
 
+    // Track latest mouse screen position so 'T' can place text at cursor
+    const lastMouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    const trackMouse = (e: MouseEvent) => { lastMouse.x = e.clientX; lastMouse.y = e.clientY; };
+    window.addEventListener("mousemove", trackMouse);
+
     // ── Window event handlers ──────────────────────────────────────────────
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
@@ -211,6 +216,36 @@ export function useFabricCanvas({
             isPastingRef.current = false;
             if (hasNewGif) startGifLoop();
           });
+        return;
+      }
+
+      // ── Insert text at cursor ('T') ───────────────────────────────────
+      if (e.key === "t" || e.key === "T") {
+        if (isEditingText || !mods) return;
+        e.preventDefault();
+        const vpt = fc.viewportTransform as number[];
+        const cx = (lastMouse.x - vpt[4]) / vpt[0];
+        const cy = (lastMouse.y - vpt[5]) / vpt[3];
+        const txt = new mods.IText("Type something", {
+          left: cx,
+          top: cy,
+          originX: "center",
+          originY: "center",
+          fontSize: Math.max(brushSizeRef.current * 2, 24),
+          fill: colorRef.current,
+          fontFamily: "sans-serif",
+          editable: true,
+        });
+        fc.add(txt);
+        fc.setActiveObject(txt);
+        // Mark as pending so mouse:down doesn't spawn a second text object
+        pendingTextRef.current = txt;
+        fc.requestRenderAll();
+        requestAnimationFrame(() => {
+          txt.enterEditing();
+          txt.selectAll();
+          fc.requestRenderAll();
+        });
         return;
       }
 
@@ -485,6 +520,7 @@ export function useFabricCanvas({
     return () => {
       window.removeEventListener("wheel", handleWheel);
       window.removeEventListener("resize", handleResize);
+      window.removeEventListener("mousemove", trackMouse);
       window.removeEventListener("keydown", handleKeyDown);
       canvasEl.removeEventListener("touchstart", onTouchStart);
       canvasEl.removeEventListener("touchmove",  onTouchMove);

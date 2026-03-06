@@ -98,7 +98,7 @@ function DrawingBoardInner() {
     broadcast: broadcastEvent,
   });
 
-  const { addText, addShape, addGif, recolorSelected, reOpacitySelected, zoomIn, zoomOut, applyTextProp } =
+  const { addText, addShape, addGif, recolorSelected, reweightSelected, reOpacitySelected, zoomIn, zoomOut, applyTextProp } =
     useCanvasActions({
       fabricRef,
       modsRef,
@@ -212,8 +212,10 @@ function DrawingBoardInner() {
         <Toolbar
           color={color}
           opacity={opacity}
+          strokeWeight={brushSize}
           onColorChange={(c) => { setColor(c); if (hasSelection) recolorSelected(c); }}
           onOpacityChange={(v) => { setOpacity(v); if (hasSelection) reOpacitySelected(v); }}
+          onStrokeWeightChange={(v) => { setBrushSize(v); if (hasSelection) reweightSelected(v); }}
         />
       )}
       <DrawingTools
