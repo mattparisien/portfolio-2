@@ -1,4 +1,4 @@
-import type { Canvas, PencilBrush, IText, Point as FabricPoint, Rect, Circle, Triangle, Path, FabricImage, ActiveSelection } from "fabric";
+import type { Canvas, PencilBrush, IText, Point as FabricPoint, Rect, Circle, Triangle, Path, FabricImage, ActiveSelection, Gradient } from "fabric";
 
 export type Tool = "pencil" | "brush" | "text" | "shape" | "select" | "eraser";
 
@@ -14,6 +14,7 @@ export type FabricMods = {
   FabricImage: typeof FabricImage;
   ActiveSelection: typeof ActiveSelection;
   util: (typeof import("fabric"))["util"];
+  Gradient: typeof Gradient;
 };
 
 export type ShapeType = "rect" | "circle" | "triangle" | "star" | "heart";
@@ -21,6 +22,11 @@ export type ShapeType = "rect" | "circle" | "triangle" | "star" | "heart";
 export interface Point {
   x: number;
   y: number;
+}
+
+export interface TextGradient {
+  color1: string;
+  color2: string;
 }
 
 export interface TextProps {
@@ -34,6 +40,7 @@ export interface TextProps {
   lineHeight: number;
   charSpacing: number;
   textAlign: "left" | "center" | "right";
+  gradient: TextGradient | null;
 }
 
 export const DEFAULT_TEXT_PROPS: TextProps = {
@@ -47,6 +54,7 @@ export const DEFAULT_TEXT_PROPS: TextProps = {
   lineHeight: 1.16,
   charSpacing: 0,
   textAlign: "left",
+  gradient: null,
 };
 
 export interface StrokeRecord {

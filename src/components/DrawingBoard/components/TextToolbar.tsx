@@ -1,7 +1,9 @@
 "use client";
 
+import { useState, useRef } from "react";
+import type { Canvas } from "fabric";
 import type { TextProps } from "../types";
-import ColorButton from "./ColorButton";
+import ColorPopover from "./ColorPopover";
 
 const FONT_FAMILIES = [
   "sans-serif",
@@ -21,6 +23,7 @@ const FONT_SIZES = [10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72, 96, 128]
 interface TextToolbarProps {
   textProps: TextProps;
   color: string;
+  fabricRef: React.MutableRefObject<Canvas | null>;
   onColorChange: (c: string) => void;
   onApply: (updates: Partial<TextProps>) => void;
 }
@@ -51,8 +54,16 @@ function ToggleBtn({
   );
 }
 
-export default function TextToolbar({ textProps, color, onColorChange, onApply }: TextToolbarProps) {
-  const { fontFamily, fontSize, bold, italic, underline, linethrough, uppercase, lineHeight, charSpacing, textAlign } = textProps;
+export default function TextToolbar({ textProps, color, fabricRef, onColorChange, onApply }: TextToolbarProps) {
+  const { fontFamily, fontSize, bold, italic, underline, linethrough, uppercase, lineHeight, charSpacing, textAlign, gradient } = textProps;
+
+  const [colorOpen, setColorOpen] = useState(false);
+  const colorTriggerRef = useRef<HTMLDivElement>(null);
+
+  // Determine display swatch — gradient pill or solid dot
+  const swatchStyle: React.CSSProperties = gradient
+    ? { background: `linear-gradient(to right, ${gradient.color1}, ${gradient.color2})`, borderRadius: 6, width: 28, height: 18 }
+    : { background: color, borderRadius: "50%", width: 18, height: 18, boxShadow: "0 0 0 1.5px rgba(0,0,0,0.15), 0 0 0 3px #fff, 0 0 0 4.5px rgba(0,0,0,0.12)" };
 
   return (
     <div
@@ -64,9 +75,30 @@ export default function TextToolbar({ textProps, color, onColorChange, onApply }
         whiteSpace: "nowrap",
       }}
     >
-      {/* Color dot */}
-      <div className="flex items-center border-r border-gray-200 pr-2 mr-0.5 flex-shrink-0">
-        <ColorButton color={color} title="Text color" onChange={onColorChange} size={24} />
+      {/* Color / gradient trigger — opens ColorPopover */}
+      <div
+        className="relative flex items-center border-r border-gray-200 pr-2 mr-0.5 flex-shrink-0"
+        ref={colorTriggerRef}
+      >
+        <button
+          title="Text color"
+          onClick={(e) => { e.stopPropagation(); setColorOpen((v) => !v); }}
+          className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-colors hover:bg-black/[0.07]"
+          style={{ background: colorOpen ? "rgba(0,0,0,0.08)" : "transparent" }}
+        >
+          <span style={swatchStyle} className="flex-shrink-0 block" />
+        </button>
+
+        {colorOpen && (
+          <ColorPopover
+            color={color}
+            gradient={gradient}
+            fabricRef={fabricRef}
+            onColorChange={(c) => { onColorChange(c); }}
+            onGradientChange={(g) => onApply({ gradient: g })}
+            onClose={() => setColorOpen(false)}
+          />
+        )}
       </div>
 
       {/* Font family */}

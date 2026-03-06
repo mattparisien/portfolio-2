@@ -10,6 +10,16 @@ import type { RoomEvent } from "@/liveblocks.config";
 
 function extractTextProps(txt: IText): TextProps {
   const align = (txt.textAlign as string) || "left";
+  const fill = txt.fill;
+  let gradient: import("../types").TextGradient | null = null;
+  if (fill && typeof fill === "object" && "colorStops" in fill) {
+    const stops = (fill as { colorStops: { offset: number; color: string }[] }).colorStops
+      .slice()
+      .sort((a, b) => a.offset - b.offset);
+    if (stops.length >= 2) {
+      gradient = { color1: stops[0].color, color2: stops[stops.length - 1].color };
+    }
+  }
   return {
     fontFamily: (txt.fontFamily as string) || DEFAULT_TEXT_PROPS.fontFamily,
     fontSize: (txt.fontSize as number) || DEFAULT_TEXT_PROPS.fontSize,
@@ -21,6 +31,7 @@ function extractTextProps(txt: IText): TextProps {
     lineHeight: (txt.lineHeight as number) || DEFAULT_TEXT_PROPS.lineHeight,
     charSpacing: (txt.charSpacing as number) ?? DEFAULT_TEXT_PROPS.charSpacing,
     textAlign: (align === "center" || align === "right") ? align : "left",
+    gradient,
   };
 }
 
@@ -45,6 +56,7 @@ interface UseFabricCanvasOptions {
   setSelectedIsGif: (v: boolean) => void;
   setSelectedIsPath: (v: boolean) => void;
   setSelectedIsLocked: (v: boolean) => void;
+  setShapeStrokeColor: (c: string) => void;
   setColor: (c: string) => void;
   setBrushSize: (s: number) => void;
   setOpacity: (v: number) => void;
@@ -74,6 +86,7 @@ export function useFabricCanvas({
   setSelectedIsGif,
   setSelectedIsPath,
   setSelectedIsLocked,
+  setShapeStrokeColor,
   setColor,
   setBrushSize,
   setOpacity,
@@ -342,7 +355,9 @@ export function useFabricCanvas({
       e.preventDefault();
       pendingMultiSave = null;
       // getActiveObjects() returns a flat array for both single and multi-select
-      const members = fc.getActiveObjects().slice() as unknown as SaveableObj[];
+      const members = fc.getActiveObjects()
+        .filter((o) => !(o as unknown as { lockMovementX?: boolean }).lockMovementX)
+        .slice() as unknown as SaveableObj[];
       fc.discardActiveObject();
       members.forEach((obj) => {
         const isGif = !!(obj as { giphyId?: string }).giphyId;
@@ -398,8 +413,8 @@ export function useFabricCanvas({
     canvasEl.addEventListener("touchend",   onTouchEnd);
 
     // ── Fabric async init ─────────────────────────────────────────────────
-    import("fabric").then(({ Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, ActiveSelection, util }) => {
-      modsRef.current = { Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, ActiveSelection, util };
+    import("fabric").then(({ Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, ActiveSelection, util, Gradient }) => {
+      modsRef.current = { Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, ActiveSelection, util, Gradient };
 
       const fc = new Canvas(canvasEl, {
         width: window.innerWidth,
@@ -544,9 +559,11 @@ export function useFabricCanvas({
           if (pathObj.opacity != null) setOpacity(pathObj.opacity);
         }
         if (isShape) {
-          const shapeObj = obj as unknown as { fill?: string; opacity?: number };
+          const shapeObj = obj as unknown as { fill?: string; stroke?: string; opacity?: number };
           if (shapeObj.fill && typeof shapeObj.fill === "string") setColor(shapeObj.fill);
           if (shapeObj.opacity != null) setOpacity(shapeObj.opacity);
+          const s = shapeObj.stroke;
+          setShapeStrokeColor(s && s !== "transparent" && s !== "" ? s : "#000000");
         }
         // Lock state for the floating lock button
         setSelectedIsLocked(!!(obj as unknown as Record<string, unknown>)?.lockMovementX);
@@ -687,7 +704,7 @@ export function useFabricCanvas({
       fabricRef.current = null;
       modsRef.current   = null;
     };
-  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, opacityRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setVpt, setHasSelection, setSelectedIsText, setSelectedIsGif, setSelectedIsPath, setColor, setBrushSize, setOpacity, setTextProps, setIsSyncing, broadcast]);
+  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, opacityRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setVpt, setHasSelection, setSelectedIsText, setSelectedIsGif, setSelectedIsPath, setShapeStrokeColor, setColor, setBrushSize, setOpacity, setTextProps, setIsSyncing, broadcast]);
 
   return { modsRef };
 }

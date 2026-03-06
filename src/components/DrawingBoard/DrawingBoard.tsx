@@ -45,8 +45,11 @@ function DrawingBoardInner() {
   const [selectedIsGif, setSelectedIsGif]   = useState(false);
   const [selectedIsPath, setSelectedIsPath] = useState(false);
   const [selectedIsLocked, setSelectedIsLocked] = useState(false);
+  const [shapeStrokeColor, setShapeStrokeColor] = useState("#000000");
   const [opacity, setOpacity]               = useState(1);
   const [textProps, setTextProps]         = useState<TextProps>(DEFAULT_TEXT_PROPS);
+
+  const selectedIsShape = hasSelection && !selectedIsText && !selectedIsGif && !selectedIsPath;
 
   // Keep refs in sync so async canvas callbacks always read the latest values
   const toolRef      = useRef<Tool>("select");
@@ -93,6 +96,7 @@ function DrawingBoardInner() {
     setSelectedIsGif,
     setSelectedIsPath,
     setSelectedIsLocked,
+    setShapeStrokeColor,
     setColor,
     setBrushSize,
     setOpacity,
@@ -102,7 +106,7 @@ function DrawingBoardInner() {
     broadcast: broadcastEvent,
   });
 
-  const { addText, addShape, addGif, recolorSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, applyTextProp } =
+  const { addText, addShape, addGif, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, applyTextProp } =
     useCanvasActions({
       fabricRef,
       modsRef,
@@ -206,6 +210,7 @@ function DrawingBoardInner() {
         <TextToolbar
           textProps={textProps}
           color={color}
+          fabricRef={fabricRef}
           onColorChange={(c) => { setColor(c); recolorSelected(c); }}
           onApply={applyTextProp}
         />
@@ -220,6 +225,8 @@ function DrawingBoardInner() {
           onColorChange={(c) => { setColor(c); if (hasSelection) recolorSelected(c); }}
           onOpacityChange={(v) => { setOpacity(v); if (hasSelection) reOpacitySelected(v); }}
           onStrokeWeightChange={(v) => { setBrushSize(v); if (hasSelection) reweightSelected(v); }}
+          strokeColor={selectedIsShape ? shapeStrokeColor : undefined}
+          onStrokeColorChange={selectedIsShape ? (c) => { setShapeStrokeColor(c); restrokeSelected(c); } : undefined}
         />
       )}
       <DrawingTools

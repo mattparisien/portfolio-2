@@ -131,7 +131,7 @@ export function useCanvasActions({
     const common = {
       fill: colorRef.current,
       stroke: "transparent",
-      strokeWidth: 0,
+      strokeWidth: 1,
       selectable: true,
       hasControls: true,
       hasBorders:  true,
@@ -250,6 +250,18 @@ export function useCanvasActions({
     saveObject(obj);
   }, [fabricRef, saveObject]);
 
+  // ── Restroke selected shape ────────────────────────────────────────────
+  const restrokeSelected = useCallback((c: string) => {
+    const fc = fabricRef.current;
+    if (!fc) return;
+    const obj = fc.getActiveObject();
+    if (!obj) return;
+    const currentWidth = (obj as unknown as { strokeWidth?: number }).strokeWidth ?? 0;
+    obj.set({ stroke: c, strokeWidth: currentWidth > 0 ? currentWidth : 1 });
+    fc.requestRenderAll();
+    saveObject(obj);
+  }, [fabricRef, saveObject]);
+
   // ── Reweight selected path ────────────────────────────────────────────
   const reweightSelected = useCallback((size: number) => {
     const fc = fabricRef.current;
@@ -336,11 +348,34 @@ export function useCanvasActions({
     }
 
     obj.set(fabricUpdates as Parameters<typeof obj.set>[0]);
+
+    // ── Gradient fill ─────────────────────────────────────────────────
+    if (updates.gradient !== undefined) {
+      const mods = modsRef.current;
+      if (mods) {
+        if (!updates.gradient) {
+          obj.set({ fill: colorRef.current });
+        } else {
+          const { color1, color2 } = updates.gradient;
+          const grad = new mods.Gradient({
+            type: "linear",
+            gradientUnits: "percentage",
+            coords: { x1: 0, y1: 0, x2: 1, y2: 0 },
+            colorStops: [
+              { offset: 0, color: color1 },
+              { offset: 1, color: color2 },
+            ],
+          });
+          obj.set({ fill: grad });
+        }
+      }
+    }
+
     fc.requestRenderAll();
     saveObject(obj);
     // Reflect updated props back to state
     setTextProps((prev: TextProps) => ({ ...prev, ...updates }));
-  }, [fabricRef, saveObject, setTextProps]);
+  }, [fabricRef, modsRef, colorRef, saveObject, setTextProps]);
 
   // ── Lock / unlock selected objects ────────────────────────────────────
   const lockSelected = useCallback((locked: boolean) => {
@@ -360,5 +395,5 @@ export function useCanvasActions({
     fc.requestRenderAll();
   }, [fabricRef, saveObject]);
 
-  return { addText, addShape, addGif, recolorSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, clearCanvas, applyTextProp };
+  return { addText, addShape, addGif, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, clearCanvas, applyTextProp };
 }

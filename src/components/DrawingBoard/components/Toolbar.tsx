@@ -10,9 +10,13 @@ interface ToolbarProps {
   onColorChange: (c: string) => void;
   onOpacityChange: (v: number) => void;
   onStrokeWeightChange: (v: number) => void;
+  /** When set, a second stroke color circle is shown (shapes only) */
+  strokeColor?: string;
+  onStrokeColorChange?: (c: string) => void;
 }
 
-export default function Toolbar({ color, opacity, strokeWeight, onColorChange, onOpacityChange, onStrokeWeightChange }: ToolbarProps) {
+export default function Toolbar({ color, opacity, strokeWeight, onColorChange, onOpacityChange, onStrokeWeightChange, strokeColor, onStrokeColorChange }: ToolbarProps) {
+  const showDual = strokeColor !== undefined && onStrokeColorChange !== undefined;
   const [openPanel, setOpenPanel] = useState<"opacity" | "weight" | null>(null);
   const opacityOpen = openPanel === "opacity";
   const weightOpen  = openPanel === "weight";
@@ -22,10 +26,27 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
       className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-2.5 rounded-2xl shadow-xl z-[200]"
       style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(14px)" }}
     >
-      {/* Shared color circle — wrapped in same 32px container as icon buttons */}
-      <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors hover:bg-black/[0.07]">
-        <ColorButton color={color} title="Stroke colour" onChange={onColorChange} size={22} />
-      </div>
+      {/* Color circle(s) */}
+      {showDual ? (
+        <>
+          <div className="flex flex-col items-center gap-0.5">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors hover:bg-black/[0.07]">
+              <ColorButton color={color} title="Fill colour" onChange={onColorChange} size={22} />
+            </div>
+            <span className="text-[8px] font-semibold uppercase tracking-widest text-gray-400 select-none leading-none">Fill</span>
+          </div>
+          <div className="flex flex-col items-center gap-0.5">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors hover:bg-black/[0.07]">
+              <ColorButton color={strokeColor!} title="Stroke colour" onChange={onStrokeColorChange!} size={22} />
+            </div>
+            <span className="text-[8px] font-semibold uppercase tracking-widest text-gray-400 select-none leading-none">Stroke</span>
+          </div>
+        </>
+      ) : (
+        <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors hover:bg-black/[0.07]">
+          <ColorButton color={color} title="Colour" onChange={onColorChange} size={22} />
+        </div>
+      )}
 
       {/* Stroke weight button + popover */}
       <div className="relative">
