@@ -17,7 +17,14 @@ function extractTextProps(txt: IText): TextProps {
       .slice()
       .sort((a, b) => a.offset - b.offset);
     if (stops.length >= 2) {
-      gradient = { color1: stops[0].color, color2: stops[stops.length - 1].color };
+      const cs = fill as { colorStops: { offset: number; color: string }[]; coords?: { x1: number; y1: number; x2: number; y2: number } };
+      let angle = 90;
+      if (cs.coords) {
+        const { x1 = 0, y1 = 0, x2 = 1, y2 = 0 } = cs.coords;
+        const deg = Math.round(Math.atan2(x2 - x1, -(y2 - y1)) * 180 / Math.PI);
+        angle = (deg + 360) % 360;
+      }
+      gradient = { stops: stops.map(s => ({ offset: s.offset, color: s.color })), angle };
     }
   }
   return {
@@ -32,6 +39,28 @@ function extractTextProps(txt: IText): TextProps {
     charSpacing: (txt.charSpacing as number) ?? DEFAULT_TEXT_PROPS.charSpacing,
     textAlign: (align === "center" || align === "right") ? align : "left",
     gradient,
+    effect: (() => {
+      const sh = txt.shadow as ({ color?: string; blur?: number; offsetX?: number; offsetY?: number } | null);
+      const sk = txt.stroke as string | undefined;
+      const sw = (txt.strokeWidth as number) ?? 0;
+      const hasShadow = !!sh && ((sh.blur ?? 0) + Math.abs(sh.offsetX ?? 0) + Math.abs(sh.offsetY ?? 0)) > 0;
+      const hasStroke = typeof sk === "string" && sk !== "" && sk !== "transparent" && sw > 0;
+      const isPattern = !!fill && typeof fill === "object" && "source" in fill;
+      if (!hasShadow && !hasStroke && !isPattern) return null;
+      const rec = txt as unknown as Record<string, unknown>;
+      return {
+        shadowColor: sh?.color ?? "rgba(0,0,0,0.5)",
+        shadowBlur: sh?.blur ?? 0,
+        shadowOffsetX: sh?.offsetX ?? 0,
+        shadowOffsetY: sh?.offsetY ?? 0,
+        strokeColor: hasStroke ? sk! : "#000000",
+        strokeWidth: hasStroke ? sw : 0,
+        patternType: isPattern ? ("glitter" as const) : null,
+        patternColor1: (rec._effectPatternC1 as string | undefined) ?? "#FFD700",
+        patternColor2: (rec._effectPatternC2 as string | undefined) ?? "#FF6EE7",
+        presetId: (rec._effectPresetId as string | undefined) ?? undefined,
+      } as import("../types").TextEffect;
+    })(),
   };
 }
 
@@ -347,7 +376,16 @@ export function useFabricCanvas({
           fc.moveObjectTo(active, 0);
         }
         fc.requestRenderAll();
-        saveObject(active as unknown as SaveableObj);
+        // Stamp zIndex on every object and save each one so order persists on reload
+        const allObjs = fc.getObjects();
+        allObjs.forEach((obj, i) => {
+          (obj as unknown as SaveableObj).zIndex = i;
+          if ((obj as unknown as { boardObjectId?: string }).boardObjectId) {
+            saveObject(obj as unknown as SaveableObj);
+          }
+        });
+        // Broadcast the new order to other clients
+        broadcast?.({ type: "LAYER_REORDERED", order: allObjs.map(o => (o as unknown as { boardObjectId?: string }).boardObjectId ?? "") });
         return;
       }
 
@@ -413,8 +451,8 @@ export function useFabricCanvas({
     canvasEl.addEventListener("touchend",   onTouchEnd);
 
     // ── Fabric async init ─────────────────────────────────────────────────
-    import("fabric").then(({ Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, ActiveSelection, util, Gradient }) => {
-      modsRef.current = { Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, ActiveSelection, util, Gradient };
+    import("fabric").then(({ Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, ActiveSelection, util, Gradient, Shadow, Pattern }) => {
+      modsRef.current = { Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, ActiveSelection, util, Gradient, Shadow, Pattern };
 
       const fc = new Canvas(canvasEl, {
         width: window.innerWidth,
@@ -441,6 +479,8 @@ export function useFabricCanvas({
         .then(async ({ objects }: { objects: { fabricJSON: string }[] }) => {
           if (!Array.isArray(objects) || objects.length === 0) return;
           const parsed = objects.map((o) => JSON.parse(o.fabricJSON)) as Record<string, unknown>[];
+          // Sort by persisted zIndex so layer order is restored correctly
+          parsed.sort((a, b) => ((a.zIndex as number) ?? 0) - ((b.zIndex as number) ?? 0));
           parsed.forEach((o) => { if (o.type === "IText" || o.type === "i-text") o.editable = false; });
           const enlivened = await util.enlivenObjects(parsed);
 
@@ -450,6 +490,10 @@ export function useFabricCanvas({
           (enlivened as unknown[]).forEach((obj, i) => {
             const src = parsed[i];
             if (src.boardObjectId) (obj as Record<string, unknown>).boardObjectId = src.boardObjectId;
+            if (src.zIndex !== undefined) (obj as Record<string, unknown>).zIndex = src.zIndex;
+            if (src._effectPresetId) (obj as Record<string, unknown>)._effectPresetId = src._effectPresetId;
+            if (src._effectPatternC1) (obj as Record<string, unknown>)._effectPatternC1 = src._effectPatternC1;
+            if (src._effectPatternC2) (obj as Record<string, unknown>)._effectPatternC2 = src._effectPatternC2;
 
             if (src.giphyId && src._gifUrl) {
               // Stamp giphyId immediately so the loop guard recognises it

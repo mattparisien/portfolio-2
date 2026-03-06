@@ -1,22 +1,84 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import type { Canvas } from "fabric";
 import type { TextGradient } from "../types";
 import { COLORS } from "../constants";
 
-const GRADIENT_PRESETS: [string, string][] = [
-  ["#FF6EE7", "#B44FFF"],
-  ["#B44FFF", "#7DF9FF"],
-  ["#FFD700", "#FF4DA6"],
-  ["#00F5D4", "#C77DFF"],
-  ["#FF85A1", "#FFF01F"],
-  ["#ADFF2F", "#7DF9FF"],
-  ["#FF6B6B", "#FFD93D"],
-  ["#000000", "#888888"],
+// ── Internal stop type (id only used inside this component for React keys) ─
+interface GStop { id: string; offset: number; color: string; }
+function uid() { return Math.random().toString(36).slice(2, 9); }
+function mkStop(color: string, offset: number): GStop { return { id: uid(), color, offset }; }
+
+// ── Color utilities ─────────────────────────────────────────────────────────
+function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace("#", "");
+  const full = h.length === 3 ? h.split("").map(c => c + c).join("") : h.padEnd(6, "0").slice(0, 6);
+  return [parseInt(full.slice(0, 2), 16) || 0, parseInt(full.slice(2, 4), 16) || 0, parseInt(full.slice(4, 6), 16) || 0];
+}
+function rgbToHex(r: number, g: number, b: number): string {
+  return "#" + [r, g, b].map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0")).join("");
+}
+function lerpHex(c1: string, c2: string, t: number): string {
+  const [r1, g1, b1] = hexToRgb(c1); const [r2, g2, b2] = hexToRgb(c2);
+  return rgbToHex(r1 + (r2 - r1) * t, g1 + (g2 - g1) * t, b1 + (b2 - b1) * t);
+}
+function colorAtOffset(stops: GStop[], offset: number): string {
+  const s = [...stops].sort((a, b) => a.offset - b.offset);
+  if (!s.length) return "#000000";
+  if (offset <= s[0].offset) return s[0].color;
+  if (offset >= s[s.length - 1].offset) return s[s.length - 1].color;
+  for (let i = 0; i < s.length - 1; i++) {
+    if (offset >= s[i].offset && offset <= s[i + 1].offset) {
+      const t = (offset - s[i].offset) / (s[i + 1].offset - s[i].offset);
+      return lerpHex(s[i].color, s[i + 1].color, t);
+    }
+  }
+  return "#000000";
+}
+function stopsToCSS(stops: GStop[], angle: number): string {
+  const s = [...stops].sort((a, b) => a.offset - b.offset);
+  return `linear-gradient(${angle}deg, ${s.map(st => `${st.color} ${Math.round(st.offset * 100)}%`).join(", ")})`;
+}
+function toTextGradient(stops: GStop[], angle: number): TextGradient {
+  return {
+    stops: [...stops].sort((a, b) => a.offset - b.offset).map(({ color, offset }) => ({ color, offset })),
+    angle,
+  };
+}
+
+// ── Presets ──────────────────────────────────────────────────────────────────
+const PRESETS: Array<{ label: string; stops: Array<{ color: string; offset: number }>; angle: number }> = [
+  { label: "Candy",   angle: 90,  stops: [{ color: "#FF6EE7", offset: 0 }, { color: "#B44FFF", offset: 1 }] },
+  { label: "Ocean",   angle: 90,  stops: [{ color: "#B44FFF", offset: 0 }, { color: "#7DF9FF", offset: 1 }] },
+  { label: "Sunset",  angle: 90,  stops: [{ color: "#FF4DA6", offset: 0 }, { color: "#FFD700", offset: 1 }] },
+  { label: "Aurora",  angle: 135, stops: [{ color: "#00F5D4", offset: 0 }, { color: "#C77DFF", offset: 0.5 }, { color: "#FF6EE7", offset: 1 }] },
+  { label: "Pop",     angle: 90,  stops: [{ color: "#FF85A1", offset: 0 }, { color: "#FFF01F", offset: 1 }] },
+  { label: "Neon",    angle: 90,  stops: [{ color: "#ADFF2F", offset: 0 }, { color: "#7DF9FF", offset: 1 }] },
+  { label: "Fire",    angle: 90,  stops: [{ color: "#FF6B6B", offset: 0 }, { color: "#FFD93D", offset: 1 }] },
+  { label: "Rainbow", angle: 90,  stops: [{ color: "#FF0000", offset: 0 }, { color: "#FF9900", offset: 0.2 }, { color: "#ADFF2F", offset: 0.4 }, { color: "#7DF9FF", offset: 0.6 }, { color: "#B44FFF", offset: 0.8 }, { color: "#FF6EE7", offset: 1 }] },
+  { label: "Dusk",    angle: 135, stops: [{ color: "#0f0c29", offset: 0 }, { color: "#302b63", offset: 0.5 }, { color: "#24243e", offset: 1 }] },
+  { label: "Mono",    angle: 90,  stops: [{ color: "#000000", offset: 0 }, { color: "#888888", offset: 1 }] },
 ];
 
+// Row-major 3×3 angle grid; null = center placeholder
+const ANGLE_GRID: Array<[number | null, string]> = [
+  [315, "↖"], [0, "↑"],   [45, "↗"],
+  [270, "←"], [null, ""], [90, "→"],
+  [225, "↙"], [180, "↓"], [135, "↘"],
+];
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return <p className="text-[9px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5 mt-3 first:mt-0 select-none">{children}</p>;
+}
+
+function initStops(gradient: TextGradient | null): GStop[] {
+  if (!gradient?.stops?.length) return [mkStop("#FF6EE7", 0), mkStop("#B44FFF", 1)];
+  return gradient.stops.map(s => mkStop(s.color, s.offset));
+}
+
+// ── Props & Component ────────────────────────────────────────────────────────
 interface ColorPopoverProps {
   color: string;
   gradient: TextGradient | null;
@@ -26,33 +88,23 @@ interface ColorPopoverProps {
   onClose: () => void;
 }
 
-export default function ColorPopover({
-  color,
-  gradient,
-  fabricRef,
-  onColorChange,
-  onGradientChange,
-  onClose,
-}: ColorPopoverProps) {
+export default function ColorPopover({ color, gradient, fabricRef, onColorChange, onGradientChange, onClose }: ColorPopoverProps) {
   const [tab, setTab] = useState<"solid" | "gradient">(gradient ? "gradient" : "solid");
-  const [g1, setG1] = useState(gradient?.color1 ?? "#FF6EE7");
-  const [g2, setG2] = useState(gradient?.color2 ?? "#B44FFF");
+
+  // ── Solid state ─────────────────────────────────────────────────────────
+  const [hexInput, setHexInput] = useState(color.startsWith("#") ? color : "#000000");
+
+  // ── Gradient state ───────────────────────────────────────────────────────
+  const [stops, setStops] = useState<GStop[]>(() => initStops(gradient));
+  const [angle, setAngle] = useState(gradient?.angle ?? 90);
+  const [selectedId, setSelectedId] = useState<string | null>(() => initStops(gradient)[0]?.id ?? null);
+
   const popoverRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
 
-  // Collect unique solid colors currently used in canvas objects
-  const docColors = (() => {
-    const fc = fabricRef.current;
-    if (!fc) return [] as string[];
-    const seen = new Set<string>();
-    fc.getObjects().forEach((obj) => {
-      const o = obj as unknown as Record<string, unknown>;
-      if (typeof o.fill === "string" && o.fill && o.fill !== "transparent") seen.add(o.fill);
-      if (typeof o.stroke === "string" && o.stroke && o.stroke !== "transparent") seen.add(o.stroke);
-    });
-    return [...seen].slice(0, 20);
-  })();
+  useEffect(() => { if (color.startsWith("#")) setHexInput(color); }, [color]);
 
-  // Click-outside closes popover
+  // Click-outside to close
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (!popoverRef.current?.contains(e.target as Node)) onClose();
@@ -61,30 +113,87 @@ export default function ColorPopover({
     return () => document.removeEventListener("mousedown", handler);
   }, [onClose]);
 
-  const applyGradient = (c1: string, c2: string) => {
-    setG1(c1); setG2(c2);
-    onGradientChange({ color1: c1, color2: c2 });
+  // ── Gradient helpers ─────────────────────────────────────────────────────
+  const emit = useCallback((s: GStop[], a: number) => {
+    onGradientChange(toTextGradient(s, a));
+  }, [onGradientChange]);
+
+  const setAndEmit = (s: GStop[]) => { setStops(s); emit(s, angle); };
+  const setAngleAndEmit = (a: number) => { setAngle(a); emit(stops, a); };
+
+  // ── Document colors ──────────────────────────────────────────────────────
+  const docColors = (() => {
+    const fc = fabricRef.current;
+    if (!fc) return [] as string[];
+    const seen = new Set<string>();
+    fc.getObjects().forEach(obj => {
+      const o = obj as unknown as Record<string, unknown>;
+      if (typeof o.fill === "string" && o.fill !== "transparent") seen.add(o.fill as string);
+      if (typeof o.stroke === "string" && o.stroke !== "transparent") seen.add(o.stroke as string);
+    });
+    return [...seen].filter(Boolean).slice(0, 16);
+  })();
+
+  // ── Stop track interaction ───────────────────────────────────────────────
+  const getOffset = (clientX: number): number => {
+    const t = trackRef.current;
+    if (!t) return 0;
+    const r = t.getBoundingClientRect();
+    return Math.max(0, Math.min(1, (clientX - r.left) / r.width));
   };
 
-  const Section = ({ label }: { label: string }) => (
-    <p className="text-[9px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5 select-none">{label}</p>
-  );
+  const handleTrackClick = (e: React.MouseEvent) => {
+    const offset = getOffset(e.clientX);
+    const newStop = mkStop(colorAtOffset(stops, offset), offset);
+    const next = [...stops, newStop];
+    setSelectedId(newStop.id);
+    setAndEmit(next);
+  };
+
+  const startDrag = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setSelectedId(id);
+    let latest = stops;
+    const onMove = (me: MouseEvent) => {
+      const off = getOffset(me.clientX);
+      setStops(prev => { latest = prev.map(s => s.id === id ? { ...s, offset: off } : s); return latest; });
+    };
+    const onUp = () => {
+      emit(latest, angle);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
+
+  const setStopColor = (id: string, c: string) => setAndEmit(stops.map(s => s.id === id ? { ...s, color: c } : s));
+
+  const removeStop = (id: string) => {
+    if (stops.length <= 2) return;
+    const next = stops.filter(s => s.id !== id);
+    if (selectedId === id) setSelectedId(next[0]?.id ?? null);
+    setAndEmit(next);
+  };
+
+  const selectedStop = stops.find(s => s.id === selectedId) ?? null;
+  const cssGrad = stopsToCSS(stops, angle);
 
   return createPortal(
     <div
       ref={popoverRef}
-      className="fixed top-5 left-[86px] p-3 rounded-2xl shadow-xl z-[300] w-56"
-      style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)" }}
+      className="fixed top-5 left-[86px] p-3 rounded-2xl shadow-xl z-[300] w-64"
+      style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)", maxHeight: "calc(100vh - 48px)", overflowY: "auto" }}
     >
-      {/* Close */}
+      {/* ✕ close */}
       <button
         onClick={onClose}
-        className="absolute -top-2.5 -right-2.5 w-5 h-5 rounded-full bg-white text-gray-500 flex items-center justify-center text-[10px] leading-none cursor-pointer hover:text-black transition-colors shadow"
+        className="absolute -top-2.5 -right-2.5 w-5 h-5 rounded-full bg-white shadow text-gray-400 flex items-center justify-center text-[10px] leading-none cursor-pointer hover:text-black transition-colors"
       >✕</button>
 
-      {/* Tabs */}
+      {/* Tab switcher */}
       <div className="flex gap-1 mb-3 p-0.5 bg-gray-100 rounded-xl">
-        {(["solid", "gradient"] as const).map((t) => (
+        {(["solid", "gradient"] as const).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -98,58 +207,57 @@ export default function ColorPopover({
         ))}
       </div>
 
+      {/* ══ SOLID TAB ══ */}
       {tab === "solid" && (
         <>
-          {/* Preset swatches */}
-          <Section label="Colors" />
+          <SectionLabel>Colors</SectionLabel>
           <div className="flex flex-wrap gap-1.5 mb-3">
-            {COLORS.map((c) => (
+            {COLORS.map(c => (
               <button
-                key={c}
-                title={c}
+                key={c} title={c}
                 onClick={() => { onGradientChange(null); onColorChange(c); }}
                 className="w-6 h-6 rounded-full cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
-                style={{
-                  background: c,
-                  boxShadow: color === c && !gradient
-                    ? "0 0 0 2px #fff, 0 0 0 4px #000"
-                    : "0 0 0 1px rgba(0,0,0,0.12)",
-                }}
+                style={{ background: c, boxShadow: color === c && !gradient ? "0 0 0 2px #fff,0 0 0 4px #000" : "0 0 0 1px rgba(0,0,0,0.12)" }}
               />
             ))}
-            {/* Custom color picker */}
+            {/* Rainbow custom picker */}
             <label
               title="Custom color"
-              className="w-6 h-6 rounded-full cursor-pointer hover:scale-110 transition-transform flex-shrink-0 flex items-center justify-center"
+              className="w-6 h-6 rounded-full cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
               style={{ background: "conic-gradient(red,yellow,lime,cyan,blue,magenta,red)", boxShadow: "0 0 0 1px rgba(0,0,0,0.12)" }}
             >
-              <input
-                type="color"
-                value={color}
-                onChange={(e) => { onGradientChange(null); onColorChange(e.target.value); }}
-                className="opacity-0 w-0 h-0 absolute pointer-events-none"
-                tabIndex={-1}
-              />
+              <input type="color" value={color.startsWith("#") ? color : "#000000"}
+                onChange={e => { onGradientChange(null); onColorChange(e.target.value); setHexInput(e.target.value); }}
+                className="opacity-0 w-0 h-0 absolute pointer-events-none" tabIndex={-1} />
             </label>
+          </div>
+
+          {/* Hex input */}
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-6 h-6 rounded-full flex-shrink-0 block" style={{ background: color, boxShadow: "0 0 0 1px rgba(0,0,0,0.12)" }} />
+            <input
+              type="text" value={hexInput} maxLength={7} spellCheck={false} placeholder="#000000"
+              onChange={e => {
+                const v = e.target.value;
+                setHexInput(v);
+                if (/^#[0-9a-fA-F]{6}$/.test(v)) { onGradientChange(null); onColorChange(v); }
+              }}
+              onBlur={() => setHexInput(color.startsWith("#") ? color : hexInput)}
+              className="flex-1 text-xs font-mono border border-gray-200 rounded-lg px-2 py-1 outline-none focus:border-gray-400 transition-colors"
+            />
           </div>
 
           {/* Document colors */}
           {docColors.length > 0 && (
             <>
-              <Section label="Used in document" />
+              <SectionLabel>Used in document</SectionLabel>
               <div className="flex flex-wrap gap-1.5">
-                {docColors.map((c) => (
+                {docColors.map(c => (
                   <button
-                    key={c}
-                    title={c}
+                    key={c} title={c}
                     onClick={() => { onGradientChange(null); onColorChange(c); }}
                     className="w-6 h-6 rounded-full cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
-                    style={{
-                      background: c,
-                      boxShadow: color === c && !gradient
-                        ? "0 0 0 2px #fff, 0 0 0 4px #000"
-                        : "0 0 0 1px rgba(0,0,0,0.12)",
-                    }}
+                    style={{ background: c, boxShadow: color === c && !gradient ? "0 0 0 2px #fff,0 0 0 4px #000" : "0 0 0 1px rgba(0,0,0,0.12)" }}
                   />
                 ))}
               </div>
@@ -158,82 +266,126 @@ export default function ColorPopover({
         </>
       )}
 
+      {/* ══ GRADIENT TAB ══ */}
       {tab === "gradient" && (
         <>
-          {/* Gradient presets */}
-          <Section label="Presets" />
+          {/* Preset pills */}
+          <SectionLabel>Presets</SectionLabel>
           <div className="flex flex-wrap gap-1.5 mb-3">
-            {GRADIENT_PRESETS.map(([c1, c2]) => {
-              const active = gradient?.color1 === c1 && gradient?.color2 === c2;
+            {PRESETS.map(p => (
+              <button
+                key={p.label} title={p.label}
+                onClick={() => {
+                  const ns = p.stops.map(s => mkStop(s.color, s.offset));
+                  setStops(ns); setAngle(p.angle); setSelectedId(ns[0].id);
+                  emit(ns, p.angle);
+                }}
+                className="h-5 rounded-full cursor-pointer hover:scale-105 transition-transform flex-shrink-0"
+                style={{
+                  width: 44,
+                  background: `linear-gradient(90deg, ${p.stops.map(s => `${s.color} ${s.offset * 100}%`).join(", ")})`,
+                  boxShadow: "0 0 0 1px rgba(0,0,0,0.1)",
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Live preview */}
+          <div className="h-7 rounded-xl mb-1" style={{ background: cssGrad }} />
+
+          {/* ─ Stop track ─ */}
+          <SectionLabel>Stops — click track to add</SectionLabel>
+          <div className="relative mb-8">
+            {/* Gradient bar — click to add a stop */}
+            <div
+              ref={trackRef}
+              onClick={handleTrackClick}
+              className="h-6 rounded-xl cursor-crosshair select-none"
+              style={{ background: cssGrad, boxShadow: "inset 0 1px 3px rgba(0,0,0,0.18)" }}
+            />
+            {/* Draggable stop handles */}
+            {stops.map(stop => {
+              const isSel = stop.id === selectedId;
               return (
                 <button
-                  key={c1 + c2}
-                  title={`${c1} → ${c2}`}
-                  onClick={() => applyGradient(c1, c2)}
-                  className="h-6 rounded-full cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
+                  key={stop.id}
+                  onMouseDown={e => startDrag(e, stop.id)}
+                  onClick={e => { e.stopPropagation(); setSelectedId(stop.id); }}
+                  className="absolute cursor-grab active:cursor-grabbing"
                   style={{
-                    width: 48,
-                    background: `linear-gradient(to right, ${c1}, ${c2})`,
-                    outline: active ? "2px solid #000" : "none",
-                    outlineOffset: 2,
-                    boxShadow: "0 0 0 1px rgba(0,0,0,0.1)",
+                    left: `${stop.offset * 100}%`,
+                    top: "100%",
+                    transform: "translate(-50%, 5px)",
+                    width: 16, height: 16,
+                    borderRadius: "50%",
+                    background: stop.color,
+                    border: isSel ? "2.5px solid #000" : "2.5px solid #fff",
+                    boxShadow: isSel ? "0 0 0 1px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.28)" : "0 1px 4px rgba(0,0,0,0.28)",
+                    zIndex: isSel ? 10 : 5,
                   }}
                 />
               );
             })}
           </div>
 
-          {/* Custom gradient builder */}
-          <Section label="Custom" />
-          <div className="flex items-center gap-2 mb-2">
-            <div
-              className="flex-1 h-7 rounded-lg"
-              style={{ background: `linear-gradient(to right, ${g1}, ${g2})` }}
-            />
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex flex-col items-center gap-1">
-              <label
-                className="w-8 h-8 rounded-full cursor-pointer hover:scale-110 transition-transform block"
-                style={{ background: g1, boxShadow: "0 0 0 1.5px rgba(0,0,0,0.15), 0 0 0 3px #fff, 0 0 0 4.5px rgba(0,0,0,0.12)" }}
-              >
-                <input
-                  type="color"
-                  value={g1}
-                  onChange={(e) => applyGradient(e.target.value, g2)}
-                  className="opacity-0 w-0 h-0 absolute pointer-events-none"
-                  tabIndex={-1}
-                />
-              </label>
-              <span className="text-[8px] text-gray-400 select-none">Start</span>
+          {/* Selected stop color editor */}
+          {selectedStop && (
+            <div className="bg-gray-50 rounded-xl border border-gray-100 p-2 mb-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[9px] font-semibold uppercase tracking-widest text-gray-400">
+                  Stop · {Math.round(selectedStop.offset * 100)}%
+                </span>
+                <button
+                  onClick={() => removeStop(selectedStop.id)}
+                  disabled={stops.length <= 2}
+                  className="text-[9px] text-gray-300 hover:text-red-400 disabled:opacity-30 disabled:pointer-events-none cursor-pointer transition-colors"
+                >✕ Remove</button>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {COLORS.map(c => (
+                  <button
+                    key={c}
+                    onClick={() => setStopColor(selectedStop.id, c)}
+                    className="w-5 h-5 rounded-full cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
+                    style={{ background: c, boxShadow: selectedStop.color === c ? "0 0 0 2px #fff,0 0 0 3.5px #000" : "0 0 0 1px rgba(0,0,0,0.12)" }}
+                  />
+                ))}
+                {/* Custom picker for stop */}
+                <label
+                  className="w-5 h-5 rounded-full cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
+                  style={{ background: "conic-gradient(red,yellow,lime,cyan,blue,magenta,red)", boxShadow: "0 0 0 1px rgba(0,0,0,0.12)" }}
+                >
+                  <input type="color" value={selectedStop.color}
+                    onChange={e => setStopColor(selectedStop.id, e.target.value)}
+                    className="opacity-0 w-0 h-0 absolute pointer-events-none" tabIndex={-1} />
+                </label>
+              </div>
             </div>
-            <svg viewBox="0 0 20 8" width="32" height="12" className="flex-shrink-0">
-              <path d="M0 4 H18 M14 1 L18 4 L14 7" stroke="#bbb" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <div className="flex flex-col items-center gap-1">
-              <label
-                className="w-8 h-8 rounded-full cursor-pointer hover:scale-110 transition-transform block"
-                style={{ background: g2, boxShadow: "0 0 0 1.5px rgba(0,0,0,0.15), 0 0 0 3px #fff, 0 0 0 4.5px rgba(0,0,0,0.12)" }}
-              >
-                <input
-                  type="color"
-                  value={g2}
-                  onChange={(e) => applyGradient(g1, e.target.value)}
-                  className="opacity-0 w-0 h-0 absolute pointer-events-none"
-                  tabIndex={-1}
-                />
-              </label>
-              <span className="text-[8px] text-gray-400 select-none">End</span>
-            </div>
-            {/* Clear gradient */}
-            {gradient && (
-              <button
-                title="Remove gradient"
-                onClick={() => { onGradientChange(null); setTab("solid"); }}
-                className="ml-auto text-[10px] text-gray-400 hover:text-red-400 transition-colors cursor-pointer underline select-none"
-              >Clear</button>
-            )}
+          )}
+
+          {/* Direction */}
+          <SectionLabel>Direction</SectionLabel>
+          <div className="grid gap-0.5 mb-3" style={{ gridTemplateColumns: "repeat(3, 1fr)", width: "fit-content" }}>
+            {ANGLE_GRID.map(([a, sym], i) => {
+              if (a === null) return <div key={i} className="w-7 h-7" />;
+              const active = angle === a;
+              return (
+                <button
+                  key={a}
+                  onClick={() => setAngleAndEmit(a)}
+                  title={`${a}°`}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-sm cursor-pointer transition-colors select-none"
+                  style={{ background: active ? "#000" : "transparent", color: active ? "#fff" : "#666" }}
+                >{sym}</button>
+              );
+            })}
           </div>
+
+          {/* Clear */}
+          <button
+            onClick={() => { onGradientChange(null); setTab("solid"); }}
+            className="text-[10px] text-gray-400 hover:text-red-400 cursor-pointer transition-colors underline select-none"
+          >Clear gradient</button>
         </>
       )}
     </div>,

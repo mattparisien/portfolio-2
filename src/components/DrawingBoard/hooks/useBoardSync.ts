@@ -7,6 +7,10 @@ export type SaveableObj = {
   boardObjectId?: string;
   giphyId?: string;
   _gifUrl?: string;
+  zIndex?: number;
+  _effectPresetId?: string | null;
+  _effectPatternC1?: string;
+  _effectPatternC2?: string;
 };
 
 interface UseBoardSyncOptions {
@@ -23,8 +27,12 @@ export function useBoardSync({ broadcast }: UseBoardSyncOptions = {}) {
     const fabricJSON = JSON.stringify({
       ...(obj.toObject()),
       boardObjectId: objectId,
-      ...(obj.giphyId  ? { giphyId:  obj.giphyId  } : {}),
-      ...(obj._gifUrl  ? { _gifUrl:  obj._gifUrl  } : {}),
+      ...(obj.giphyId             ? { giphyId:          obj.giphyId         } : {}),
+      ...(obj._gifUrl             ? { _gifUrl:           obj._gifUrl         } : {}),
+      ...(obj.zIndex !== undefined ? { zIndex:            obj.zIndex          } : {}),
+      ...(obj._effectPresetId     ? { _effectPresetId:   obj._effectPresetId  } : {}),
+      ...(obj._effectPatternC1    ? { _effectPatternC1:  obj._effectPatternC1 } : {}),
+      ...(obj._effectPatternC2    ? { _effectPatternC2:  obj._effectPatternC2 } : {}),
     });
     fetch("/api/board-objects", {
       method: "POST",

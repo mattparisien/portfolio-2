@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import type { Canvas } from "fabric";
 import type { TextProps } from "../types";
 import ColorPopover from "./ColorPopover";
+import TextEffectsPopover from "./TextEffectsPopover";
 
 const FONT_FAMILIES = [
   "sans-serif",
@@ -55,15 +56,19 @@ function ToggleBtn({
 }
 
 export default function TextToolbar({ textProps, color, fabricRef, onColorChange, onApply }: TextToolbarProps) {
-  const { fontFamily, fontSize, bold, italic, underline, linethrough, uppercase, lineHeight, charSpacing, textAlign, gradient } = textProps;
+  const { fontFamily, fontSize, bold, italic, underline, linethrough, uppercase, lineHeight, charSpacing, textAlign, gradient, effect } = textProps;
 
   const [colorOpen, setColorOpen] = useState(false);
+  const [effectOpen, setEffectOpen] = useState(false);
   const colorTriggerRef = useRef<HTMLDivElement>(null);
 
   // Determine display swatch — gradient pill or solid dot
-  const swatchStyle: React.CSSProperties = gradient
-    ? { background: `linear-gradient(to right, ${gradient.color1}, ${gradient.color2})`, borderRadius: 6, width: 28, height: 18 }
-    : { background: color, borderRadius: "50%", width: 18, height: 18, boxShadow: "0 0 0 1.5px rgba(0,0,0,0.15), 0 0 0 3px #fff, 0 0 0 4.5px rgba(0,0,0,0.12)" };
+  const swatchStyle: React.CSSProperties = (() => {
+    if (!gradient) return { background: color, borderRadius: "50%", width: 18, height: 18, boxShadow: "0 0 0 1.5px rgba(0,0,0,0.15), 0 0 0 3px #fff, 0 0 0 4.5px rgba(0,0,0,0.12)" };
+    const sorted = [...gradient.stops].sort((a, b) => a.offset - b.offset);
+    const parts = sorted.map(s => `${s.color} ${Math.round(s.offset * 100)}%`).join(", ");
+    return { background: `linear-gradient(${gradient.angle}deg, ${parts})`, borderRadius: 6, width: 28, height: 18 };
+  })();
 
   return (
     <div
@@ -82,7 +87,7 @@ export default function TextToolbar({ textProps, color, fabricRef, onColorChange
       >
         <button
           title="Text color"
-          onClick={(e) => { e.stopPropagation(); setColorOpen((v) => !v); }}
+          onClick={(e) => { e.stopPropagation(); setColorOpen((v) => !v); setEffectOpen(false); }}
           className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-colors hover:bg-black/[0.07]"
           style={{ background: colorOpen ? "rgba(0,0,0,0.08)" : "transparent" }}
         >
@@ -97,6 +102,30 @@ export default function TextToolbar({ textProps, color, fabricRef, onColorChange
             onColorChange={(c) => { onColorChange(c); }}
             onGradientChange={(g) => onApply({ gradient: g })}
             onClose={() => setColorOpen(false)}
+          />
+        )}
+      </div>
+
+      {/* Effects trigger — opens TextEffectsPopover */}
+      <div className="relative flex items-center border-r border-gray-200 pr-2 mr-0.5 flex-shrink-0">
+        <button
+          title="Text effects"
+          onClick={(e) => { e.stopPropagation(); setEffectOpen((v) => !v); setColorOpen(false); }}
+          className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-colors hover:bg-black/[0.07] select-none"
+          style={{
+            background: effectOpen ? "rgba(0,0,0,0.08)" : effect ? "#000" : "transparent",
+            color: effect && !effectOpen ? "#fff" : "inherit",
+          }}
+        >
+          <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">
+            <path d="M10 2a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L10 14.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L2.82 8.125a.75.75 0 0 1 .416-1.28l4.21-.611L9.327 2.418A.75.75 0 0 1 10 2Z" />
+          </svg>
+        </button>
+        {effectOpen && (
+          <TextEffectsPopover
+            effect={effect ?? null}
+            onApply={(e) => onApply({ effect: e })}
+            onClose={() => setEffectOpen(false)}
           />
         )}
       </div>

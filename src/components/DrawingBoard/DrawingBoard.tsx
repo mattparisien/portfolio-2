@@ -149,6 +149,17 @@ function DrawingBoardInner() {
       return;
     }
 
+    if (event.type === "LAYER_REORDERED") {
+      const allObjs = fc.getObjects();
+      event.order.forEach((oid, targetIdx) => {
+        if (!oid) return;
+        const obj = allObjs.find(o => (o as unknown as Record<string, unknown>).boardObjectId === oid);
+        if (obj) fc.moveObjectTo(obj, targetIdx);
+      });
+      fc.requestRenderAll();
+      return;
+    }
+
     if (event.type === "OBJECT_UPSERTED") {
       let parsed: Record<string, unknown>;
       try { parsed = JSON.parse(event.fabricJSON); } catch { return; }

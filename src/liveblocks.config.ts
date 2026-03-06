@@ -18,7 +18,8 @@ export type Presence = {
 export type RoomEvent =
   | { type: "OBJECT_UPSERTED"; objectId: string; fabricJSON: string }
   | { type: "OBJECT_DELETED";  objectId: string }
-  | { type: "CANVAS_CLEARED" };
+  | { type: "CANVAS_CLEARED" }
+  | { type: "LAYER_REORDERED"; order: string[] };
 
 export const {
   RoomProvider,

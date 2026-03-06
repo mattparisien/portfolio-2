@@ -7,6 +7,43 @@ import type { RoomEvent } from "@/liveblocks.config";
 import { BOARD_ID, BG_COLOR } from "../constants";
 import { decodeGif } from "../gifDecoder";
 
+// ── Glitter canvas tile ───────────────────────────────────────────────────────
+function makeGlitterCanvas(c1: string, c2: string): HTMLCanvasElement {
+  const S = 80;
+  const cnv = document.createElement("canvas");
+  cnv.width = cnv.height = S;
+  const ctx = cnv.getContext("2d")!;
+  // Deterministic LCG so the tile is stable
+  let seed = 777;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+  ctx.clearRect(0, 0, S, S);
+  // Sparkle dots
+  for (let j = 0; j < 42; j++) {
+    const x = rnd() * S, y = rnd() * S;
+    const r = rnd() * 1.8 + 0.3;
+    const col = rnd() < 0.5 ? c1 : rnd() < 0.75 ? c2 : "#ffffff";
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = col;
+    ctx.globalAlpha = rnd() * 0.65 + 0.35;
+    ctx.fill();
+  }
+  // Four-pointed star sparkles
+  ctx.lineWidth = 0.6;
+  for (let j = 0; j < 10; j++) {
+    const x = rnd() * S, y = rnd() * S;
+    const len = rnd() * 4 + 1.5;
+    ctx.strokeStyle = rnd() < 0.55 ? "#ffffff" : c1;
+    ctx.globalAlpha = rnd() * 0.55 + 0.45;
+    ctx.beginPath();
+    ctx.moveTo(x - len, y); ctx.lineTo(x + len, y);
+    ctx.moveTo(x, y - len); ctx.lineTo(x, y + len);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  return cnv;
+}
+
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 4;
 const ZOOM_STEP = 0.1;
@@ -356,17 +393,60 @@ export function useCanvasActions({
         if (!updates.gradient) {
           obj.set({ fill: colorRef.current });
         } else {
-          const { color1, color2 } = updates.gradient;
+          const { stops, angle } = updates.gradient;
+          const rad = (angle * Math.PI) / 180;
+          const dx = Math.sin(rad);
+          const dy = -Math.cos(rad);
           const grad = new mods.Gradient({
             type: "linear",
             gradientUnits: "percentage",
-            coords: { x1: 0, y1: 0, x2: 1, y2: 0 },
-            colorStops: [
-              { offset: 0, color: color1 },
-              { offset: 1, color: color2 },
-            ],
+            coords: { x1: 0.5 - dx * 0.5, y1: 0.5 - dy * 0.5, x2: 0.5 + dx * 0.5, y2: 0.5 + dy * 0.5 },
+            colorStops: stops.map(s => ({ offset: s.offset, color: s.color })),
           });
           obj.set({ fill: grad });
+        }
+      }
+    }
+
+    // ── Text effect (shadow + stroke + optional glitter pattern fill) ────────
+    if (updates.effect !== undefined) {
+      const mods = modsRef.current;
+      if (mods) {
+        const rec = obj as unknown as Record<string, unknown>;
+        if (!updates.effect) {
+          obj.set({ shadow: null, stroke: "", strokeWidth: 0, paintFirst: "fill" });
+          // If fill was a glitter pattern, restore the current solid colour
+          if (obj.fill && typeof obj.fill === "object" && "source" in obj.fill) {
+            obj.set({ fill: colorRef.current });
+          }
+          rec._effectPresetId = null;
+          rec._effectPatternC1 = undefined;
+          rec._effectPatternC2 = undefined;
+        } else {
+          const e = updates.effect;
+          const hasShadow = e.shadowBlur > 0 || e.shadowOffsetX !== 0 || e.shadowOffsetY !== 0;
+          obj.set({
+            shadow: hasShadow
+              ? new mods.Shadow({ color: e.shadowColor, blur: e.shadowBlur, offsetX: e.shadowOffsetX, offsetY: e.shadowOffsetY })
+              : null,
+            stroke: e.strokeWidth > 0 ? e.strokeColor : "",
+            strokeWidth: e.strokeWidth > 0 ? e.strokeWidth : 0,
+            paintFirst: e.strokeWidth > 0 ? "stroke" : "fill",
+          });
+          // Glitter: replace fill with a repeating sparkle-tile Pattern
+          if (e.patternType === "glitter") {
+            const tile = makeGlitterCanvas(
+              e.patternColor1 ?? "#FFD700",
+              e.patternColor2 ?? "#FF6EE7",
+            );
+            obj.set({ fill: new mods.Pattern({ source: tile, repeat: "repeat" }) });
+            rec._effectPatternC1 = e.patternColor1 ?? "#FFD700";
+            rec._effectPatternC2 = e.patternColor2 ?? "#FF6EE7";
+          } else if (obj.fill && typeof obj.fill === "object" && "source" in obj.fill) {
+            // Switching away from glitter to another effect — restore solid fill
+            obj.set({ fill: colorRef.current });
+          }
+          rec._effectPresetId = e.presetId ?? null;
         }
       }
     }
