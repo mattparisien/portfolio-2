@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import type { Canvas } from "fabric";
+import { useState, useEffect } from "react";
 import type { TextProps } from "../types";
-import ColorPopover from "./ColorPopover";
 import TextEffectsPopover from "./TextEffectsPopover";
 
 const FONT_FAMILIES = [
@@ -24,11 +22,13 @@ const FONT_SIZES = [10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72, 96, 128]
 interface TextToolbarProps {
   textProps: TextProps;
   color: string;
-  fabricRef: React.MutableRefObject<Canvas | null>;
-  onColorChange: (c: string) => void;
   onApply: (updates: Partial<TextProps>) => void;
   closeSignal?: number;
   onPopoverOpened?: () => void;
+  /** Shared color popover control — managed by the parent (DrawingBoard) */
+  colorPopoverOpen?: boolean;
+  onOpenColorPopover?: () => void;
+  onCloseColorPopover?: () => void;
 }
 
 function Divider() {
@@ -84,10 +84,9 @@ function StepBtn({
   );
 }
 
-export default function TextToolbar({ textProps, color, fabricRef, onColorChange, onApply, closeSignal, onPopoverOpened }: TextToolbarProps) {
+export default function TextToolbar({ textProps, color, onApply, closeSignal, onPopoverOpened, colorPopoverOpen, onOpenColorPopover, onCloseColorPopover }: TextToolbarProps) {
   const { fontFamily, fontSize, bold, italic, underline, linethrough, uppercase, lineHeight, charSpacing, textAlign, gradient, effect } = textProps;
 
-  const [colorOpen, setColorOpen] = useState(false);
   const [effectOpen, setEffectOpen] = useState(false);
   const [lineHeightOpen, setLineHeightOpen] = useState(false);
   const [letterSpacingOpen, setLetterSpacingOpen] = useState(false);
@@ -96,7 +95,6 @@ export default function TextToolbar({ textProps, color, fabricRef, onColorChange
   // Close all when a sibling component opens a popover
   useEffect(() => {
     if (!closeSignal) return;
-    setColorOpen(false);
     setEffectOpen(false);
     setLineHeightOpen(false);
     setLetterSpacingOpen(false);
@@ -125,25 +123,15 @@ export default function TextToolbar({ textProps, color, fabricRef, onColorChange
       }}
     >
       {/* ── Color / gradient ── */}
-      <div className="relative flex items-center flex-shrink-0" ref={colorTriggerRef}>
+      <div className="relative flex items-center flex-shrink-0">
         <button
           title="Text color"
           onClick={(e) => { e.stopPropagation(); setColorOpen((v) => !v); setEffectOpen(false); setLineHeightOpen(false); setLetterSpacingOpen(false); onPopoverOpened?.(); }}
           className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 hover:scale-105"
-          style={{ background: colorOpen ? "rgba(0,0,0,0.09)" : "transparent" }}
+          style={{ background: colorPopoverOpen ? "rgba(0,0,0,0.09)" : "transparent" }}
         >
           <span style={swatchStyle} className="flex-shrink-0 block" />
         </button>
-        {colorOpen && (
-          <ColorPopover
-            color={color}
-            gradient={gradient}
-            fabricRef={fabricRef}
-            onColorChange={(c) => { onColorChange(c); }}
-            onGradientChange={(g) => onApply({ gradient: g })}
-            onClose={() => setColorOpen(false)}
-          />
-        )}
       </div>
 
       {/* ── Effects ── */}
