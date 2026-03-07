@@ -1,5 +1,6 @@
 import { useRef, useEffect, useMemo } from 'react';
 import { gsap } from 'gsap';
+import { ANIMATION_COLORS } from '@/app/constants';
 
 interface ZigzagButtonProps {
     children: React.ReactNode;
@@ -23,7 +24,7 @@ export default function ZigzagButton({
     const buttonRef = useRef<HTMLButtonElement | HTMLAnchorElement>(null);
     const timelineRef = useRef<gsap.core.Timeline | null>(null);
 
-    const colors = useMemo(() => ['#EE4E2B', '#F3BE21', '#009563', '#F7D9D3', '#5266AB'], []);
+    const colors = useMemo(() => ANIMATION_COLORS, []);
 
     useEffect(() => {
         const button = buttonRef.current;
