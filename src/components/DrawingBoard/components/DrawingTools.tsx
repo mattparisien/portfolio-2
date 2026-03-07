@@ -222,14 +222,14 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
         {drawOpen && (
           <div
             ref={drawPopoverRef}
-            className="absolute top-0 left-[calc(100%+12px)] flex gap-2 p-3 rounded-2xl shadow-xl popover-enter-right"
-            style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)" }}
+            className="absolute top-0 left-[calc(100%+12px)] flex gap-2 p-3 rounded-2xl popover-enter-right"
+            style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)", border: "1px solid rgba(0,0,0,0.08)" }}
           >
             {/* Close button */}
             <button
               title="Close"
               onClick={() => { setDrawPinned(false); setDrawHover(false); onToolChange("select"); }}
-              className="absolute -top-2.5 -right-2.5 w-5 h-5 rounded-full bg-white text-gray-500 flex items-center justify-center text-[10px] leading-none cursor-pointer hover:text-black transition-colors z-10 shadow"
+              className="absolute -top-2.5 -right-2.5 w-5 h-5 rounded-full bg-white text-gray-500 flex items-center justify-center text-[10px] leading-none cursor-pointer hover:text-black transition-colors z-10"
             >
               ✕
             </button>
@@ -327,8 +327,8 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
         {shapeOpen && (
           <div
             ref={popoverRef}
-            className="absolute top-0 left-[calc(100%+12px)] flex gap-2 p-3 rounded-2xl shadow-xl popover-enter-right"
-            style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)", minWidth: 220 }}
+            className="absolute top-0 left-[calc(100%+12px)] flex gap-2 p-3 rounded-2xl popover-enter-right"
+            style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)", border: "1px solid rgba(0,0,0,0.08)", minWidth: 220 }}
           >
             {SHAPES.map((s) => (
               <button
@@ -381,8 +381,8 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
         {gifOpen && (
           <div
             ref={gifPopoverRef}
-            className="absolute top-0 left-[calc(100%+12px)] p-3 rounded-2xl shadow-xl z-50 popover-enter-right"
-            style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)", width: 420 }}
+            className="absolute top-0 left-[calc(100%+12px)] p-3 rounded-2xl z-50 popover-enter-right"
+            style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)", border: "1px solid rgba(0,0,0,0.08)", width: 420 }}
           >
             <GifPicker
               onSelect={(id, url) => {

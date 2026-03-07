@@ -58,7 +58,7 @@ export default function ObjectLockButton({ fabricRef, locked, onToggle }: Object
   return (
     <button
       ref={btnRef}
-      className="fixed z-[300] flex items-center gap-1.5 px-2.5 py-1 rounded-full shadow-lg cursor-pointer hover:scale-105 active:scale-95 select-none"
+      className="fixed z-[300] flex items-center gap-1.5 px-2.5 py-1 rounded-full cursor-pointer hover:scale-105 active:scale-95 select-none"
       style={{
         background: locked ? "#111" : "rgba(255,255,255,0.96)",
         border: locked ? "none" : "1px solid rgba(0,0,0,0.1)",
