@@ -631,9 +631,9 @@ export function useFabricCanvas({
       fc.on("path:created", (e) => {
         if (isUndoingRef.current) return;
         e.path.set({ opacity: opacityRef.current });
-        // Auto-simplify with a gentle 2 px tolerance (RDP, curve-preserving)
+        // Auto-simplify with an aggressive 8 px tolerance (RDP, curve-preserving)
         const raw = (e.path as unknown as { path: PathCmd[] }).path;
-        const simplified = autoSimplifyPath(raw, 2);
+        const simplified = autoSimplifyPath(raw, 8);
         (e.path as unknown as { path: PathCmd[] }).path = simplified;
         (e.path as unknown as { setCoords(): void }).setCoords();
         fc.requestRenderAll();
