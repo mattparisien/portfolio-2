@@ -151,19 +151,25 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
     active: boolean,
     onClick: () => void,
     title: string,
+    label: string,
     icon: React.ReactNode,
   ) => (
-    <button
-      title={title}
-      onClick={onClick}
-      className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
-        active
-          ? "bg-black text-white"
-          : "text-[#111] hover:bg-black/[0.07] hover:scale-105"
-      }`}
-    >
-      {icon}
-    </button>
+    <div className="flex flex-col items-center gap-[3px]">
+      <button
+        title={title}
+        onClick={onClick}
+        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+          active
+            ? "bg-black text-white"
+            : "text-[#111] hover:bg-black/[0.07] hover:scale-105"
+        }`}
+      >
+        {icon}
+      </button>
+      <span className="text-[10px] font-medium tracking-wide text-gray-400 select-none leading-none">
+        {label}
+      </span>
+    </div>
   );
 
   return (
@@ -180,6 +186,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
         tool === "text",
         () => onAddText(),
         "Text",
+        "Text",
         <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
           <path d="M5 4v3h5.5v12h3V7H19V4z" />
         </svg>,
@@ -194,30 +201,35 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
         onMouseEnter={() => { cancelDrawLeave(); setDrawHover(true); }}
         onMouseLeave={() => { drawLeaveTimer.current = setTimeout(() => setDrawHover(false), 120); }}
       >
-        <button
-          ref={drawRef}
-          title="Draw"
-          onClick={() => {
-            if (drawPinned) {
-              setDrawPinned(false);
-              setDrawHover(false);
-              onToolChange("select");
-            } else {
-              setDrawPinned(true);
-              setShapePinned(false); setShapeHover(false); setGifPinned(false); setGifHover(false);
-              onPopoverOpened?.();
-            }
-          }}
-          className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
-          style={{
-            background: drawPinned ? "#000" : (tool === "pencil" || tool === "brush" || tool === "eraser") && !drawOpen ? "#000" : drawHover ? "rgba(0,0,0,0.07)" : "transparent",
-            color: drawPinned || ((tool === "pencil" || tool === "brush" || tool === "eraser") && !drawOpen) ? "#fff" : "#111",
-          }}
-        >
-          <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm2.92 1.5H5v-.92l9.06-9.06.92.92-9.06 9.06zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-          </svg>
-        </button>
+        <div className="flex flex-col items-center gap-[3px]">
+          <button
+            ref={drawRef}
+            title="Draw"
+            onClick={() => {
+              if (drawPinned) {
+                setDrawPinned(false);
+                setDrawHover(false);
+                onToolChange("select");
+              } else {
+                setDrawPinned(true);
+                setShapePinned(false); setShapeHover(false); setGifPinned(false); setGifHover(false);
+                onPopoverOpened?.();
+              }
+            }}
+            className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
+            style={{
+              background: drawPinned ? "#000" : (tool === "pencil" || tool === "brush" || tool === "eraser") && !drawOpen ? "#000" : drawHover ? "rgba(0,0,0,0.07)" : "transparent",
+              color: drawPinned || ((tool === "pencil" || tool === "brush" || tool === "eraser") && !drawOpen) ? "#fff" : "#111",
+            }}
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+              <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm2.92 1.5H5v-.92l9.06-9.06.92.92-9.06 9.06zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+            </svg>
+          </button>
+          <span className="text-[10px] font-medium tracking-wide text-gray-400 select-none leading-none">
+            Tools
+          </span>
+        </div>
 
         {drawOpen && (
           <div
@@ -303,26 +315,31 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
         onMouseEnter={() => { cancelShapeLeave(); setShapeHover(true); }}
         onMouseLeave={() => { shapeLeaveTimer.current = setTimeout(() => setShapeHover(false), 120); }}
       >
-        <button
-          ref={shapeRef}
-          title="Shapes"
-          onClick={() => {
-            const nowPinned = !shapePinned;
-            setShapePinned(nowPinned);
-            if (nowPinned) { setGifPinned(false); setGifHover(false); setDrawPinned(false); setDrawHover(false); onToolChange("shape"); onPopoverOpened?.(); }
-          }}
-          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
-            shapePinned
-              ? "bg-black text-white"
-              : shapeHover ? "bg-black/[0.07] text-[#111]" : "text-[#111] hover:bg-black/[0.07] hover:scale-105"
-          }`}
-        >
-          <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-            <rect x="2" y="13" width="9" height="9" rx="1.5" />
-            <circle cx="17.5" cy="17.5" r="4.5" />
-            <polygon points="12,2 22,11 2,11" />
-          </svg>
-        </button>
+        <div className="flex flex-col items-center gap-[3px]">
+          <button
+            ref={shapeRef}
+            title="Shapes"
+            onClick={() => {
+              const nowPinned = !shapePinned;
+              setShapePinned(nowPinned);
+              if (nowPinned) { setGifPinned(false); setGifHover(false); setDrawPinned(false); setDrawHover(false); onToolChange("shape"); onPopoverOpened?.(); }
+            }}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+              shapePinned
+                ? "bg-black text-white"
+                : shapeHover ? "bg-black/[0.07] text-[#111]" : "text-[#111] hover:bg-black/[0.07] hover:scale-105"
+            }`}
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+              <rect x="2" y="13" width="9" height="9" rx="1.5" />
+              <circle cx="17.5" cy="17.5" r="4.5" />
+              <polygon points="12,2 22,11 2,11" />
+            </svg>
+          </button>
+          <span className="text-[10px] font-medium tracking-wide text-gray-400 select-none leading-none">
+            Shapes
+          </span>
+        </div>
 
         {shapeOpen && (
           <div
@@ -358,25 +375,30 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
         onMouseEnter={() => { cancelGifLeave(); setGifHover(true); }}
         onMouseLeave={() => { gifLeaveTimer.current = setTimeout(() => setGifHover(false), 120); }}
       >
-        <button
-          ref={gifRef}
-          title="Add GIF or Sticker"
-          onClick={() => {
-            const nowPinned = !gifPinned;
-            setGifPinned(nowPinned);
-            if (nowPinned) { setShapePinned(false); setShapeHover(false); setDrawPinned(false); setDrawHover(false); onPopoverOpened?.(); }
-          }}
-          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
-            gifPinned
-              ? "bg-black text-white"
-              : gifHover ? "bg-black/[0.07] text-[#111]" : "text-[#111] hover:bg-black/[0.07] hover:scale-105"
-          }`}
-        >
-          <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-            <rect x="2" y="6" width="20" height="12" rx="2" fill="none" stroke="currentColor" strokeWidth="1.8"/>
-            <text x="5.5" y="15.5" fontSize="7.5" fontWeight="bold" fill="currentColor" fontFamily="sans-serif">GIF</text>
-          </svg>
-        </button>
+        <div className="flex flex-col items-center gap-[3px]">
+          <button
+            ref={gifRef}
+            title="Add GIF or Sticker"
+            onClick={() => {
+              const nowPinned = !gifPinned;
+              setGifPinned(nowPinned);
+              if (nowPinned) { setShapePinned(false); setShapeHover(false); setDrawPinned(false); setDrawHover(false); onPopoverOpened?.(); }
+            }}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+              gifPinned
+                ? "bg-black text-white"
+                : gifHover ? "bg-black/[0.07] text-[#111]" : "text-[#111] hover:bg-black/[0.07] hover:scale-105"
+            }`}
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+              <rect x="2" y="6" width="20" height="12" rx="2" fill="none" stroke="currentColor" strokeWidth="1.8"/>
+              <text x="5.5" y="15.5" fontSize="7.5" fontWeight="bold" fill="currentColor" fontFamily="sans-serif">GIF</text>
+            </svg>
+          </button>
+          <span className="text-[10px] font-medium tracking-wide text-gray-400 select-none leading-none">
+            Gifs
+          </span>
+        </div>
 
         {gifOpen && (
           <div
