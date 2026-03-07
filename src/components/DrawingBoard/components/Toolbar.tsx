@@ -1,23 +1,23 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { Canvas } from "fabric";
-import ColorPopover from "./ColorPopover";
 
 interface ToolbarProps {
   color: string;
   opacity: number;
   strokeWeight: number;
-  onColorChange: (c: string) => void;
   onOpacityChange: (v: number) => void;
   onStrokeWeightChange: (v: number) => void;
   /** When set, a second stroke color circle is shown (shapes only) */
   strokeColor?: string;
   onStrokeColorChange?: (c: string) => void;
-  /** Optional canvas ref — enables "used in document" colors inside ColorPopover */
-  fabricRef?: React.MutableRefObject<Canvas | null>;
   closeSignal?: number;
   onPopoverOpened?: () => void;
+  /** Shared color popover control — managed by the parent (DrawingBoard) */
+  colorPopoverOpenFor?: "fill" | "stroke" | null;
+  onOpenFillColorPopover?: () => void;
+  onOpenStrokeColorPopover?: () => void;
+  onCloseColorPopover?: () => void;
 }
 
 /** Small labelled toolbar button with icon + label beneath */
@@ -54,10 +54,9 @@ function ToolbarBtn({
   );
 }
 
-export default function Toolbar({ color, opacity, strokeWeight, onColorChange, onOpacityChange, onStrokeWeightChange, strokeColor, onStrokeColorChange, fabricRef, closeSignal, onPopoverOpened }: ToolbarProps) {
+export default function Toolbar({ color, opacity, strokeWeight, onOpacityChange, onStrokeWeightChange, strokeColor, onStrokeColorChange, closeSignal, onPopoverOpened, colorPopoverOpenFor, onOpenFillColorPopover, onOpenStrokeColorPopover, onCloseColorPopover }: ToolbarProps) {
   const showDual = strokeColor !== undefined && onStrokeColorChange !== undefined;
   const [openPanel, setOpenPanel] = useState<"opacity" | "weight" | null>(null);
-  const [openColor, setOpenColor] = useState<"fill" | "stroke" | null>(null);
   const opacityOpen = openPanel === "opacity";
   const weightOpen  = openPanel === "weight";
 
@@ -65,18 +64,17 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
   useEffect(() => {
     if (!closeSignal) return;
     setOpenPanel(null);
-    setOpenColor(null);
   }, [closeSignal]);
 
   function openFill() {
-    setOpenColor("fill");
     setOpenPanel(null);
-    onPopoverOpened?.();
+    if (colorPopoverOpenFor === "fill") onCloseColorPopover?.();
+    else onOpenFillColorPopover?.();
   }
   function openStroke() {
-    setOpenColor("stroke");
     setOpenPanel(null);
-    onPopoverOpened?.();
+    if (colorPopoverOpenFor === "stroke") onCloseColorPopover?.();
+    else onOpenStrokeColorPopover?.();
   }
 
   const swatchShadow = "0 0 0 1.5px rgba(0,0,0,0.18), 0 0 0 3px #fff, 0 0 0 4.5px rgba(0,0,0,0.10)";
@@ -91,55 +89,35 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
         border: "1px solid rgba(0,0,0,0.08)",
       }}
     >
-      {/* Color swatch button(s) — open ColorPopover */}
+      {/* Color swatch button(s) — open ColorPopover via parent */}
       {showDual ? (
         <div className="flex items-end gap-1">
           <ToolbarBtn
-            active={openColor === "fill"}
+            active={colorPopoverOpenFor === "fill"}
             title="Fill colour"
             label="Fill"
-            onClick={(e) => { e.stopPropagation(); if (openColor === "fill") setOpenColor(null); else openFill(); }}
+            onClick={(e) => { e.stopPropagation(); openFill(); }}
           >
             <span className="block rounded-full flex-shrink-0" style={{ width: 20, height: 20, background: color, boxShadow: swatchShadow }} />
           </ToolbarBtn>
           <ToolbarBtn
-            active={openColor === "stroke"}
+            active={colorPopoverOpenFor === "stroke"}
             title="Stroke colour"
             label="Stroke"
-            onClick={(e) => { e.stopPropagation(); if (openColor === "stroke") setOpenColor(null); else openStroke(); }}
+            onClick={(e) => { e.stopPropagation(); openStroke(); }}
           >
             <span className="block rounded-full flex-shrink-0" style={{ width: 20, height: 20, background: strokeColor, boxShadow: swatchShadow }} />
           </ToolbarBtn>
         </div>
       ) : (
         <ToolbarBtn
-          active={openColor === "fill"}
+          active={colorPopoverOpenFor === "fill"}
           title="Colour"
           label="Color"
-          onClick={(e) => { e.stopPropagation(); if (openColor === "fill") setOpenColor(null); else openFill(); }}
+          onClick={(e) => { e.stopPropagation(); openFill(); }}
         >
           <span className="block rounded-full flex-shrink-0" style={{ width: 20, height: 20, background: color, boxShadow: swatchShadow }} />
         </ToolbarBtn>
-      )}
-
-      {/* ColorPopover portal instances — positioned above the bottom toolbar */}
-      {openColor === "fill" && (
-        <ColorPopover
-          color={color}
-          fabricRef={fabricRef}
-          onColorChange={onColorChange}
-          onClose={() => setOpenColor(null)}
-          anchorStyle={{ top: "auto", bottom: 88, left: "calc(50vw - 128px)" }}
-        />
-      )}
-      {openColor === "stroke" && showDual && (
-        <ColorPopover
-          color={strokeColor!}
-          fabricRef={fabricRef}
-          onColorChange={onStrokeColorChange!}
-          onClose={() => setOpenColor(null)}
-          anchorStyle={{ top: "auto", bottom: 88, left: "calc(50vw - 128px)" }}
-        />
       )}
 
       {/* Thin vertical separator */}

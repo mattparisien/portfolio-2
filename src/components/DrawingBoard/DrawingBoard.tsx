@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import type { Canvas } from "fabric";
 import Toolbar from "./components/Toolbar";
 import TextToolbar from "./components/TextToolbar";
@@ -10,6 +10,7 @@ import RemoteCursors from "./components/RemoteCursors";
 import ZoomNav from "./components/ZoomNav";
 import ActiveUsers from "./components/ActiveUsers";
 import ObjectLockButton from "./components/ObjectLockButton";
+import ColorPopover from "./components/ColorPopover";
 import { useGifLoop } from "./hooks/useGifLoop";
 import { useBoardSync } from "./hooks/useBoardSync";
 import { useFabricCanvas } from "./hooks/useFabricCanvas";
@@ -73,6 +74,9 @@ function CapacityWall() {
   );
 }
 
+// ── Shared color popover slot type — one instance managed by the board ───────
+type ColorSlot = "toolbar-fill" | "toolbar-stroke" | "text";
+
 // ── Inner board — uses Liveblocks hooks (must be inside RoomProvider) ─────
 function DrawingBoardInner() {
   const canvasElRef = useRef<HTMLCanvasElement>(null);
@@ -99,9 +103,23 @@ function DrawingBoardInner() {
   const [toolbarClose, setToolbarClose]           = useState(0);
   const [textToolbarClose, setTextToolbarClose]   = useState(0);
 
-  const onDrawingToolsPopoverOpened = () => { setToolbarClose(n => n + 1); setTextToolbarClose(n => n + 1); };
-  const onToolbarPopoverOpened      = () => { setDrawingToolsClose(n => n + 1); setTextToolbarClose(n => n + 1); };
-  const onTextToolbarPopoverOpened  = () => { setDrawingToolsClose(n => n + 1); setToolbarClose(n => n + 1); };
+  // Shared singleton color popover — lifted here so only one instance ever exists.
+  const [colorPopoverSlot, setColorPopoverSlot] = useState<ColorSlot | null>(null);
+  const closeColorPopover = useCallback(() => setColorPopoverSlot(null), []);
+  const openColorPopover  = useCallback((slot: ColorSlot) => {
+    setColorPopoverSlot(slot);
+    if (slot === "text") {
+      setDrawingToolsClose(n => n + 1);
+      setToolbarClose(n => n + 1);
+    } else {
+      setDrawingToolsClose(n => n + 1);
+      setTextToolbarClose(n => n + 1);
+    }
+  }, []);
+
+  const onDrawingToolsPopoverOpened = () => { setToolbarClose(n => n + 1); setTextToolbarClose(n => n + 1); setColorPopoverSlot(null); };
+  const onToolbarPopoverOpened      = () => { setDrawingToolsClose(n => n + 1); setTextToolbarClose(n => n + 1); setColorPopoverSlot(null); };
+  const onTextToolbarPopoverOpened  = () => { setDrawingToolsClose(n => n + 1); setToolbarClose(n => n + 1); setColorPopoverSlot(null); };
 
   const selectedIsShape = hasSelection && !selectedIsText && !selectedIsGif && !selectedIsPath;
 
@@ -276,11 +294,12 @@ function DrawingBoardInner() {
         <TextToolbar
           textProps={textProps}
           color={color}
-          fabricRef={fabricRef}
-          onColorChange={(c) => { setColor(c); recolorSelected(c); }}
           onApply={applyTextProp}
           closeSignal={textToolbarClose}
           onPopoverOpened={onTextToolbarPopoverOpened}
+          colorPopoverOpen={colorPopoverSlot === "text"}
+          onOpenColorPopover={() => openColorPopover("text")}
+          onCloseColorPopover={closeColorPopover}
         />
       )}
 
@@ -290,14 +309,16 @@ function DrawingBoardInner() {
           color={color}
           opacity={opacity}
           strokeWeight={brushSize}
-          fabricRef={fabricRef}
-          onColorChange={(c) => { setColor(c); if (hasSelection) recolorSelected(c); }}
           onOpacityChange={(v) => { setOpacity(v); if (hasSelection) reOpacitySelected(v); }}
           onStrokeWeightChange={(v) => { setBrushSize(v); if (hasSelection) reweightSelected(v); }}
           strokeColor={selectedIsShape ? shapeStrokeColor : undefined}
           onStrokeColorChange={selectedIsShape ? (c) => { setShapeStrokeColor(c); restrokeSelected(c); } : undefined}
           closeSignal={toolbarClose}
           onPopoverOpened={onToolbarPopoverOpened}
+          colorPopoverOpenFor={colorPopoverSlot === "toolbar-fill" ? "fill" : colorPopoverSlot === "toolbar-stroke" ? "stroke" : null}
+          onOpenFillColorPopover={() => openColorPopover("toolbar-fill")}
+          onOpenStrokeColorPopover={() => openColorPopover("toolbar-stroke")}
+          onCloseColorPopover={closeColorPopover}
         />
       )}
       <DrawingTools
@@ -326,6 +347,34 @@ function DrawingBoardInner() {
         />
       )}
       <CapacityWall />
+
+      {/* ── Shared singleton color popover — renders at the top, next to navigation ── */}
+      {colorPopoverSlot === "toolbar-fill" && (
+        <ColorPopover
+          color={color}
+          fabricRef={fabricRef}
+          onColorChange={(c) => { setColor(c); if (hasSelection) recolorSelected(c); }}
+          onClose={closeColorPopover}
+        />
+      )}
+      {colorPopoverSlot === "toolbar-stroke" && (
+        <ColorPopover
+          color={shapeStrokeColor}
+          fabricRef={fabricRef}
+          onColorChange={(c) => { setShapeStrokeColor(c); restrokeSelected(c); }}
+          onClose={closeColorPopover}
+        />
+      )}
+      {colorPopoverSlot === "text" && (
+        <ColorPopover
+          color={color}
+          gradient={textProps.gradient}
+          fabricRef={fabricRef}
+          onColorChange={(c) => { setColor(c); recolorSelected(c); }}
+          onGradientChange={(g) => applyTextProp({ gradient: g })}
+          onClose={closeColorPopover}
+        />
+      )}
     </div>
   );
 }
