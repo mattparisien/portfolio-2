@@ -24,7 +24,7 @@ export default function ZoomNav({ zoom, onZoomIn, onZoomOut }: ZoomNavProps) {
       >
         −
       </button>
-      <span className="text-[11px] font-semibold text-gray-500 w-11 text-center tabular-nums select-none leading-none">
+      <span className="text-xs font-semibold text-gray-500 w-11 text-center tabular-nums select-none leading-none">
         {Math.round(zoom * 100)}%
       </span>
       <button

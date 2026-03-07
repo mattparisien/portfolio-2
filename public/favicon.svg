@@ -1,3 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">
-  <circle cx="32" cy="32" r="32" fill="#5266AB"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <clipPath id="favicon-circle-clip">
+      <circle cx="32" cy="32" r="30"/>
+    </clipPath>
+  </defs>
+  <rect x="4" y="4"     width="56" height="9.33" fill="#E40303" clip-path="url(#favicon-circle-clip)"/>
+  <rect x="4" y="13.33" width="56" height="9.33" fill="#FF8C00" clip-path="url(#favicon-circle-clip)"/>
+  <rect x="4" y="22.67" width="56" height="9.33" fill="#FFED00" clip-path="url(#favicon-circle-clip)"/>
+  <rect x="4" y="32"    width="56" height="9.33" fill="#008026" clip-path="url(#favicon-circle-clip)"/>
+  <rect x="4" y="41.33" width="56" height="9.33" fill="#004DFF" clip-path="url(#favicon-circle-clip)"/>
+  <rect x="4" y="50.67" width="56" height="13.33" fill="#750787" clip-path="url(#favicon-circle-clip)"/>
 </svg>

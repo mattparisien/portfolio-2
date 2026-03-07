@@ -229,7 +229,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
             <button
               title="Close"
               onClick={() => { setDrawPinned(false); setDrawHover(false); onToolChange("select"); }}
-              className="absolute -top-2.5 -right-2.5 w-5 h-5 rounded-full bg-white text-gray-500 flex items-center justify-center text-[10px] leading-none cursor-pointer hover:text-black transition-colors z-10"
+              className="absolute -top-2.5 -right-2.5 w-5 h-5 rounded-full bg-white text-gray-500 flex items-center justify-center text-xs leading-none cursor-pointer hover:text-black transition-colors z-10"
             >
               ✕
             </button>
@@ -244,7 +244,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
                 <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm2.92 1.5H5v-.92l9.06-9.06.92.92-9.06 9.06zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
               </svg>
-              <span className={`text-[10px] leading-none ${tool === "pencil" ? "text-white/70" : "text-gray-400"}`}>Pencil</span>
+              <span className={`text-xs leading-none ${tool === "pencil" ? "text-white/70" : "text-gray-400"}`}>Pencil</span>
             </button>
 
             {/* Brush */}
@@ -258,7 +258,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
                 <path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34a1 1 0 0 0-1.41 0L9 12.25 11.75 15l8.96-8.96a1 1 0 0 0 0-1.41z"/>
               </svg>
-              <span className={`text-[10px] leading-none ${tool === "brush" ? "text-white/70" : "text-gray-400"}`}>Brush</span>
+              <span className={`text-xs leading-none ${tool === "brush" ? "text-white/70" : "text-gray-400"}`}>Brush</span>
             </button>
 
             {/* Select */}
@@ -272,7 +272,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
                 <path d="M4 2 L4 18 L8.5 13.5 L11.5 20 L13.5 19 L10.5 12.5 L16 12.5 Z" />
               </svg>
-              <span className={`text-[10px] leading-none ${tool === "select" ? "text-white/70" : "text-gray-400"}`}>Select</span>
+              <span className={`text-xs leading-none ${tool === "select" ? "text-white/70" : "text-gray-400"}`}>Select</span>
             </button>
 
             {/* Eraser */}
@@ -287,7 +287,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
                 <path d="M20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-9.5 9.5a1 1 0 0 0-.29.71V17a1 1 0 0 0 1 1h4a1 1 0 0 0 .71-.29l7.83-7.83zM10.88 16H9v-1.88l5.5-5.5 1.88 1.88L10.88 16z" />
                 <path d="M3 21h18v-2H3z" />
               </svg>
-              <span className={`text-[10px] leading-none ${tool === "eraser" ? "text-white/70" : "text-gray-400"}`}>Eraser</span>
+              <span className={`text-xs leading-none ${tool === "eraser" ? "text-white/70" : "text-gray-400"}`}>Eraser</span>
             </button>
 
           </div>
@@ -342,7 +342,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
                 className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-black/[0.07] transition-colors flex-1 cursor-pointer text-[#1a1a1a]"
               >
                 {s.icon}
-                <span className="text-[10px] text-gray-400 leading-none">{s.label}</span>
+                <span className="text-xs text-gray-400 leading-none">{s.label}</span>
               </button>
             ))}
           </div>
@@ -373,8 +373,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
           }`}
         >
           <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-            <rect x="2" y="6" width="20" height="12" rx="2" fill="none" stroke="currentColor" strokeWidth="1.8"/>
-            <text x="5.5" y="15.5" fontSize="7.5" fontWeight="bold" fill="currentColor" fontFamily="sans-serif">GIF</text>
+            <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
           </svg>
         </button>
 
