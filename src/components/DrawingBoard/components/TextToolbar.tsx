@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import type { Canvas } from "fabric";
 import type { TextProps } from "../types";
 import ColorPopover from "./ColorPopover";
@@ -84,11 +85,83 @@ function StepBtn({
   );
 }
 
+// ── Reusable portal popover for line-height and letter-spacing sliders ────────
+function SpacingPopover({
+  title,
+  value,
+  displayValue,
+  min,
+  max,
+  step,
+  onChange,
+  onClose,
+}: {
+  title: string;
+  value: number;
+  displayValue: string;
+  min: number;
+  max: number;
+  step: number;
+  onChange: (v: number) => void;
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) onClose();
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [onClose]);
+
+  const trackPercent = ((value - min) / (max - min)) * 100;
+
+  return createPortal(
+    <div
+      ref={ref}
+      className="fixed bottom-20 left-1/2 -translate-x-1/2 px-4 pt-3.5 pb-4 rounded-2xl z-[300] popover-enter"
+      style={{
+        background: "rgba(255,255,255,0.98)",
+        backdropFilter: "blur(18px)",
+        WebkitBackdropFilter: "blur(18px)",
+        width: 200,
+        border: "1px solid rgba(0,0,0,0.07)",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.05)",
+      }}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400 select-none">
+          {title}
+        </span>
+        <span className="text-sm font-semibold text-gray-800 tabular-nums">
+          {displayValue}
+        </span>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="toolbar-slider"
+        style={{
+          background: `linear-gradient(to right, #111 ${trackPercent}%, #e0e0e0 ${trackPercent}%)`,
+        }}
+      />
+    </div>,
+    document.body,
+  );
+}
+
 export default function TextToolbar({ textProps, color, fabricRef, onColorChange, onApply, closeSignal, onPopoverOpened }: TextToolbarProps) {
   const { fontFamily, fontSize, bold, italic, underline, linethrough, uppercase, lineHeight, charSpacing, textAlign, gradient, effect } = textProps;
 
   const [colorOpen, setColorOpen] = useState(false);
   const [effectOpen, setEffectOpen] = useState(false);
+  const [lineHeightOpen, setLineHeightOpen] = useState(false);
+  const [letterSpacingOpen, setLetterSpacingOpen] = useState(false);
   const colorTriggerRef = useRef<HTMLDivElement>(null);
 
   // Close all when a sibling component opens a popover
@@ -96,7 +169,25 @@ export default function TextToolbar({ textProps, color, fabricRef, onColorChange
     if (!closeSignal) return;
     setColorOpen(false);
     setEffectOpen(false);
+    setLineHeightOpen(false);
+    setLetterSpacingOpen(false);
   }, [closeSignal]);
+
+  // Helper: toggle one spacing popover and close the other
+  function toggleSpacingPopover(target: "lineHeight" | "letterSpacing") {
+    if (target === "lineHeight") {
+      setLineHeightOpen(v => !v);
+      setLetterSpacingOpen(false);
+    } else {
+      setLetterSpacingOpen(v => !v);
+      setLineHeightOpen(false);
+    }
+  }
+
+  // Shared className for the compact icon+value trigger buttons
+  function spacingBtnClass(isOpen: boolean) {
+    return `flex items-center gap-1 px-2 h-8 rounded-lg cursor-pointer transition-all duration-150 select-none ${isOpen ? "bg-black/[0.09]" : "hover:bg-black/[0.05]"}`;
+  }
 
   // Determine display swatch — gradient pill or solid dot
   const swatchStyle: React.CSSProperties = (() => {
@@ -259,45 +350,69 @@ export default function TextToolbar({ textProps, color, fabricRef, onColorChange
       <Divider />
 
       {/* ── Line height ── */}
-      <div className="flex items-center gap-1 flex-shrink-0">
-        <svg viewBox="0 0 16 16" width="13" height="13" fill="none" className="text-gray-400 flex-shrink-0" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
-          <line x1="8" y1="1" x2="8" y2="5"/>
-          <polyline points="6,3 8,1 10,3"/>
-          <line x1="3" y1="6.5" x2="13" y2="6.5"/>
-          <line x1="3" y1="9.5" x2="13" y2="9.5"/>
-          <line x1="8" y1="11" x2="8" y2="15"/>
-          <polyline points="6,13 8,15 10,13"/>
-        </svg>
-        <StepBtn title="Decrease line height" onClick={() => onApply({ lineHeight: Math.max(0.5, Math.round((lineHeight - 0.1) * 10) / 10) })}>
-          <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor"><rect x="1" y="5.5" width="10" height="1.5" rx="0.75"/></svg>
-        </StepBtn>
-        <span className="text-xs w-7 text-center tabular-nums text-gray-700 font-medium select-none">{lineHeight.toFixed(1)}</span>
-        <StepBtn title="Increase line height" onClick={() => onApply({ lineHeight: Math.min(4, Math.round((lineHeight + 0.1) * 10) / 10) })}>
-          <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor"><rect x="1" y="5.5" width="10" height="1.5" rx="0.75"/><rect x="5.5" y="1" width="1.5" height="10" rx="0.75"/></svg>
-        </StepBtn>
+      <div className="flex items-center flex-shrink-0">
+        <button
+          title="Line height"
+          onClick={(e) => { e.stopPropagation(); toggleSpacingPopover("lineHeight"); }}
+          className={spacingBtnClass(lineHeightOpen)}
+        >
+          <svg viewBox="0 0 16 16" width="13" height="13" fill="none" className="text-gray-400 flex-shrink-0" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+            <line x1="8" y1="1" x2="8" y2="5"/>
+            <polyline points="6,3 8,1 10,3"/>
+            <line x1="3" y1="6.5" x2="13" y2="6.5"/>
+            <line x1="3" y1="9.5" x2="13" y2="9.5"/>
+            <line x1="8" y1="11" x2="8" y2="15"/>
+            <polyline points="6,13 8,15 10,13"/>
+          </svg>
+          <span className="text-xs w-7 text-center tabular-nums text-gray-700 font-medium">{lineHeight.toFixed(1)}</span>
+        </button>
+        {lineHeightOpen && (
+          <SpacingPopover
+            title="Line Height"
+            value={lineHeight}
+            displayValue={lineHeight.toFixed(1)}
+            min={0.5}
+            max={4}
+            step={0.1}
+            onChange={(v) => onApply({ lineHeight: Math.round(v * 10) / 10 })}
+            onClose={() => setLineHeightOpen(false)}
+          />
+        )}
       </div>
 
       <Divider />
 
       {/* ── Letter spacing ── */}
-      <div className="flex items-center gap-1 flex-shrink-0">
-        <svg viewBox="0 0 16 16" width="13" height="13" fill="none" className="text-gray-400 flex-shrink-0" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
-          <line x1="1" y1="8" x2="5" y2="8"/>
-          <polyline points="3,6 1,8 3,10"/>
-          <line x1="4" y1="3" x2="12" y2="3"/>
-          <line x1="4" y1="6" x2="12" y2="6"/>
-          <line x1="4" y1="9" x2="12" y2="9"/>
-          <line x1="4" y1="12" x2="12" y2="12"/>
-          <line x1="11" y1="8" x2="15" y2="8"/>
-          <polyline points="13,6 15,8 13,10"/>
-        </svg>
-        <StepBtn title="Decrease letter spacing" onClick={() => onApply({ charSpacing: Math.max(-200, charSpacing - 25) })}>
-          <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor"><rect x="1" y="5.5" width="10" height="1.5" rx="0.75"/></svg>
-        </StepBtn>
-        <span className="text-xs w-8 text-center tabular-nums text-gray-700 font-medium select-none">{charSpacing}</span>
-        <StepBtn title="Increase letter spacing" onClick={() => onApply({ charSpacing: Math.min(1000, charSpacing + 25) })}>
-          <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor"><rect x="1" y="5.5" width="10" height="1.5" rx="0.75"/><rect x="5.5" y="1" width="1.5" height="10" rx="0.75"/></svg>
-        </StepBtn>
+      <div className="flex items-center flex-shrink-0">
+        <button
+          title="Letter spacing"
+          onClick={(e) => { e.stopPropagation(); toggleSpacingPopover("letterSpacing"); }}
+          className={spacingBtnClass(letterSpacingOpen)}
+        >
+          <svg viewBox="0 0 16 16" width="13" height="13" fill="none" className="text-gray-400 flex-shrink-0" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+            <line x1="1" y1="8" x2="5" y2="8"/>
+            <polyline points="3,6 1,8 3,10"/>
+            <line x1="4" y1="3" x2="12" y2="3"/>
+            <line x1="4" y1="6" x2="12" y2="6"/>
+            <line x1="4" y1="9" x2="12" y2="9"/>
+            <line x1="4" y1="12" x2="12" y2="12"/>
+            <line x1="11" y1="8" x2="15" y2="8"/>
+            <polyline points="13,6 15,8 13,10"/>
+          </svg>
+          <span className="text-xs w-8 text-center tabular-nums text-gray-700 font-medium">{charSpacing}</span>
+        </button>
+        {letterSpacingOpen && (
+          <SpacingPopover
+            title="Letter Spacing"
+            value={charSpacing}
+            displayValue={String(charSpacing)}
+            min={-200}
+            max={1000}
+            step={25}
+            onChange={(v) => onApply({ charSpacing: v })}
+            onClose={() => setLetterSpacingOpen(false)}
+          />
+        )}
       </div>
     </div>
   );
