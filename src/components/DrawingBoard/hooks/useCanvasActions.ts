@@ -561,15 +561,62 @@ export function useCanvasActions({
     //   Single segment (to = from + 1): copy the original command verbatim
     //     → keeps Q/C control points intact
     //   Multi-segment span (to > from + 1): collapsed into a straight L
+    // Build each output segment, preserving curves as much as possible.
+    //
+    // Single-segment span (to == from+1): copy the original command verbatim.
+    //   → Q / C control points survive unchanged.
+    //
+    // Multi-segment span (to > from+1): collapsed into ONE cubic Bézier (C)
+    //   whose control points are derived from the tangent directions of the
+    //   first and last original commands in the span so the curve looks smooth.
+    const buildSpanCmd = (from: number, to: number): PathCmd => {
+      if (to - from === 1) return [...origCmds[anchorCmdIdx[to]]] as PathCmd;
+
+      const p0 = anchors[from];
+      const p3 = anchors[to];
+      const chord = Math.hypot(p3[0] - p0[0], p3[1] - p0[1]);
+      if (chord < 0.001) return ["L", p3[0], p3[1]];
+      const scale = chord / 3;
+
+      // Departure tangent at p0: direction p0 → first control point of span
+      const firstCmd = origCmds[anchorCmdIdx[from + 1]];
+      let cp1x: number, cp1y: number;
+      if (firstCmd[0] === "Q" || firstCmd[0] === "C") {
+        const dx = firstCmd[1] - p0[0], dy = firstCmd[2] - p0[1];
+        const len = Math.hypot(dx, dy) || chord;
+        cp1x = p0[0] + (dx / len) * scale;
+        cp1y = p0[1] + (dy / len) * scale;
+      } else {
+        cp1x = p0[0] + (p3[0] - p0[0]) / 3;
+        cp1y = p0[1] + (p3[1] - p0[1]) / 3;
+      }
+
+      // Arrival tangent at p3: direction last-control-point → p3
+      const lastCmd = origCmds[anchorCmdIdx[to]];
+      let cp2x: number, cp2y: number;
+      if (lastCmd[0] === "Q") {
+        // Q cx cy ex ey — arrival direction: (cx,cy) → (ex,ey)=p3
+        const dx = p3[0] - lastCmd[1], dy = p3[1] - lastCmd[2];
+        const len = Math.hypot(dx, dy) || chord;
+        cp2x = p3[0] - (dx / len) * scale;
+        cp2y = p3[1] - (dy / len) * scale;
+      } else if (lastCmd[0] === "C") {
+        // C x1 y1 x2 y2 ex ey — arrival direction: (x2,y2) → (ex,ey)=p3
+        const dx = p3[0] - lastCmd[3], dy = p3[1] - lastCmd[4];
+        const len = Math.hypot(dx, dy) || chord;
+        cp2x = p3[0] - (dx / len) * scale;
+        cp2y = p3[1] - (dy / len) * scale;
+      } else {
+        cp2x = p3[0] - (p3[0] - p0[0]) / 3;
+        cp2y = p3[1] - (p3[1] - p0[1]) / 3;
+      }
+
+      return ["C", cp1x, cp1y, cp2x, cp2y, p3[0], p3[1]];
+    };
+
     const newPath: PathCmd[] = [[...origCmds[anchorCmdIdx[0]]] as PathCmd]; // M
     for (let k = 1; k < kept.length; k++) {
-      const from = kept[k - 1];
-      const to   = kept[k];
-      if (to - from === 1) {
-        newPath.push([...origCmds[anchorCmdIdx[to]]] as PathCmd); // preserve curve
-      } else {
-        newPath.push(["L", anchors[to][0], anchors[to][1]]);      // merge → straight
-      }
+      newPath.push(buildSpanCmd(kept[k - 1], kept[k]));
     }
     if (hasClosingZ) newPath.push(["Z"]);
 
