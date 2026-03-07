@@ -60,6 +60,8 @@ export default function Home() {
     fontWeight: "300",
   };
 
+  const navItemClass = "text-base sm:text-xl md:text-2xl font-sans";
+
   return (
     <>
       <main
@@ -73,7 +75,7 @@ export default function Home() {
       >
         <div className="flex flex-col justify-between items-start w-screen h-[100dvh] fixed top-0 left-0 sm:px-8 sm:py-5 px-4 py-3 bg-[#FC79C8]">
           <h2
-            className="text-black leading-[1.24] text-[1.4rem] sm:text-[clamp(1.7rem,3vw,3rem)]"
+            className="text-black leading-[1.24] text-[1.6rem] sm:text-[clamp(2rem,3.5vw,3.5rem)]"
             style={proseStyle}
           >
             <Button href="">Matthew Parisien</Button> (1997, Montreal) is a
@@ -100,11 +102,11 @@ export default function Home() {
             className="flex items-center justify-between w-full [&>a]:cursor-pointer [&>a]:decoration-[2px] [&>a]:decoration-black [&>a]:underline-offset-2 [&>a]:hover:underline"
             style={{ ...proseStyle, fontWeight: 400 }}
           >
-            <div className="text-sm sm:text-lg md:text-xl font-sans">
+            <div className={navItemClass}>
               Matthew Parisien *
             </div>
             <a
-              className="text-sm sm:text-lg text-lg md:text-xl font-sans"
+              className={navItemClass}
               href={`mailto:${CONTACT_EMAIL}`}
             >
               {CONTACT_EMAIL}
