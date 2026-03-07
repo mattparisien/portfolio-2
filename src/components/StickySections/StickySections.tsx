@@ -1,53 +1,35 @@
 'use client';
-import { MediaItem } from "@/app/page";
 import classNames from "classnames";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PALETTE } from "@/app/constants";
-import { useScrollHeight } from "@/app/hooks/useScrollHeight";
+import { isMetaTrue } from "@/app/helpers";
+import type { MediaItem } from "@/types/media";
 
-gsap.registerPlugin(ScrollTrigger);
+// Re-export the canonical type under the legacy alias so existing imports keep working
+export type { MediaItem as MediaGridItem };
 
-// Function to darken a hex color
-function darkenHexColor(hex: string, percent: number = 30): string {
-    // Remove # if present
-    hex = hex.replace('#', '');
-
-    // Parse RGB values
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-
-    // Darken by reducing each component
-    const factor = (100 - percent) / 100;
-    const newR = Math.round(r * factor);
-    const newG = Math.round(g * factor);
-    const newB = Math.round(b * factor);
-
-    // Convert back to hex
-    const toHex = (n: number) => n.toString(16).padStart(2, '0');
-    return `#${toHex(newR)}${toHex(newG)}${toHex(newB)}`;
-}
+// Number of sections to keep rendered before and after the current viewport section.
+// Increasing these values improves visual continuity at the cost of DOM size.
+const SCROLL_BUFFER_BEFORE = 3;
+const SCROLL_BUFFER_AFTER = 2;
 
 interface MediaGridProps {
-    items: MediaGridItem[];
+    items: MediaItem[];
     isActive: boolean;
 }
 
-export type MediaGridItem = MediaItem & {
-    width: number | null;
-    height: number | null;
-    aspectRatio: number | null;
-    meta?: {
-        isFullScreen?: "true" | "false";
-        removeBackground?: "true" | "false";
-        rotate?: string;
-        context?: string;
-        transform?: "scale"
-    }
-};
-
+/** Returns the inline styles shared by both <video> and <img> media elements. */
+function getMediaStyles(item: MediaItem): React.CSSProperties {
+    const fullScreen = isMetaTrue(item.meta?.isFullScreen);
+    return {
+        backfaceVisibility: "hidden",
+        transform: "translateZ(0)",
+        width: fullScreen ? "100%" : "auto",
+        height: fullScreen ? "100%" : "auto",
+        maxWidth: fullScreen ? "100%" : "90vw",
+        maxHeight: fullScreen ? "100%" : "90vh",
+    };
+}
 
 const StickySections = ({ items }: MediaGridProps) => {
     const [visibleRange, setVisibleRange] = useState({ start: 0, end: 6 });
@@ -56,16 +38,15 @@ const StickySections = ({ items }: MediaGridProps) => {
     const sectionRefs = useRef<React.RefObject<HTMLDivElement>[]>([]);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
-    const scrollHeight = useScrollHeight();
 
     const addToRefs = (el: HTMLDivElement | null) => {
         if (el) {
             const ref = { current: el };
-            if (!sectionRefs.current.find(r => r.current === el)) {
+            if (!sectionRefs.current.find((r) => r.current === el)) {
                 sectionRefs.current.push(ref);
             }
         }
-    }
+    };
 
     useEffect(() => {
         let ticking = false;
@@ -77,25 +58,21 @@ const StickySections = ({ items }: MediaGridProps) => {
                 const vh = window.innerHeight;
                 const scrollY = window.scrollY;
 
-                // Calculate which sections should be visible
                 const current = Math.floor(scrollY / vh);
-                const bufferBefore = 3; // Render 3 sections before (backwards)
-                const bufferAfter = 2; // Render 2 sections after
 
-                let start = Math.max(0, current - bufferBefore);
-                const end = Math.min(items.length, current + bufferAfter + 1);
+                let start = Math.max(0, current - SCROLL_BUFFER_BEFORE);
+                const end = Math.min(items.length, current + SCROLL_BUFFER_AFTER + 1);
 
-                // Check if any section in or near the visible range has removeBackground
-                // If so, keep rendering from the beginning to ensure there's always a background
-                // Check from current section up to 2 sections ahead
+                // If any section in or near the visible range removes its background
+                // (transparent overlay), render from the start so there is always a
+                // coloured section visible underneath.
                 for (let i = Math.max(0, current - 1); i <= current + 2 && i < items.length; i++) {
-                    if (items[i]?.meta?.removeBackground === "true") {
+                    if (isMetaTrue(items[i]?.meta?.removeBackground)) {
                         start = 0;
                         break;
                     }
                 }
 
-                console.log('setting visible range...', start, end);
                 setVisibleRange({ start, end });
                 setCurrentSection(current);
 
@@ -104,7 +81,7 @@ const StickySections = ({ items }: MediaGridProps) => {
         };
 
         window.addEventListener("scroll", onScroll, { passive: true });
-        onScroll(); // Initial call
+        onScroll(); // set initial state
 
         return () => {
             window.removeEventListener("scroll", onScroll);
@@ -112,7 +89,6 @@ const StickySections = ({ items }: MediaGridProps) => {
     }, [items]);
 
     useEffect(() => {
-        // Pause all videos except the current one
         videoRefs.current.forEach((video, index) => {
             if (index === currentSection) {
                 video.play().catch(() => {});
@@ -122,62 +98,53 @@ const StickySections = ({ items }: MediaGridProps) => {
         });
     }, [currentSection]);
 
-    const ctx = useMemo(() => {
-        return items[currentSection -1 || 0]?.meta?.context || null;
-    }, [items,currentSection]);
+    return (
+        <div className="pointer-events-none" ref={scrollContainerRef}>
+            <div className="relative top-0 left-0 w-screen">
+                {/* Initial spacer to push the first section below the viewport */}
+                <div className="h-screen pointer-events-none" />
 
-    const textColor = useMemo(() => {
+                {items.map((item, actualIndex) => {
+                    const isInRange =
+                        actualIndex >= visibleRange.start &&
+                        actualIndex < visibleRange.end;
+                    const bgColor = isMetaTrue(item.meta?.removeBackground)
+                        ? "transparent"
+                        : PALETTE[actualIndex % PALETTE.length];
 
-    }, [items, currentSection])
+                    if (!isInRange) {
+                        return (
+                            <div
+                                key={actualIndex}
+                                className="sticky left-0 top-0 h-screen w-screen"
+                                style={{ backgroundColor: bgColor, zIndex: actualIndex }}
+                            />
+                        );
+                    }
 
-    return <div
-        className="pointer-events-none"
-        ref={scrollContainerRef}
-    >
-        {/* <div className="fixed top-0 left-0 z-[999] text-4xl p-4" >{ctx}</div> */}
-        <div className="relative top-0 left-0 w-screen">
-            {/* Initial spacer to push first section below viewport */}
-            <div className="h-screen pointer-events-none" />
+                    const isFullScreen = isMetaTrue(item.meta?.isFullScreen);
+                    const mediaStyles = getMediaStyles(item);
 
-            {items.map((item, actualIndex) => {
-                // Check if this item should be rendered
-                const isInRange = actualIndex >= visibleRange.start && actualIndex < visibleRange.end;
-                const bgColor = item.meta?.removeBackground === "true" ? "transparent" : PALETTE[actualIndex % PALETTE.length];
-                
-                // Don't render if not in range
-                if (!isInRange) {
-                    // Still need spacer to maintain scroll positions with background
-                    return <div 
-                        key={actualIndex} 
-                        className="sticky left-0 top-0 h-screen w-screen" 
-                        style={{
-                            backgroundColor: bgColor,
-                            zIndex: actualIndex,
-                        }}
-                    />;
-                }
-
-                return (
-                    <div
-                        key={actualIndex}
-                        className="sticky left-0 top-0 w-screen h-screen flex items-center justify-center rounded-t-xl pointer-events-auto relative"
-                        ref={addToRefs}
-                        style={{
-                            backgroundColor: bgColor,
-                            zIndex: actualIndex,
-                        }}
-                    >
-
-                            <div className={classNames("rounded-md overflow-hidden inline-flex", {
-                                "w-full h-full": item.meta?.isFullScreen == "true",
-                            })} style={{
-                                width: item.meta?.isFullScreen === "true" ? "100%" : "auto",
-                                height: item.meta?.isFullScreen === "true" ? "100%" : "auto",
-                                maxWidth: item.meta?.isFullScreen === "true" ? "100%" : '90vw',
-                                maxHeight: item.meta?.isFullScreen === "true" ? "100%" : '90vh',
-                                transform: `rotate(${item.meta?.rotate ? item.meta.rotate : 0}deg)`,
-                            }}>
-                                {item.type === 'video' ? (
+                    return (
+                        <div
+                            key={actualIndex}
+                            className="sticky left-0 top-0 w-screen h-screen flex items-center justify-center rounded-t-xl pointer-events-auto relative"
+                            ref={addToRefs}
+                            style={{ backgroundColor: bgColor, zIndex: actualIndex }}
+                        >
+                            <div
+                                className={classNames("rounded-md overflow-hidden inline-flex", {
+                                    "w-full h-full": isFullScreen,
+                                })}
+                                style={{
+                                    width: isFullScreen ? "100%" : "auto",
+                                    height: isFullScreen ? "100%" : "auto",
+                                    maxWidth: isFullScreen ? "100%" : "90vw",
+                                    maxHeight: isFullScreen ? "100%" : "90vh",
+                                    transform: `rotate(${item.meta?.rotate ?? 0}deg)`,
+                                }}
+                            >
+                                {item.type === "video" ? (
                                     <video
                                         ref={(el) => {
                                             if (el) {
@@ -188,47 +155,32 @@ const StickySections = ({ items }: MediaGridProps) => {
                                         }}
                                         src={item.url}
                                         className={classNames({
-                                            "w-full h-full object-cover": item.meta?.isFullScreen == "true",
+                                            "w-full h-full object-cover": isFullScreen,
                                         })}
                                         loop
                                         muted
                                         playsInline
-                                        style={{
-                                            backfaceVisibility: "hidden",
-                                            transform: "translateZ(0)",
-                                            maxWidth: item.meta?.isFullScreen === "true" ? "100%" : "90vw",
-                                            maxHeight: item.meta?.isFullScreen === "true" ? "100%" : "90vh",
-                                            width: item.meta?.isFullScreen === "true" ? "100%" : "auto",
-                                            height: item.meta?.isFullScreen === "true" ? "100%" : "auto",
-                                        }}
+                                        style={mediaStyles}
                                     />
                                 ) : (
                                     <img
                                         src={item.url}
                                         className={classNames({
-                                            "w-full h-full object-cover": item.meta?.isFullScreen == "true",
+                                            "w-full h-full object-cover": isFullScreen,
                                         })}
                                         alt=""
                                         loading={actualIndex < 3 ? "eager" : "lazy"}
                                         decoding="async"
-                                        style={{
-                                            backfaceVisibility: "hidden",
-                                            transform: "translateZ(0)",
-                                            maxWidth: item.meta?.isFullScreen === "true" ? "100%" : "90vw",
-                                            maxHeight: item.meta?.isFullScreen === "true" ? "100%" : "90vh",
-                                            width: item.meta?.isFullScreen === "true" ? "100%" : "auto",
-                                            height: item.meta?.isFullScreen === "true" ? "100%" : "auto"
-                                        }}
+                                        style={mediaStyles}
                                     />
                                 )}
-
                             </div>
-                    
                         </div>
-                );
-            })}
+                    );
+                })}
+            </div>
         </div>
-    </div>;
-}
+    );
+};
 
 export default StickySections;

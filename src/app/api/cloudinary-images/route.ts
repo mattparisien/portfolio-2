@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import sizeOf from "image-size";
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import type { MediaItem, MediaMeta } from "@/types/media";
 
 /* -----------------------------
    Cloudflare R2 (S3-compatible)
@@ -18,19 +19,12 @@ const r2 = new S3Client({
 /* -----------------------------
    Types
 -------------------------------- */
-type MediaItem = {
-  url: string;
-  type: "image" | "video";
-  width: number | null;
-  height: number | null;
-  aspectRatio: number | null;
-  meta?: {
-    isFullScreen?: "true" | "false";
-    removeBackground?: "true" | "false";
-    rotate?: string;
-    context?: string;
-    excludeFromShowcase?: "true" | "false";
-  };
+// MediaItem and MediaMeta are imported from @/types/media
+
+/** Shape of a single image record returned by the Cloudflare Images v1 API. */
+type CloudflareImage = {
+  variants: string[];
+  meta?: MediaMeta & { width?: number; height?: number };
 };
 
 /* -----------------------------
@@ -59,17 +53,7 @@ export async function GET() {
     const images = imagesJson?.result?.images ?? [];
 
     const imagesWithMetadata: MediaItem[] = await Promise.all(
-      images.map(async (image: {
-        variants: string[];
-        meta?: {
-          width?: number;
-          height?: number;
-          isFullScreen?: "true" | "false";
-          removeBackground?: "true" | "false";
-          rotate?: string;
-          context?: string;
-        };
-      }) => {
+      images.map(async (image: CloudflareImage) => {
         const url = image?.variants?.[0];
         if (!url) return null;
 
