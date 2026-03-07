@@ -1,6 +1,7 @@
 "use client";
 import StickySections from "@/components/StickySections/StickySections";
 import Button from "@/components/Button/Button";
+import Logo from "@/components/Logo/Logo";
 import { useEffect, useState } from "react";
 import { shuffle } from "@/app/helpers";
 import { SHUFFLE_SEED, CONTACT_EMAIL } from "@/app/constants";
@@ -101,7 +102,7 @@ export default function Home() {
             style={{ ...proseStyle, fontWeight: 400 }}
           >
             <div className="text-sm sm:text-lg md:text-xl font-sans">
-              Matthew Parisien *
+              <Logo size={36} />
             </div>
             <a
               className="text-sm sm:text-lg text-lg md:text-xl font-sans"
