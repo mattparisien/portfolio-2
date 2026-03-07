@@ -1,7 +1,5 @@
 "use client";
 
-import Image from "next/image";
-
 interface BoardHeaderProps {
   isSyncing?: boolean;
 }
@@ -16,7 +14,6 @@ export default function BoardHeader({ isSyncing }: BoardHeaderProps) {
         border: "1px solid rgba(0,0,0,0.08)",
       }}
     >
-      <Image src="/logo.svg" alt="Queer Wall logo" width={20} height={20} className="flex-shrink-0" />
       Queer Montréal ✦ Collective Board
       {isSyncing && (
         <span
