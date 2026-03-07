@@ -160,7 +160,7 @@ export default function GifPicker({ onSelect }: GifPickerProps) {
       </div>
 
       {/* Brand */}
-      <p className="text-center text-[10px] text-gray-300 mt-1 select-none">Powered by GIPHY</p>
+      <p className="text-center text-xs text-gray-300 mt-1 select-none">Powered by GIPHY</p>
     </div>
   );
 }

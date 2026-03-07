@@ -47,7 +47,7 @@ function ToolbarBtn({
       >
         {children}
       </button>
-      <span className="text-[10px] font-medium tracking-wide text-gray-400 select-none leading-none">
+      <span className="text-xs font-medium tracking-wide text-gray-400 select-none leading-none">
         {label}
       </span>
     </div>
@@ -172,7 +172,7 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
             }}
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400 select-none">
+              <span className="text-xs font-semibold uppercase tracking-[0.1em] text-gray-400 select-none">
                 Weight
               </span>
               <span className="text-sm font-semibold text-gray-800 tabular-nums">
@@ -229,7 +229,7 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
             }}
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400 select-none">
+              <span className="text-xs font-semibold uppercase tracking-[0.1em] text-gray-400 select-none">
                 Opacity
               </span>
               <span className="text-sm font-semibold text-gray-800 tabular-nums">
