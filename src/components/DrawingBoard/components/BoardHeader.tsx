@@ -11,7 +11,7 @@ export default function BoardHeader({ isSyncing }: BoardHeaderProps) {
       style={{
         background: "rgba(255,255,255,0.85)",
         backdropFilter: "blur(10px)",
-        boxShadow: "0 2px 12px rgba(0,0,0,0.09), 0 0 0 1px rgba(0,0,0,0.06)",
+        border: "1px solid rgba(0,0,0,0.08)",
       }}
     >
       Queer Montréal ✦ Collective Board

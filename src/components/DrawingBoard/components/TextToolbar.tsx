@@ -73,7 +73,7 @@ export default function TextToolbar({ textProps, color, fabricRef, onColorChange
 
   // Determine display swatch — gradient pill or solid dot
   const swatchStyle: React.CSSProperties = (() => {
-    if (!gradient) return { background: color, borderRadius: "50%", width: 18, height: 18, boxShadow: "0 0 0 1.5px rgba(0,0,0,0.15), 0 0 0 3px #fff, 0 0 0 4.5px rgba(0,0,0,0.12)" };
+    if (!gradient) return { background: color, borderRadius: "50%", width: 18, height: 18, outline: "1.5px solid rgba(0,0,0,0.15)" };
     const sorted = [...gradient.stops].sort((a, b) => a.offset - b.offset);
     const parts = sorted.map(s => `${s.color} ${Math.round(s.offset * 100)}%`).join(", ");
     return { background: `linear-gradient(${gradient.angle}deg, ${parts})`, borderRadius: 6, width: 28, height: 18 };
@@ -81,10 +81,11 @@ export default function TextToolbar({ textProps, color, fabricRef, onColorChange
 
   return (
     <div
-      className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-2 rounded-2xl shadow-xl overflow-x-auto z-[200]"
+      className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-2 rounded-2xl overflow-x-auto z-[200]"
       style={{
         background: "rgba(255,255,255,0.92)",
         backdropFilter: "blur(12px)",
+        border: "1px solid rgba(0,0,0,0.08)",
         maxWidth: "calc(100vw - 32px)",
         whiteSpace: "nowrap",
       }}

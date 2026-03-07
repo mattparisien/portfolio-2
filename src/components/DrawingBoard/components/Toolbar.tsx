@@ -51,7 +51,7 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
       style={{
         background: "rgba(255,255,255,0.92)",
         backdropFilter: "blur(14px)",
-        boxShadow: "0 2px 12px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.06)",
+        border: "1px solid rgba(0,0,0,0.08)",
       }}
     >
       {/* Color swatch button(s) — open ColorPopover */}
@@ -66,7 +66,7 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
             >
               <span
                 className="block rounded-full flex-shrink-0"
-                style={{ width: 22, height: 22, background: color, boxShadow: "0 0 0 1.5px rgba(0,0,0,0.15), 0 0 0 3px #fff, 0 0 0 4.5px rgba(0,0,0,0.12)" }}
+                style={{ width: 22, height: 22, background: color, outline: "1.5px solid rgba(0,0,0,0.15)" }}
               />
             </button>
             <span className="text-[9px] font-semibold uppercase tracking-widest text-gray-400 select-none leading-none">Fill</span>
@@ -80,7 +80,7 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
             >
               <span
                 className="block rounded-full flex-shrink-0"
-                style={{ width: 22, height: 22, background: strokeColor, boxShadow: "0 0 0 1.5px rgba(0,0,0,0.15), 0 0 0 3px #fff, 0 0 0 4.5px rgba(0,0,0,0.12)" }}
+                style={{ width: 22, height: 22, background: strokeColor, outline: "1.5px solid rgba(0,0,0,0.15)" }}
               />
             </button>
             <span className="text-[9px] font-semibold uppercase tracking-widest text-gray-400 select-none leading-none">Stroke</span>
@@ -95,7 +95,7 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
         >
           <span
             className="block rounded-full flex-shrink-0"
-            style={{ width: 22, height: 22, background: color, boxShadow: "0 0 0 1.5px rgba(0,0,0,0.15), 0 0 0 3px #fff, 0 0 0 4.5px rgba(0,0,0,0.12)" }}
+            style={{ width: 22, height: 22, background: color, outline: "1.5px solid rgba(0,0,0,0.15)" }}
           />
         </button>
       )}
@@ -140,7 +140,7 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
 
         {weightOpen && (
           <div
-            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-4 py-3 rounded-xl shadow-2xl popover-enter"
+            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-4 py-3 rounded-xl popover-enter"
             style={{
               background: "rgba(255,255,255,0.97)",
               backdropFilter: "blur(14px)",
@@ -184,7 +184,7 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
 
         {opacityOpen && (
           <div
-            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-4 py-3 rounded-xl shadow-2xl popover-enter"
+            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-4 py-3 rounded-xl popover-enter"
             style={{
               background: "rgba(255,255,255,0.97)",
               backdropFilter: "blur(14px)",
