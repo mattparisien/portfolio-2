@@ -56,6 +56,7 @@ interface UseCanvasActionsOptions {
   tool: Tool;
   color: string;
   brushSize: number;
+  simplify?: number;
   saveObject: (obj: SaveableObj) => void;
   startGifLoop: () => void;
   stopGifLoop: () => void;
@@ -75,6 +76,7 @@ export function useCanvasActions({
   tool,
   color,
   brushSize,
+  simplify = 0,
   saveObject,
   startGifLoop,
   stopGifLoop,
@@ -96,6 +98,9 @@ export function useCanvasActions({
       fc.selection = false;
       const b = new mods.PencilBrush(fc);
       b.color = color;
+      // Apply simplification (Ramer-Douglas-Peucker tolerance in px).
+      // Fabric's PencilBrush runs this after the stroke is completed.
+      (b as unknown as Record<string, unknown>).decimate = simplify;
       if (tool === "brush") {
         // Soft round brush: wider
         b.width = brushSize * 3;
@@ -126,7 +131,7 @@ export function useCanvasActions({
       tool === "eraser"                     ? "cell"      :
       "default";
     fc.requestRenderAll();
-  }, [tool, color, brushSize, fabricRef, modsRef]);
+  }, [tool, color, brushSize, simplify, fabricRef, modsRef]);
 
   // ── Add text ───────────────────────────────────────────────────────────
   const addText = useCallback(() => {
@@ -487,5 +492,89 @@ export function useCanvasActions({
     fc.requestRenderAll();
   }, [fabricRef, saveObject]);
 
-  return { addText, addShape, addGif, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, clearCanvas, applyTextProp };
+  // ── Simplify selected path (Ramer-Douglas-Peucker, curve-preserving) ──
+  const simplifySelected = useCallback((level: number) => {
+    const fc = fabricRef.current;
+    if (!fc) return;
+    const obj = fc.getActiveObject() as unknown as Record<string, unknown>;
+    if (!obj || (obj as { type?: string }).type !== "path") return;
+
+    type PathCmd = [string, ...number[]];
+    type ObjWithPath = { set: (p: Record<string, unknown>) => void; setCoords: () => void };
+
+    // Snapshot original path the first time so we can re-run at any level.
+    if (!obj._origPath) {
+      obj._origPath = JSON.parse(JSON.stringify((obj as { path: PathCmd[] }).path));
+    }
+    const origCmds = obj._origPath as PathCmd[];
+
+    const applyPath = (cmds: PathCmd[]) => {
+      (obj as unknown as ObjWithPath).set({ path: cmds });
+      (obj as unknown as ObjWithPath).setCoords();
+      fc.requestRenderAll();
+      saveObject(obj as unknown as SaveableObj);
+    };
+
+    if (level === 0) { applyPath(origCmds); return; }
+
+    // ── Build anchor list, remembering which origCmd produced each anchor ──
+    // Anchors are the *endpoints* of each drawing command (M / L / Q / C).
+    // We skip Z (close-path) and re-append it at the end if present.
+    const anchors: [number, number][] = [];
+    const anchorCmdIdx: number[] = [];          // origCmds index for anchor[i]
+    const hasClosingZ = origCmds.at(-1)?.[0] === "Z";
+
+    for (let i = 0; i < origCmds.length; i++) {
+      const c = origCmds[i];
+      if      (c[0] === "M") { anchors.push([c[1], c[2]]); anchorCmdIdx.push(i); }
+      else if (c[0] === "L") { anchors.push([c[1], c[2]]); anchorCmdIdx.push(i); }
+      else if (c[0] === "Q") { anchors.push([c[3], c[4]]); anchorCmdIdx.push(i); }
+      else if (c[0] === "C") { anchors.push([c[5], c[6]]); anchorCmdIdx.push(i); }
+    }
+    if (anchors.length < 2) return;
+
+    // ── Ramer-Douglas-Peucker on anchor indices ──────────────────────────
+    const eps = level * 2; // slider 1-20 → 2-40 canvas-px tolerance
+
+    const perpDist = (p: [number, number], a: [number, number], b: [number, number]): number => {
+      const dx = b[0] - a[0], dy = b[1] - a[1];
+      if (dx === 0 && dy === 0) return Math.hypot(p[0] - a[0], p[1] - a[1]);
+      const t = ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / (dx * dx + dy * dy);
+      return Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
+    };
+
+    const keepSet = new Set<number>([0, anchors.length - 1]);
+    const rdp = (lo: number, hi: number) => {
+      if (hi - lo <= 1) return;
+      let max = 0, split = lo;
+      for (let i = lo + 1; i < hi; i++) {
+        const d = perpDist(anchors[i], anchors[lo], anchors[hi]);
+        if (d > max) { max = d; split = i; }
+      }
+      if (max > eps) { keepSet.add(split); rdp(lo, split); rdp(split, hi); }
+    };
+    rdp(0, anchors.length - 1);
+
+    const kept = [...keepSet].sort((a, b) => a - b);
+
+    // ── Rebuild path, preserving curves when the span is a single segment ─
+    //   Single segment (to = from + 1): copy the original command verbatim
+    //     → keeps Q/C control points intact
+    //   Multi-segment span (to > from + 1): collapsed into a straight L
+    const newPath: PathCmd[] = [[...origCmds[anchorCmdIdx[0]]] as PathCmd]; // M
+    for (let k = 1; k < kept.length; k++) {
+      const from = kept[k - 1];
+      const to   = kept[k];
+      if (to - from === 1) {
+        newPath.push([...origCmds[anchorCmdIdx[to]]] as PathCmd); // preserve curve
+      } else {
+        newPath.push(["L", anchors[to][0], anchors[to][1]]);      // merge → straight
+      }
+    }
+    if (hasClosingZ) newPath.push(["Z"]);
+
+    applyPath(newPath);
+  }, [fabricRef, saveObject]);
+
+  return { addText, addShape, addGif, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, simplifySelected, zoomIn, zoomOut, clearCanvas, applyTextProp };
 }

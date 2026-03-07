@@ -16,16 +16,21 @@ interface ToolbarProps {
   onStrokeColorChange?: (c: string) => void;
   /** Optional canvas ref — enables "used in document" colors inside ColorPopover */
   fabricRef?: React.MutableRefObject<Canvas | null>;
+  /** Simplify slider — only shown for pencil/brush tool */
+  simplify?: number;
+  onSimplifyChange?: (v: number) => void;
+  showSimplify?: boolean;
   closeSignal?: number;
   onPopoverOpened?: () => void;
 }
 
-export default function Toolbar({ color, opacity, strokeWeight, onColorChange, onOpacityChange, onStrokeWeightChange, strokeColor, onStrokeColorChange, fabricRef, closeSignal, onPopoverOpened }: ToolbarProps) {
+export default function Toolbar({ color, opacity, strokeWeight, onColorChange, onOpacityChange, onStrokeWeightChange, strokeColor, onStrokeColorChange, fabricRef, simplify = 0, onSimplifyChange, showSimplify, closeSignal, onPopoverOpened }: ToolbarProps) {
   const showDual = strokeColor !== undefined && onStrokeColorChange !== undefined;
-  const [openPanel, setOpenPanel] = useState<"opacity" | "weight" | null>(null);
+  const [openPanel, setOpenPanel] = useState<"opacity" | "weight" | "simplify" | null>(null);
   const [openColor, setOpenColor] = useState<"fill" | "stroke" | null>(null);
-  const opacityOpen = openPanel === "opacity";
-  const weightOpen  = openPanel === "weight";
+  const opacityOpen  = openPanel === "opacity";
+  const weightOpen   = openPanel === "weight";
+  const simplifyOpen = openPanel === "simplify";
 
   // Close all when a sibling component opens a popover
   useEffect(() => {
@@ -202,6 +207,59 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
           </div>
         )}
       </div>
+
+      {/* Simplify button + popover — pencil / brush only */}
+      {showSimplify && (
+        <div className="relative">
+          <button
+            onClick={() => { setOpenPanel((v) => { const next = v === "simplify" ? null : "simplify"; if (next) onPopoverOpened?.(); return next; }); }}
+            className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-colors hover:bg-black/[0.07]"
+            style={{ background: simplifyOpen ? "rgba(0,0,0,0.08)" : simplify > 0 ? "rgba(0,0,0,0.06)" : "transparent" }}
+            title="Simplify path"
+          >
+            {/* Node/anchor icon */}
+            <svg viewBox="0 0 20 20" width="18" height="18" fill="none">
+              <path d="M3 15 Q7 4 10 10 Q13 16 17 5" stroke="#555" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+              <circle cx="3"  cy="15" r="1.8" fill={simplify > 0 ? "#000" : "#555"} />
+              <circle cx="10" cy="10" r="1.8" fill={simplify > 0 ? "#000" : "#555"} />
+              <circle cx="17" cy="5"  r="1.8" fill={simplify > 0 ? "#000" : "#555"} />
+            </svg>
+          </button>
+
+          {simplifyOpen && (
+            <div
+              className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-4 py-3 rounded-xl shadow-2xl"
+              style={{
+                background: "rgba(255,255,255,0.97)",
+                backdropFilter: "blur(14px)",
+                width: 168,
+                border: "1px solid rgba(0,0,0,0.07)",
+              }}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[9px] font-semibold uppercase tracking-widest text-gray-400 select-none">
+                  Simplify
+                </span>
+                <span className="text-xs font-semibold text-gray-600 tabular-nums">
+                  {simplify === 0 ? "Off" : simplify}
+                </span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={20}
+                step={1}
+                value={simplify}
+                onChange={(e) => onSimplifyChange?.(Number(e.target.value))}
+                className="w-full accent-black cursor-pointer"
+              />
+              <p className="text-[9px] text-gray-400 mt-2 select-none leading-tight">
+                Reduces anchor points on new strokes. Higher = fewer points.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

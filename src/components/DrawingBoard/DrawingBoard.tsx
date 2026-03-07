@@ -91,6 +91,7 @@ function DrawingBoardInner() {
   const [selectedIsLocked, setSelectedIsLocked] = useState(false);
   const [shapeStrokeColor, setShapeStrokeColor] = useState("#000000");
   const [opacity, setOpacity]               = useState(1);
+  const [simplify, setSimplify]             = useState(0);
   const [textProps, setTextProps]         = useState<TextProps>(DEFAULT_TEXT_PROPS);
 
   // Whenever any component opens a popover, we increment the other two signals
@@ -160,7 +161,7 @@ function DrawingBoardInner() {
     broadcast: broadcastEvent,
   });
 
-  const { addText, addShape, addGif, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, applyTextProp } =
+  const { addText, addShape, addGif, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, simplifySelected, zoomIn, zoomOut, applyTextProp } =
     useCanvasActions({
       fabricRef,
       modsRef,
@@ -169,6 +170,7 @@ function DrawingBoardInner() {
       tool,
       color,
       brushSize,
+      simplify,
       saveObject,
       startGifLoop,
       stopGifLoop,
@@ -179,6 +181,10 @@ function DrawingBoardInner() {
       setTextProps,
       broadcast: broadcastEvent,
     });
+
+  // Reset simplify slider when a path is newly selected/deselected
+  // so each selection starts fresh at 0.
+  useEffect(() => { setSimplify(0); }, [selectedIsPath]);
 
   // ── Apply remote canvas events from other users ───────────────────────
   useEventListener(({ event }) => {
@@ -291,6 +297,12 @@ function DrawingBoardInner() {
           opacity={opacity}
           strokeWeight={brushSize}
           fabricRef={fabricRef}
+          simplify={simplify}
+          onSimplifyChange={(v) => {
+            setSimplify(v);
+            if (selectedIsPath) simplifySelected(v);
+          }}
+          showSimplify={tool === "pencil" || tool === "brush" || selectedIsPath}
           onColorChange={(c) => { setColor(c); if (hasSelection) recolorSelected(c); }}
           onOpacityChange={(v) => { setOpacity(v); if (hasSelection) reOpacitySelected(v); }}
           onStrokeWeightChange={(v) => { setBrushSize(v); if (hasSelection) reweightSelected(v); }}
