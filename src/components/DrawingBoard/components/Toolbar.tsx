@@ -16,21 +16,16 @@ interface ToolbarProps {
   onStrokeColorChange?: (c: string) => void;
   /** Optional canvas ref — enables "used in document" colors inside ColorPopover */
   fabricRef?: React.MutableRefObject<Canvas | null>;
-  /** Simplify slider — only shown for pencil/brush tool */
-  simplify?: number;
-  onSimplifyChange?: (v: number) => void;
-  showSimplify?: boolean;
   closeSignal?: number;
   onPopoverOpened?: () => void;
 }
 
-export default function Toolbar({ color, opacity, strokeWeight, onColorChange, onOpacityChange, onStrokeWeightChange, strokeColor, onStrokeColorChange, fabricRef, simplify = 0, onSimplifyChange, showSimplify, closeSignal, onPopoverOpened }: ToolbarProps) {
+export default function Toolbar({ color, opacity, strokeWeight, onColorChange, onOpacityChange, onStrokeWeightChange, strokeColor, onStrokeColorChange, fabricRef, closeSignal, onPopoverOpened }: ToolbarProps) {
   const showDual = strokeColor !== undefined && onStrokeColorChange !== undefined;
-  const [openPanel, setOpenPanel] = useState<"opacity" | "weight" | "simplify" | null>(null);
+  const [openPanel, setOpenPanel] = useState<"opacity" | "weight" | null>(null);
   const [openColor, setOpenColor] = useState<"fill" | "stroke" | null>(null);
-  const opacityOpen  = openPanel === "opacity";
-  const weightOpen   = openPanel === "weight";
-  const simplifyOpen = openPanel === "simplify";
+  const opacityOpen = openPanel === "opacity";
+  const weightOpen  = openPanel === "weight";
 
   // Close all when a sibling component opens a popover
   useEffect(() => {
@@ -52,8 +47,12 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
 
   return (
     <div
-      className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-2.5 rounded-2xl shadow-xl z-[200]"
-      style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(14px)" }}
+      className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-2.5 rounded-2xl z-[200]"
+      style={{
+        background: "rgba(255,255,255,0.92)",
+        backdropFilter: "blur(14px)",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.06)",
+      }}
     >
       {/* Color swatch button(s) — open ColorPopover */}
       {showDual ? (
@@ -61,8 +60,8 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
           <div className="flex flex-col items-center gap-0.5">
             <button
               title="Fill colour"
-              onClick={(e) => { e.stopPropagation(); openColor === "fill" ? setOpenColor(null) : openFill(); }}
-              className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors hover:bg-black/[0.07]"
+              onClick={(e) => { e.stopPropagation(); if (openColor === "fill") setOpenColor(null); else openFill(); }}
+              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors hover:bg-black/[0.07]"
               style={{ background: openColor === "fill" ? "rgba(0,0,0,0.08)" : "transparent" }}
             >
               <span
@@ -70,13 +69,13 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
                 style={{ width: 22, height: 22, background: color, boxShadow: "0 0 0 1.5px rgba(0,0,0,0.15), 0 0 0 3px #fff, 0 0 0 4.5px rgba(0,0,0,0.12)" }}
               />
             </button>
-            <span className="text-[8px] font-semibold uppercase tracking-widest text-gray-400 select-none leading-none">Fill</span>
+            <span className="text-[9px] font-semibold uppercase tracking-widest text-gray-400 select-none leading-none">Fill</span>
           </div>
           <div className="flex flex-col items-center gap-0.5">
             <button
               title="Stroke colour"
-              onClick={(e) => { e.stopPropagation(); openColor === "stroke" ? setOpenColor(null) : openStroke(); }}
-              className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors hover:bg-black/[0.07]"
+              onClick={(e) => { e.stopPropagation(); if (openColor === "stroke") setOpenColor(null); else openStroke(); }}
+              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors hover:bg-black/[0.07]"
               style={{ background: openColor === "stroke" ? "rgba(0,0,0,0.08)" : "transparent" }}
             >
               <span
@@ -84,14 +83,14 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
                 style={{ width: 22, height: 22, background: strokeColor, boxShadow: "0 0 0 1.5px rgba(0,0,0,0.15), 0 0 0 3px #fff, 0 0 0 4.5px rgba(0,0,0,0.12)" }}
               />
             </button>
-            <span className="text-[8px] font-semibold uppercase tracking-widest text-gray-400 select-none leading-none">Stroke</span>
+            <span className="text-[9px] font-semibold uppercase tracking-widest text-gray-400 select-none leading-none">Stroke</span>
           </div>
         </>
       ) : (
         <button
           title="Colour"
-          onClick={(e) => { e.stopPropagation(); openColor === "fill" ? setOpenColor(null) : openFill(); }}
-          className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors hover:bg-black/[0.07]"
+          onClick={(e) => { e.stopPropagation(); if (openColor === "fill") setOpenColor(null); else openFill(); }}
+          className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors hover:bg-black/[0.07]"
           style={{ background: openColor === "fill" ? "rgba(0,0,0,0.08)" : "transparent" }}
         >
           <span
@@ -101,13 +100,14 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
         </button>
       )}
 
-      {/* ColorPopover portal instances */}
+      {/* ColorPopover portal instances — positioned above the bottom toolbar */}
       {openColor === "fill" && (
         <ColorPopover
           color={color}
           fabricRef={fabricRef}
           onColorChange={onColorChange}
           onClose={() => setOpenColor(null)}
+          anchorStyle={{ top: "auto", bottom: 88, left: "calc(50vw - 128px)" }}
         />
       )}
       {openColor === "stroke" && showDual && (
@@ -116,14 +116,18 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
           fabricRef={fabricRef}
           onColorChange={onStrokeColorChange!}
           onClose={() => setOpenColor(null)}
+          anchorStyle={{ top: "auto", bottom: 88, left: "calc(50vw - 128px)" }}
         />
       )}
+
+      {/* Thin separator */}
+      <div className="w-px h-5 bg-black/[0.10] mx-0.5 flex-shrink-0" />
 
       {/* Stroke weight button + popover */}
       <div className="relative">
         <button
           onClick={() => { setOpenPanel((v) => { const next = v === "weight" ? null : "weight"; if (next) onPopoverOpened?.(); return next; }); }}
-          className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-colors hover:bg-black/[0.07]"
+          className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer transition-colors hover:bg-black/[0.07]"
           style={{ background: weightOpen ? "rgba(0,0,0,0.08)" : "transparent" }}
           title="Stroke weight"
         >
@@ -136,16 +140,16 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
 
         {weightOpen && (
           <div
-            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-4 py-3 rounded-xl shadow-2xl"
+            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-4 py-3 rounded-xl shadow-2xl popover-enter"
             style={{
               background: "rgba(255,255,255,0.97)",
               backdropFilter: "blur(14px)",
-              width: 168,
+              width: 180,
               border: "1px solid rgba(0,0,0,0.07)",
             }}
           >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[9px] font-semibold uppercase tracking-widest text-gray-400 select-none">
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 select-none">
                 Weight
               </span>
               <span className="text-xs font-semibold text-gray-600 tabular-nums">
@@ -168,7 +172,7 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
       <div className="relative">
         <button
           onClick={() => { setOpenPanel((v) => { const next = v === "opacity" ? null : "opacity"; if (next) onPopoverOpened?.(); return next; }); }}
-          className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-colors hover:bg-black/[0.07]"
+          className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer transition-colors hover:bg-black/[0.07]"
           style={{ background: opacityOpen ? "rgba(0,0,0,0.08)" : "transparent" }}
           title="Transparency"
         >
@@ -180,16 +184,16 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
 
         {opacityOpen && (
           <div
-            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-4 py-3 rounded-xl shadow-2xl"
+            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-4 py-3 rounded-xl shadow-2xl popover-enter"
             style={{
               background: "rgba(255,255,255,0.97)",
               backdropFilter: "blur(14px)",
-              width: 168,
+              width: 180,
               border: "1px solid rgba(0,0,0,0.07)",
             }}
           >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[9px] font-semibold uppercase tracking-widest text-gray-400 select-none">
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 select-none">
                 Opacity
               </span>
               <span className="text-xs font-semibold text-gray-600 tabular-nums">
@@ -207,59 +211,6 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
           </div>
         )}
       </div>
-
-      {/* Simplify button + popover — pencil / brush only */}
-      {showSimplify && (
-        <div className="relative">
-          <button
-            onClick={() => { setOpenPanel((v) => { const next = v === "simplify" ? null : "simplify"; if (next) onPopoverOpened?.(); return next; }); }}
-            className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-colors hover:bg-black/[0.07]"
-            style={{ background: simplifyOpen ? "rgba(0,0,0,0.08)" : simplify > 0 ? "rgba(0,0,0,0.06)" : "transparent" }}
-            title="Simplify path"
-          >
-            {/* Node/anchor icon */}
-            <svg viewBox="0 0 20 20" width="18" height="18" fill="none">
-              <path d="M3 15 Q7 4 10 10 Q13 16 17 5" stroke="#555" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-              <circle cx="3"  cy="15" r="1.8" fill={simplify > 0 ? "#000" : "#555"} />
-              <circle cx="10" cy="10" r="1.8" fill={simplify > 0 ? "#000" : "#555"} />
-              <circle cx="17" cy="5"  r="1.8" fill={simplify > 0 ? "#000" : "#555"} />
-            </svg>
-          </button>
-
-          {simplifyOpen && (
-            <div
-              className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-4 py-3 rounded-xl shadow-2xl"
-              style={{
-                background: "rgba(255,255,255,0.97)",
-                backdropFilter: "blur(14px)",
-                width: 168,
-                border: "1px solid rgba(0,0,0,0.07)",
-              }}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[9px] font-semibold uppercase tracking-widest text-gray-400 select-none">
-                  Simplify
-                </span>
-                <span className="text-xs font-semibold text-gray-600 tabular-nums">
-                  {simplify === 0 ? "Off" : simplify}
-                </span>
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={20}
-                step={1}
-                value={simplify}
-                onChange={(e) => onSimplifyChange?.(Number(e.target.value))}
-                className="w-full accent-black cursor-pointer"
-              />
-              <p className="text-[9px] text-gray-400 mt-2 select-none leading-tight">
-                Reduces anchor points on new strokes. Higher = fewer points.
-              </p>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }

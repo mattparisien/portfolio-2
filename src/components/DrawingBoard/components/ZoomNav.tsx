@@ -8,23 +8,30 @@ interface ZoomNavProps {
 
 export default function ZoomNav({ zoom, onZoomIn, onZoomOut }: ZoomNavProps) {
   return (
-    <div className="absolute bottom-6 right-6 flex items-center gap-1 z-[200]">
+    <div
+      className="absolute bottom-6 right-6 flex items-center gap-0.5 px-1.5 py-1.5 rounded-xl z-[200]"
+      style={{
+        background: "rgba(255,255,255,0.92)",
+        backdropFilter: "blur(14px)",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.06)",
+      }}
+    >
       <button
         onClick={onZoomOut}
         title="Zoom out"
         disabled={zoom <= 0.25}
-        className="w-7 h-7 flex items-center justify-center text-base font-bold text-gray-500 hover:text-black transition-colors disabled:opacity-30 cursor-pointer"
+        className="w-7 h-7 flex items-center justify-center rounded-lg text-base font-semibold text-gray-500 hover:text-black hover:bg-black/[0.06] transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer select-none"
       >
         −
       </button>
-      <span className="text-xs text-gray-500 w-10 text-center tabular-nums select-none">
+      <span className="text-[11px] font-semibold text-gray-500 w-11 text-center tabular-nums select-none leading-none">
         {Math.round(zoom * 100)}%
       </span>
       <button
         onClick={onZoomIn}
         title="Zoom in"
         disabled={zoom >= 4}
-        className="w-7 h-7 flex items-center justify-center text-base font-bold text-gray-500 hover:text-black transition-colors disabled:opacity-30 cursor-pointer"
+        className="w-7 h-7 flex items-center justify-center rounded-lg text-base font-semibold text-gray-500 hover:text-black hover:bg-black/[0.06] transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer select-none"
       >
         +
       </button>

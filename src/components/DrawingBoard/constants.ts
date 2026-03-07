@@ -15,7 +15,7 @@ export const COLORS = [
 
 export const BRUSH_SIZES = [2, 5, 10, 20, 40] as const;
 
-export const BG_COLOR = "#f5f0e8";
+export const BG_COLOR = "#ffffff";
 
 // ── Presence / multiplayer ────────────────────────────────────────────────
 
@@ -26,7 +26,7 @@ export const CURSOR_COLORS= [
 export const CURSOR_ADJECTIVES = [
   "Sickening", "Gagged", "Snatched", "Fierce", "Serving",
   "Campy", "Shady", "Iconic", "Lewky", "Extra",
-  "Delusional", "Unclocked", "Opulent", "Messy", "Legendary", "Questioning", "Anal", ""
+  "Delusional", "Unclocked", "Opulent", "Messy", "Legendary", "Questioning", "Anal"
 ] as const;
 
 export const CURSOR_ANIMALS = [

@@ -78,21 +78,20 @@ function DrawingBoardInner() {
   const canvasElRef = useRef<HTMLCanvasElement>(null);
   const fabricRef   = useRef<Canvas | null>(null);
 
-  const [tool, setTool]                   = useState<Tool>("select");
-  const [color, setColor]                 = useState("#000000");
-  const [brushSize, setBrushSize]         = useState(5);
-  const [isSyncing, setIsSyncing]         = useState(false);
-  const [zoom, setZoom]                   = useState(1);
-  const [vpt, setVpt]                     = useState<number[]>([1, 0, 0, 1, 0, 0]);
-  const [hasSelection, setHasSelection]   = useState(false);
-  const [selectedIsText, setSelectedIsText] = useState(false);
-  const [selectedIsGif, setSelectedIsGif]   = useState(false);
-  const [selectedIsPath, setSelectedIsPath] = useState(false);
+  const [tool, setTool]                         = useState<Tool>("select");
+  const [color, setColor]                       = useState("#000000");
+  const [brushSize, setBrushSize]               = useState(5);
+  const [isSyncing, setIsSyncing]               = useState(false);
+  const [zoom, setZoom]                         = useState(1);
+  const [vpt, setVpt]                           = useState<number[]>([1, 0, 0, 1, 0, 0]);
+  const [hasSelection, setHasSelection]         = useState(false);
+  const [selectedIsText, setSelectedIsText]     = useState(false);
+  const [selectedIsGif, setSelectedIsGif]       = useState(false);
+  const [selectedIsPath, setSelectedIsPath]     = useState(false);
   const [selectedIsLocked, setSelectedIsLocked] = useState(false);
   const [shapeStrokeColor, setShapeStrokeColor] = useState("#000000");
-  const [opacity, setOpacity]               = useState(1);
-  const [simplify, setSimplify]             = useState(0);
-  const [textProps, setTextProps]         = useState<TextProps>(DEFAULT_TEXT_PROPS);
+  const [opacity, setOpacity]                   = useState(1);
+  const [textProps, setTextProps]               = useState<TextProps>(DEFAULT_TEXT_PROPS);
 
   // Whenever any component opens a popover, we increment the other two signals
   // so they close themselves — guaranteeing only one popover is ever visible.
@@ -161,7 +160,7 @@ function DrawingBoardInner() {
     broadcast: broadcastEvent,
   });
 
-  const { addText, addShape, addGif, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, simplifySelected, zoomIn, zoomOut, applyTextProp } =
+  const { addText, addShape, addGif, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, applyTextProp } =
     useCanvasActions({
       fabricRef,
       modsRef,
@@ -170,7 +169,6 @@ function DrawingBoardInner() {
       tool,
       color,
       brushSize,
-      simplify,
       saveObject,
       startGifLoop,
       stopGifLoop,
@@ -182,11 +180,7 @@ function DrawingBoardInner() {
       broadcast: broadcastEvent,
     });
 
-  // Reset simplify slider when a path is newly selected/deselected
-  // so each selection starts fresh at 0.
-  useEffect(() => { setSimplify(0); }, [selectedIsPath]);
-
-  // ── Apply remote canvas events from other users ───────────────────────
+  // ── Apply remote canvas events from other users ───────────────────
   useEventListener(({ event }) => {
     const fc   = fabricRef.current;
     const mods = modsRef.current;
@@ -297,12 +291,6 @@ function DrawingBoardInner() {
           opacity={opacity}
           strokeWeight={brushSize}
           fabricRef={fabricRef}
-          simplify={simplify}
-          onSimplifyChange={(v) => {
-            setSimplify(v);
-            if (selectedIsPath) simplifySelected(v);
-          }}
-          showSimplify={tool === "pencil" || tool === "brush" || selectedIsPath}
           onColorChange={(c) => { setColor(c); if (hasSelection) recolorSelected(c); }}
           onOpacityChange={(v) => { setOpacity(v); if (hasSelection) reOpacitySelected(v); }}
           onStrokeWeightChange={(v) => { setBrushSize(v); if (hasSelection) reweightSelected(v); }}

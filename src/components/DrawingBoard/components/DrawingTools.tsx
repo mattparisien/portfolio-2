@@ -156,13 +156,11 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
     <button
       title={title}
       onClick={onClick}
-      className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
-      style={{
-        background: active ? "#000" : "transparent",
-        color: active ? "#fff" : "#111",
-      }}
-      onMouseEnter={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.07)"; }}
-      onMouseLeave={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+      className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+        active
+          ? "bg-black text-white"
+          : "text-[#111] hover:bg-black/[0.07] hover:scale-105"
+      }`}
     >
       {icon}
     </button>
@@ -170,8 +168,12 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
 
   return (
     <div
-      className="absolute top-5 left-5 flex flex-col gap-1 p-2 rounded-2xl shadow-xl z-[200]"
-      style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(12px)" }}
+      className="absolute top-5 left-5 flex flex-col gap-1 p-2 rounded-2xl z-[200]"
+      style={{
+        background: "rgba(255,255,255,0.92)",
+        backdropFilter: "blur(12px)",
+        boxShadow: "0 2px 16px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.06)",
+      }}
     >
       {/* Text */}
       {toolBtn(
@@ -179,10 +181,12 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
         () => onAddText(),
         "Text",
         <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-          <path d="M4 6h16v2H4zM4 12h10v2H4zM4 18h7v2H4z" opacity="0" />
           <path d="M5 4v3h5.5v12h3V7H19V4z" />
         </svg>,
       )}
+
+      {/* Separator */}
+      <div className="h-px bg-black/[0.07] -mx-1 my-0.5" />
 
       {/* Draw popover: pencil, brush, select */}
       <div
@@ -218,7 +222,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
         {drawOpen && (
           <div
             ref={drawPopoverRef}
-            className="absolute top-0 left-[calc(100%+10px)] flex gap-2 p-3 rounded-2xl shadow-xl"
+            className="absolute top-0 left-[calc(100%+12px)] flex gap-2 p-3 rounded-2xl shadow-xl popover-enter-right"
             style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)" }}
           >
             {/* Close button */}
@@ -233,66 +237,65 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
             <button
               title="Pencil"
               onClick={() => { onToolChange("pencil"); setDrawPinned(true); }}
-              className="flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px] cursor-pointer"
-              style={{ background: tool === "pencil" ? "#000" : "transparent", color: tool === "pencil" ? "#fff" : "#111" }}
-              onMouseEnter={e => { if (tool !== "pencil") (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.07)"; }}
-              onMouseLeave={e => { if (tool !== "pencil") (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+              className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px] cursor-pointer ${
+                tool === "pencil" ? "bg-black text-white" : "text-[#111] hover:bg-black/[0.07]"
+              }`}
             >
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
                 <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm2.92 1.5H5v-.92l9.06-9.06.92.92-9.06 9.06zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
               </svg>
-              <span className="text-[10px] text-gray-500 leading-none" style={{ color: tool === "pencil" ? "#fff" : undefined }}>Pencil</span>
+              <span className={`text-[10px] leading-none ${tool === "pencil" ? "text-white/70" : "text-gray-400"}`}>Pencil</span>
             </button>
 
             {/* Brush */}
             <button
               title="Brush"
               onClick={() => { onToolChange("brush"); setDrawPinned(true); }}
-              className="flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px] cursor-pointer"
-              style={{ background: tool === "brush" ? "#000" : "transparent", color: tool === "brush" ? "#fff" : "#111" }}
-              onMouseEnter={e => { if (tool !== "brush") (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.07)"; }}
-              onMouseLeave={e => { if (tool !== "brush") (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+              className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px] cursor-pointer ${
+                tool === "brush" ? "bg-black text-white" : "text-[#111] hover:bg-black/[0.07]"
+              }`}
             >
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
                 <path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34a1 1 0 0 0-1.41 0L9 12.25 11.75 15l8.96-8.96a1 1 0 0 0 0-1.41z"/>
               </svg>
-              <span className="text-[10px] text-gray-500 leading-none" style={{ color: tool === "brush" ? "#fff" : undefined }}>Brush</span>
+              <span className={`text-[10px] leading-none ${tool === "brush" ? "text-white/70" : "text-gray-400"}`}>Brush</span>
             </button>
 
             {/* Select */}
             <button
               title="Select"
               onClick={() => { onToolChange("select"); setDrawPinned(true); }}
-              className="flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px] cursor-pointer"
-              style={{ background: tool === "select" ? "#000" : "transparent", color: tool === "select" ? "#fff" : "#111" }}
-              onMouseEnter={e => { if (tool !== "select") (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.07)"; }}
-              onMouseLeave={e => { if (tool !== "select") (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+              className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px] cursor-pointer ${
+                tool === "select" ? "bg-black text-white" : "text-[#111] hover:bg-black/[0.07]"
+              }`}
             >
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
                 <path d="M4 2 L4 18 L8.5 13.5 L11.5 20 L13.5 19 L10.5 12.5 L16 12.5 Z" />
               </svg>
-              <span className="text-[10px] text-gray-500 leading-none" style={{ color: tool === "select" ? "#fff" : undefined }}>Select</span>
+              <span className={`text-[10px] leading-none ${tool === "select" ? "text-white/70" : "text-gray-400"}`}>Select</span>
             </button>
 
             {/* Eraser */}
             <button
               title="Eraser"
               onClick={() => { onToolChange("eraser"); setDrawPinned(true); }}
-              className="flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px] cursor-pointer"
-              style={{ background: tool === "eraser" ? "#000" : "transparent", color: tool === "eraser" ? "#fff" : "#111" }}
-              onMouseEnter={e => { if (tool !== "eraser") (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.07)"; }}
-              onMouseLeave={e => { if (tool !== "eraser") (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+              className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px] cursor-pointer ${
+                tool === "eraser" ? "bg-black text-white" : "text-[#111] hover:bg-black/[0.07]"
+              }`}
             >
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
                 <path d="M20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-9.5 9.5a1 1 0 0 0-.29.71V17a1 1 0 0 0 1 1h4a1 1 0 0 0 .71-.29l7.83-7.83zM10.88 16H9v-1.88l5.5-5.5 1.88 1.88L10.88 16z" />
                 <path d="M3 21h18v-2H3z" />
               </svg>
-              <span className="text-[10px] text-gray-500 leading-none" style={{ color: tool === "eraser" ? "#fff" : undefined }}>Eraser</span>
+              <span className={`text-[10px] leading-none ${tool === "eraser" ? "text-white/70" : "text-gray-400"}`}>Eraser</span>
             </button>
 
           </div>
         )}
       </div>
+
+      {/* Separator */}
+      <div className="h-px bg-black/[0.07] -mx-1 my-0.5" />
 
       {/* Shapes */}
       <div
@@ -308,11 +311,11 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
             setShapePinned(nowPinned);
             if (nowPinned) { setGifPinned(false); setGifHover(false); setDrawPinned(false); setDrawHover(false); onToolChange("shape"); onPopoverOpened?.(); }
           }}
-          className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
-          style={{
-            background: shapePinned ? "#000" : shapeHover ? "rgba(0,0,0,0.07)" : "transparent",
-            color: shapePinned ? "#fff" : "#111",
-          }}
+          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+            shapePinned
+              ? "bg-black text-white"
+              : shapeHover ? "bg-black/[0.07] text-[#111]" : "text-[#111] hover:bg-black/[0.07] hover:scale-105"
+          }`}
         >
           <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
             <rect x="2" y="13" width="9" height="9" rx="1.5" />
@@ -324,7 +327,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
         {shapeOpen && (
           <div
             ref={popoverRef}
-            className="absolute top-0 left-[calc(100%+10px)] flex gap-2 p-3 rounded-2xl shadow-xl"
+            className="absolute top-0 left-[calc(100%+12px)] flex gap-2 p-3 rounded-2xl shadow-xl popover-enter-right"
             style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)", minWidth: 220 }}
           >
             {SHAPES.map((s) => (
@@ -336,16 +339,18 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
                   setShapePinned(false);
                   setShapeHover(false);
                 }}
-                className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-gray-100 transition-colors flex-1 cursor-pointer"
-                style={{ color }}
+                className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-black/[0.07] transition-colors flex-1 cursor-pointer text-[#1a1a1a]"
               >
                 {s.icon}
-                <span className="text-[10px] text-gray-500 leading-none">{s.label}</span>
+                <span className="text-[10px] text-gray-400 leading-none">{s.label}</span>
               </button>
             ))}
           </div>
         )}
       </div>
+
+      {/* Separator */}
+      <div className="h-px bg-black/[0.07] -mx-1 my-0.5" />
 
       {/* GIF / Sticker picker */}
       <div
@@ -361,11 +366,11 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
             setGifPinned(nowPinned);
             if (nowPinned) { setShapePinned(false); setShapeHover(false); setDrawPinned(false); setDrawHover(false); onPopoverOpened?.(); }
           }}
-          className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
-          style={{
-            background: gifPinned ? "#000" : gifHover ? "rgba(0,0,0,0.07)" : "transparent",
-            color: gifPinned ? "#fff" : "#111",
-          }}
+          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+            gifPinned
+              ? "bg-black text-white"
+              : gifHover ? "bg-black/[0.07] text-[#111]" : "text-[#111] hover:bg-black/[0.07] hover:scale-105"
+          }`}
         >
           <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
             <rect x="2" y="6" width="20" height="12" rx="2" fill="none" stroke="currentColor" strokeWidth="1.8"/>
@@ -376,7 +381,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
         {gifOpen && (
           <div
             ref={gifPopoverRef}
-            className="absolute top-0 left-[calc(100%+10px)] p-3 rounded-2xl shadow-xl z-50"
+            className="absolute top-0 left-[calc(100%+12px)] p-3 rounded-2xl shadow-xl z-50 popover-enter-right"
             style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)", width: 420 }}
           >
             <GifPicker
