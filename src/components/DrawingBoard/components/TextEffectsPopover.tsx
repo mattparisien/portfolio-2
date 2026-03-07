@@ -201,7 +201,7 @@ const PRESETS: EffectPreset[] = [
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[9px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5 mt-2.5 first:mt-0 select-none">
+    <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5 mt-2.5 first:mt-0 select-none">
       {children}
     </p>
   );
@@ -321,7 +321,7 @@ export default function TextEffectsPopover({ effect, onApply, onClose }: TextEff
       {/* ✕ close */}
       <button
         onClick={onClose}
-        className="absolute -top-2.5 -right-2.5 w-5 h-5 rounded-full bg-white text-gray-400 flex items-center justify-center text-[10px] leading-none cursor-pointer hover:text-black transition-colors"
+        className="absolute -top-2.5 -right-2.5 w-5 h-5 rounded-full bg-white text-gray-400 flex items-center justify-center text-xs leading-none cursor-pointer hover:text-black transition-colors"
       >✕</button>
 
       {/* Preset grid — 2 columns */}
@@ -358,7 +358,7 @@ export default function TextEffectsPopover({ effect, onApply, onClose }: TextEff
                 A
               </span>
               <span
-                className="text-[9px] font-semibold select-none leading-none"
+                className="text-[11px] font-semibold select-none leading-none"
                 style={{ color: isActive ? "rgba(255,255,255,0.75)" : "#666" }}
               >
                 {p.label}
@@ -375,19 +375,19 @@ export default function TextEffectsPopover({ effect, onApply, onClose }: TextEff
 
           {/* Intensity */}
           <div className="flex items-center gap-2 mb-2.5">
-            <span className="text-[9px] text-gray-400 w-12 flex-shrink-0 select-none">Intensity</span>
+            <span className="text-[11px] text-gray-400 w-12 flex-shrink-0 select-none">Intensity</span>
             <input
               type="range" min={0} max={100} value={intensity}
               onChange={e => updateIntensity(Number(e.target.value))}
               className="flex-1 cursor-pointer h-1.5 accent-black"
             />
-            <span className="text-[9px] tabular-nums w-7 text-right text-gray-500 select-none">{intensity}</span>
+            <span className="text-[11px] tabular-nums w-7 text-right text-gray-500 select-none">{intensity}</span>
           </div>
 
           {/* Shadow / glow color */}
           {activePreset.hasShadow && (
             <>
-              <p className="text-[9px] text-gray-400 mb-1 select-none">
+              <p className="text-[11px] text-gray-400 mb-1 select-none">
                 {activePreset.id === "drop-shadow" || activePreset.id === "hard-shadow" ? "Shadow color" : "Glow color"}
               </p>
               <SwatchRow
@@ -401,7 +401,7 @@ export default function TextEffectsPopover({ effect, onApply, onClose }: TextEff
           {/* Stroke color */}
           {activePreset.hasStroke && (
             <>
-              <p className="text-[9px] text-gray-400 mb-1 mt-2 select-none">Stroke / outline color</p>
+              <p className="text-[11px] text-gray-400 mb-1 mt-2 select-none">Stroke / outline color</p>
               <SwatchRow
                 colors={STROKE_COLORS}
                 selected={strokeColor}
@@ -416,7 +416,7 @@ export default function TextEffectsPopover({ effect, onApply, onClose }: TextEff
       {(effect || activeId) && (
         <button
           onClick={() => { setActiveId(null); onApply(null); }}
-          className="text-[10px] text-gray-400 hover:text-red-400 cursor-pointer transition-colors underline select-none mt-2 block"
+          className="text-xs text-gray-400 hover:text-red-400 cursor-pointer transition-colors underline select-none mt-2 block"
         >
           Clear effect
         </button>

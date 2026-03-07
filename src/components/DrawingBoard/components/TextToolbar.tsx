@@ -222,7 +222,7 @@ export default function TextToolbar({ textProps, color, fabricRef, onColorChange
         <ToggleBtn active={underline} title="Underline" onClick={() => onApply({ underline: !underline })} style={{ textDecoration: "underline" }}>U</ToggleBtn>
         <ToggleBtn active={linethrough} title="Strikethrough" onClick={() => onApply({ linethrough: !linethrough })} style={{ textDecoration: "line-through" }}>S</ToggleBtn>
         <ToggleBtn active={uppercase} title="All caps" onClick={() => onApply({ uppercase: !uppercase })}>
-          <span className="text-[10px] font-bold tracking-wider">AA</span>
+          <span className="text-xs font-bold tracking-wider">AA</span>
         </ToggleBtn>
       </div>
 

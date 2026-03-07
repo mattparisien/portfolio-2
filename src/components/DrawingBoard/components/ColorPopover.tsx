@@ -70,7 +70,7 @@ const ANGLE_GRID: Array<[number | null, string]> = [
 ];
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <p className="text-[9px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5 mt-3 first:mt-0 select-none">{children}</p>;
+  return <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5 mt-3 first:mt-0 select-none">{children}</p>;
 }
 
 function initStops(gradient: TextGradient | null): GStop[] {
@@ -191,7 +191,7 @@ export default function ColorPopover({ color, gradient = null, fabricRef, onColo
       {/* ✕ close */}
       <button
         onClick={onClose}
-        className="absolute -top-2.5 -right-2.5 w-5 h-5 rounded-full bg-white border border-gray-200 text-gray-400 flex items-center justify-center text-[10px] leading-none cursor-pointer hover:text-black transition-colors"
+        className="absolute -top-2.5 -right-2.5 w-5 h-5 rounded-full bg-white border border-gray-200 text-gray-400 flex items-center justify-center text-xs leading-none cursor-pointer hover:text-black transition-colors"
       >✕</button>
 
       {/* Tab switcher — only shown when gradient is supported */}
@@ -201,7 +201,7 @@ export default function ColorPopover({ color, gradient = null, fabricRef, onColo
             <button
               key={t}
               onClick={() => setTab(t)}
-              className="flex-1 text-[10px] font-semibold rounded-lg py-1 capitalize cursor-pointer transition-colors"
+              className="flex-1 text-xs font-semibold rounded-lg py-1 capitalize cursor-pointer transition-colors"
               style={{
                 background: tab === t ? "#fff" : "transparent",
                 color: tab === t ? "#111" : "#888",
@@ -337,13 +337,13 @@ export default function ColorPopover({ color, gradient = null, fabricRef, onColo
           {selectedStop && (
             <div className="bg-gray-50 rounded-xl border border-gray-100 p-2 mb-3">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[9px] font-semibold uppercase tracking-widest text-gray-400">
+                <span className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">
                   Stop · {Math.round(selectedStop.offset * 100)}%
                 </span>
                 <button
                   onClick={() => removeStop(selectedStop.id)}
                   disabled={stops.length <= 2}
-                  className="text-[9px] text-gray-300 hover:text-red-400 disabled:opacity-30 disabled:pointer-events-none cursor-pointer transition-colors"
+                  className="text-[11px] text-gray-300 hover:text-red-400 disabled:opacity-30 disabled:pointer-events-none cursor-pointer transition-colors"
                 >✕ Remove</button>
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -389,7 +389,7 @@ export default function ColorPopover({ color, gradient = null, fabricRef, onColo
           {/* Clear */}
           <button
             onClick={() => { onGradientChange?.(null); setTab("solid"); }}
-            className="text-[10px] text-gray-400 hover:text-red-400 cursor-pointer transition-colors underline select-none"
+            className="text-xs text-gray-400 hover:text-red-400 cursor-pointer transition-colors underline select-none"
           >Clear gradient</button>
         </>
       )}
