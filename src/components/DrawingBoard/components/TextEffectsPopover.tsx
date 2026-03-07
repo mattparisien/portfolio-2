@@ -309,10 +309,11 @@ export default function TextEffectsPopover({ effect, onApply, onClose }: TextEff
   return createPortal(
     <div
       ref={popoverRef}
-      className="fixed top-5 left-[86px] p-3 rounded-2xl shadow-xl z-[300] w-64"
+      className="fixed top-5 left-[86px] p-3 rounded-2xl z-[300] w-64"
       style={{
         background: "rgba(255,255,255,0.97)",
         backdropFilter: "blur(12px)",
+        border: "1px solid rgba(0,0,0,0.08)",
         maxHeight: "calc(100vh - 48px)",
         overflowY: "auto",
       }}
@@ -320,7 +321,7 @@ export default function TextEffectsPopover({ effect, onApply, onClose }: TextEff
       {/* ✕ close */}
       <button
         onClick={onClose}
-        className="absolute -top-2.5 -right-2.5 w-5 h-5 rounded-full bg-white shadow text-gray-400 flex items-center justify-center text-[10px] leading-none cursor-pointer hover:text-black transition-colors"
+        className="absolute -top-2.5 -right-2.5 w-5 h-5 rounded-full bg-white text-gray-400 flex items-center justify-center text-[10px] leading-none cursor-pointer hover:text-black transition-colors"
       >✕</button>
 
       {/* Preset grid — 2 columns */}

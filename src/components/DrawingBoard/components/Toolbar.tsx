@@ -88,7 +88,7 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
         background: "rgba(255,255,255,0.94)",
         backdropFilter: "blur(18px)",
         WebkitBackdropFilter: "blur(18px)",
-        boxShadow: "0 4px 24px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.06)",
+        border: "1px solid rgba(0,0,0,0.08)",
       }}
     >
       {/* Color swatch button(s) — open ColorPopover */}
@@ -162,14 +162,13 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
 
         {weightOpen && (
           <div
-            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-4 pt-3.5 pb-4 rounded-2xl shadow-2xl popover-enter"
+            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-4 pt-3.5 pb-4 rounded-2xl popover-enter"
             style={{
               background: "rgba(255,255,255,0.98)",
               backdropFilter: "blur(18px)",
               WebkitBackdropFilter: "blur(18px)",
               width: 200,
               border: "1px solid rgba(0,0,0,0.07)",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.05)",
             }}
           >
             <div className="flex items-center justify-between mb-3">
@@ -220,14 +219,13 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
 
         {opacityOpen && (
           <div
-            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-4 pt-3.5 pb-4 rounded-2xl shadow-2xl popover-enter"
+            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-4 pt-3.5 pb-4 rounded-2xl popover-enter"
             style={{
               background: "rgba(255,255,255,0.98)",
               backdropFilter: "blur(18px)",
               WebkitBackdropFilter: "blur(18px)",
               width: 200,
               border: "1px solid rgba(0,0,0,0.07)",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.05)",
             }}
           >
             <div className="flex items-center justify-between mb-3">
