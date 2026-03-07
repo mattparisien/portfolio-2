@@ -290,6 +290,7 @@ function DrawingBoardInner() {
           color={color}
           opacity={opacity}
           strokeWeight={brushSize}
+          fabricRef={fabricRef}
           onColorChange={(c) => { setColor(c); if (hasSelection) recolorSelected(c); }}
           onOpacityChange={(v) => { setOpacity(v); if (hasSelection) reOpacitySelected(v); }}
           onStrokeWeightChange={(v) => { setBrushSize(v); if (hasSelection) reweightSelected(v); }}

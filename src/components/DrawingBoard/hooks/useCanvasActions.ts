@@ -169,6 +169,11 @@ export function useCanvasActions({
       fill: colorRef.current,
       stroke: "transparent",
       strokeWidth: 1,
+      // paintFirst:'stroke' means fill renders on top of the stroke, so the
+      // inner half of the stroke is hidden by the fill — stroke appears fully
+      // outside the shape boundary.
+      paintFirst: "stroke" as const,
+      strokeUniform: true,
       selectable: true,
       hasControls: true,
       hasBorders:  true,
@@ -294,7 +299,14 @@ export function useCanvasActions({
     const obj = fc.getActiveObject();
     if (!obj) return;
     const currentWidth = (obj as unknown as { strokeWidth?: number }).strokeWidth ?? 0;
-    obj.set({ stroke: c, strokeWidth: currentWidth > 0 ? currentWidth : 1 });
+    obj.set({
+      stroke: c,
+      strokeWidth: currentWidth > 0 ? currentWidth : 1,
+      // Keep outside-stroke behaviour consistent even if this shape was
+      // created before the paintFirst flag was introduced.
+      paintFirst: "stroke",
+      strokeUniform: true,
+    });
     fc.requestRenderAll();
     saveObject(obj);
   }, [fabricRef, saveObject]);

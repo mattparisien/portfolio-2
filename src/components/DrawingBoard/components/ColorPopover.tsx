@@ -81,15 +81,18 @@ function initStops(gradient: TextGradient | null): GStop[] {
 // ── Props & Component ────────────────────────────────────────────────────────
 interface ColorPopoverProps {
   color: string;
-  gradient: TextGradient | null;
-  fabricRef: React.MutableRefObject<Canvas | null>;
+  gradient?: TextGradient | null;
+  fabricRef?: React.MutableRefObject<Canvas | null>;
   onColorChange: (c: string) => void;
-  onGradientChange: (g: TextGradient | null) => void;
+  onGradientChange?: (g: TextGradient | null) => void;
   onClose: () => void;
+  /** Optional override for the popover's inline positioning styles */
+  anchorStyle?: React.CSSProperties;
 }
 
-export default function ColorPopover({ color, gradient, fabricRef, onColorChange, onGradientChange, onClose }: ColorPopoverProps) {
-  const [tab, setTab] = useState<"solid" | "gradient">(gradient ? "gradient" : "solid");
+export default function ColorPopover({ color, gradient = null, fabricRef, onColorChange, onGradientChange, onClose, anchorStyle }: ColorPopoverProps) {
+  const showGradientTab = typeof onGradientChange === "function";
+  const [tab, setTab] = useState<"solid" | "gradient">(gradient && showGradientTab ? "gradient" : "solid");
 
   // ── Solid state ─────────────────────────────────────────────────────────
   const [hexInput, setHexInput] = useState(color.startsWith("#") ? color : "#000000");
@@ -115,7 +118,7 @@ export default function ColorPopover({ color, gradient, fabricRef, onColorChange
 
   // ── Gradient helpers ─────────────────────────────────────────────────────
   const emit = useCallback((s: GStop[], a: number) => {
-    onGradientChange(toTextGradient(s, a));
+    onGradientChange?.(toTextGradient(s, a));
   }, [onGradientChange]);
 
   const setAndEmit = (s: GStop[]) => { setStops(s); emit(s, angle); };
@@ -123,7 +126,7 @@ export default function ColorPopover({ color, gradient, fabricRef, onColorChange
 
   // ── Document colors ──────────────────────────────────────────────────────
   const docColors = (() => {
-    const fc = fabricRef.current;
+    const fc = fabricRef?.current;
     if (!fc) return [] as string[];
     const seen = new Set<string>();
     fc.getObjects().forEach(obj => {
@@ -183,7 +186,7 @@ export default function ColorPopover({ color, gradient, fabricRef, onColorChange
     <div
       ref={popoverRef}
       className="fixed top-5 left-[86px] p-3 rounded-2xl shadow-xl z-[300] w-64"
-      style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)", maxHeight: "calc(100vh - 48px)", overflowY: "auto" }}
+      style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)", maxHeight: "calc(100vh - 48px)", overflowY: "auto", ...anchorStyle }}
     >
       {/* ✕ close */}
       <button
@@ -191,21 +194,23 @@ export default function ColorPopover({ color, gradient, fabricRef, onColorChange
         className="absolute -top-2.5 -right-2.5 w-5 h-5 rounded-full bg-white shadow text-gray-400 flex items-center justify-center text-[10px] leading-none cursor-pointer hover:text-black transition-colors"
       >✕</button>
 
-      {/* Tab switcher */}
-      <div className="flex gap-1 mb-3 p-0.5 bg-gray-100 rounded-xl">
-        {(["solid", "gradient"] as const).map(t => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className="flex-1 text-[10px] font-semibold rounded-lg py-1 capitalize cursor-pointer transition-colors"
-            style={{
-              background: tab === t ? "#fff" : "transparent",
-              color: tab === t ? "#111" : "#888",
-              boxShadow: tab === t ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
-            }}
-          >{t}</button>
-        ))}
-      </div>
+      {/* Tab switcher — only shown when gradient is supported */}
+      {showGradientTab && (
+        <div className="flex gap-1 mb-3 p-0.5 bg-gray-100 rounded-xl">
+          {(["solid", "gradient"] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className="flex-1 text-[10px] font-semibold rounded-lg py-1 capitalize cursor-pointer transition-colors"
+              style={{
+                background: tab === t ? "#fff" : "transparent",
+                color: tab === t ? "#111" : "#888",
+                boxShadow: tab === t ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+              }}
+            >{t}</button>
+          ))}
+        </div>
+      )}
 
       {/* ══ SOLID TAB ══ */}
       {tab === "solid" && (
@@ -215,7 +220,7 @@ export default function ColorPopover({ color, gradient, fabricRef, onColorChange
             {COLORS.map(c => (
               <button
                 key={c} title={c}
-                onClick={() => { onGradientChange(null); onColorChange(c); }}
+                onClick={() => { onGradientChange?.(null); onColorChange(c); }}
                 className="w-6 h-6 rounded-full cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
                 style={{ background: c, boxShadow: color === c && !gradient ? "0 0 0 2px #fff,0 0 0 4px #000" : "0 0 0 1px rgba(0,0,0,0.12)" }}
               />
@@ -227,7 +232,7 @@ export default function ColorPopover({ color, gradient, fabricRef, onColorChange
               style={{ background: "conic-gradient(red,yellow,lime,cyan,blue,magenta,red)", boxShadow: "0 0 0 1px rgba(0,0,0,0.12)" }}
             >
               <input type="color" value={color.startsWith("#") ? color : "#000000"}
-                onChange={e => { onGradientChange(null); onColorChange(e.target.value); setHexInput(e.target.value); }}
+                onChange={e => { onGradientChange?.(null); onColorChange(e.target.value); setHexInput(e.target.value); }}
                 className="opacity-0 w-0 h-0 absolute pointer-events-none" tabIndex={-1} />
             </label>
           </div>
@@ -240,7 +245,7 @@ export default function ColorPopover({ color, gradient, fabricRef, onColorChange
               onChange={e => {
                 const v = e.target.value;
                 setHexInput(v);
-                if (/^#[0-9a-fA-F]{6}$/.test(v)) { onGradientChange(null); onColorChange(v); }
+                if (/^#[0-9a-fA-F]{6}$/.test(v)) { onGradientChange?.(null); onColorChange(v); }
               }}
               onBlur={() => setHexInput(color.startsWith("#") ? color : hexInput)}
               className="flex-1 text-xs font-mono border border-gray-200 rounded-lg px-2 py-1 outline-none focus:border-gray-400 transition-colors"
@@ -255,7 +260,7 @@ export default function ColorPopover({ color, gradient, fabricRef, onColorChange
                 {docColors.map(c => (
                   <button
                     key={c} title={c}
-                    onClick={() => { onGradientChange(null); onColorChange(c); }}
+                    onClick={() => { onGradientChange?.(null); onColorChange(c); }}
                     className="w-6 h-6 rounded-full cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
                     style={{ background: c, boxShadow: color === c && !gradient ? "0 0 0 2px #fff,0 0 0 4px #000" : "0 0 0 1px rgba(0,0,0,0.12)" }}
                   />
@@ -267,7 +272,7 @@ export default function ColorPopover({ color, gradient, fabricRef, onColorChange
       )}
 
       {/* ══ GRADIENT TAB ══ */}
-      {tab === "gradient" && (
+      {showGradientTab && tab === "gradient" && (
         <>
           {/* Preset pills */}
           <SectionLabel>Presets</SectionLabel>
@@ -383,7 +388,7 @@ export default function ColorPopover({ color, gradient, fabricRef, onColorChange
 
           {/* Clear */}
           <button
-            onClick={() => { onGradientChange(null); setTab("solid"); }}
+            onClick={() => { onGradientChange?.(null); setTab("solid"); }}
             className="text-[10px] text-gray-400 hover:text-red-400 cursor-pointer transition-colors underline select-none"
           >Clear gradient</button>
         </>

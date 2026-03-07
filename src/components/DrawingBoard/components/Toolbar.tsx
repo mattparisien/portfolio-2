@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import ColorButton from "./ColorButton";
+import type { Canvas } from "fabric";
+import ColorPopover from "./ColorPopover";
 
 interface ToolbarProps {
   color: string;
@@ -13,13 +14,16 @@ interface ToolbarProps {
   /** When set, a second stroke color circle is shown (shapes only) */
   strokeColor?: string;
   onStrokeColorChange?: (c: string) => void;
+  /** Optional canvas ref — enables "used in document" colors inside ColorPopover */
+  fabricRef?: React.MutableRefObject<Canvas | null>;
   closeSignal?: number;
   onPopoverOpened?: () => void;
 }
 
-export default function Toolbar({ color, opacity, strokeWeight, onColorChange, onOpacityChange, onStrokeWeightChange, strokeColor, onStrokeColorChange, closeSignal, onPopoverOpened }: ToolbarProps) {
+export default function Toolbar({ color, opacity, strokeWeight, onColorChange, onOpacityChange, onStrokeWeightChange, strokeColor, onStrokeColorChange, fabricRef, closeSignal, onPopoverOpened }: ToolbarProps) {
   const showDual = strokeColor !== undefined && onStrokeColorChange !== undefined;
   const [openPanel, setOpenPanel] = useState<"opacity" | "weight" | null>(null);
+  const [openColor, setOpenColor] = useState<"fill" | "stroke" | null>(null);
   const opacityOpen = openPanel === "opacity";
   const weightOpen  = openPanel === "weight";
 
@@ -27,33 +31,87 @@ export default function Toolbar({ color, opacity, strokeWeight, onColorChange, o
   useEffect(() => {
     if (!closeSignal) return;
     setOpenPanel(null);
+    setOpenColor(null);
   }, [closeSignal]);
+
+  function openFill() {
+    setOpenColor("fill");
+    setOpenPanel(null);
+    onPopoverOpened?.();
+  }
+  function openStroke() {
+    setOpenColor("stroke");
+    setOpenPanel(null);
+    onPopoverOpened?.();
+  }
 
   return (
     <div
       className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-2.5 rounded-2xl shadow-xl z-[200]"
       style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(14px)" }}
     >
-      {/* Color circle(s) */}
+      {/* Color swatch button(s) — open ColorPopover */}
       {showDual ? (
         <>
           <div className="flex flex-col items-center gap-0.5">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors hover:bg-black/[0.07]">
-              <ColorButton color={color} title="Fill colour" onChange={onColorChange} size={22} />
-            </div>
+            <button
+              title="Fill colour"
+              onClick={(e) => { e.stopPropagation(); openColor === "fill" ? setOpenColor(null) : openFill(); }}
+              className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors hover:bg-black/[0.07]"
+              style={{ background: openColor === "fill" ? "rgba(0,0,0,0.08)" : "transparent" }}
+            >
+              <span
+                className="block rounded-full flex-shrink-0"
+                style={{ width: 22, height: 22, background: color, boxShadow: "0 0 0 1.5px rgba(0,0,0,0.15), 0 0 0 3px #fff, 0 0 0 4.5px rgba(0,0,0,0.12)" }}
+              />
+            </button>
             <span className="text-[8px] font-semibold uppercase tracking-widest text-gray-400 select-none leading-none">Fill</span>
           </div>
           <div className="flex flex-col items-center gap-0.5">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors hover:bg-black/[0.07]">
-              <ColorButton color={strokeColor!} title="Stroke colour" onChange={onStrokeColorChange!} size={22} />
-            </div>
+            <button
+              title="Stroke colour"
+              onClick={(e) => { e.stopPropagation(); openColor === "stroke" ? setOpenColor(null) : openStroke(); }}
+              className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors hover:bg-black/[0.07]"
+              style={{ background: openColor === "stroke" ? "rgba(0,0,0,0.08)" : "transparent" }}
+            >
+              <span
+                className="block rounded-full flex-shrink-0"
+                style={{ width: 22, height: 22, background: strokeColor, boxShadow: "0 0 0 1.5px rgba(0,0,0,0.15), 0 0 0 3px #fff, 0 0 0 4.5px rgba(0,0,0,0.12)" }}
+              />
+            </button>
             <span className="text-[8px] font-semibold uppercase tracking-widest text-gray-400 select-none leading-none">Stroke</span>
           </div>
         </>
       ) : (
-        <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors hover:bg-black/[0.07]">
-          <ColorButton color={color} title="Colour" onChange={onColorChange} size={22} />
-        </div>
+        <button
+          title="Colour"
+          onClick={(e) => { e.stopPropagation(); openColor === "fill" ? setOpenColor(null) : openFill(); }}
+          className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors hover:bg-black/[0.07]"
+          style={{ background: openColor === "fill" ? "rgba(0,0,0,0.08)" : "transparent" }}
+        >
+          <span
+            className="block rounded-full flex-shrink-0"
+            style={{ width: 22, height: 22, background: color, boxShadow: "0 0 0 1.5px rgba(0,0,0,0.15), 0 0 0 3px #fff, 0 0 0 4.5px rgba(0,0,0,0.12)" }}
+          />
+        </button>
+      )}
+
+      {/* ColorPopover portal instances */}
+      {openColor === "fill" && (
+        <ColorPopover
+          color={color}
+          fabricRef={fabricRef}
+          onColorChange={onColorChange}
+          onClose={() => setOpenColor(null)}
+        />
+      )}
+      {openColor === "stroke" && showDual && (
+        <ColorPopover
+          color={strokeColor!}
+          fabricRef={fabricRef}
+          onColorChange={onStrokeColorChange!}
+          onClose={() => setOpenColor(null)}
+        />
       )}
 
       {/* Stroke weight button + popover */}
