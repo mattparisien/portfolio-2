@@ -100,7 +100,7 @@ export default function TextToolbar({ textProps, color, fabricRef, onColorChange
 
   // Determine display swatch — gradient pill or solid dot
   const swatchStyle: React.CSSProperties = (() => {
-    if (!gradient) return { background: color, borderRadius: "50%", width: 18, height: 18, boxShadow: "0 0 0 1.5px rgba(0,0,0,0.15), 0 0 0 3px #fff, 0 0 0 4.5px rgba(0,0,0,0.12)" };
+    if (!gradient) return { background: color, borderRadius: "50%", width: 18, height: 18, outline: "1.5px solid rgba(0,0,0,0.15)" };
     const sorted = [...gradient.stops].sort((a, b) => a.offset - b.offset);
     const parts = sorted.map(s => `${s.color} ${Math.round(s.offset * 100)}%`).join(", ");
     return { background: `linear-gradient(${gradient.angle}deg, ${parts})`, borderRadius: 6, width: 28, height: 18 };

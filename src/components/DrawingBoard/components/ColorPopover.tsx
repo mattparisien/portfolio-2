@@ -185,13 +185,13 @@ export default function ColorPopover({ color, gradient = null, fabricRef, onColo
   return createPortal(
     <div
       ref={popoverRef}
-      className="fixed top-5 left-[86px] p-3 rounded-2xl shadow-xl z-[300] w-64"
-      style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)", maxHeight: "calc(100vh - 48px)", overflowY: "auto", ...anchorStyle }}
+      className="fixed top-5 left-[86px] p-3 rounded-2xl z-[300] w-64"
+      style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)", border: "1px solid rgba(0,0,0,0.08)", maxHeight: "calc(100vh - 48px)", overflowY: "auto", ...anchorStyle }}
     >
       {/* ✕ close */}
       <button
         onClick={onClose}
-        className="absolute -top-2.5 -right-2.5 w-5 h-5 rounded-full bg-white shadow text-gray-400 flex items-center justify-center text-[10px] leading-none cursor-pointer hover:text-black transition-colors"
+        className="absolute -top-2.5 -right-2.5 w-5 h-5 rounded-full bg-white border border-gray-200 text-gray-400 flex items-center justify-center text-[10px] leading-none cursor-pointer hover:text-black transition-colors"
       >✕</button>
 
       {/* Tab switcher — only shown when gradient is supported */}
@@ -205,7 +205,7 @@ export default function ColorPopover({ color, gradient = null, fabricRef, onColo
               style={{
                 background: tab === t ? "#fff" : "transparent",
                 color: tab === t ? "#111" : "#888",
-                boxShadow: tab === t ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                border: tab === t ? "1px solid rgba(0,0,0,0.08)" : "1px solid transparent",
               }}
             >{t}</button>
           ))}
@@ -222,14 +222,14 @@ export default function ColorPopover({ color, gradient = null, fabricRef, onColo
                 key={c} title={c}
                 onClick={() => { onGradientChange?.(null); onColorChange(c); }}
                 className="w-6 h-6 rounded-full cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
-                style={{ background: c, boxShadow: color === c && !gradient ? "0 0 0 2px #fff,0 0 0 4px #000" : "0 0 0 1px rgba(0,0,0,0.12)" }}
+                style={{ background: c, outline: color === c && !gradient ? "2px solid #000" : "1px solid rgba(0,0,0,0.12)", outlineOffset: color === c && !gradient ? "2px" : "0px" }}
               />
             ))}
             {/* Rainbow custom picker */}
             <label
               title="Custom color"
               className="w-6 h-6 rounded-full cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
-              style={{ background: "conic-gradient(red,yellow,lime,cyan,blue,magenta,red)", boxShadow: "0 0 0 1px rgba(0,0,0,0.12)" }}
+              style={{ background: "conic-gradient(red,yellow,lime,cyan,blue,magenta,red)", outline: "1px solid rgba(0,0,0,0.12)" }}
             >
               <input type="color" value={color.startsWith("#") ? color : "#000000"}
                 onChange={e => { onGradientChange?.(null); onColorChange(e.target.value); setHexInput(e.target.value); }}
@@ -239,7 +239,7 @@ export default function ColorPopover({ color, gradient = null, fabricRef, onColo
 
           {/* Hex input */}
           <div className="flex items-center gap-2 mb-1">
-            <span className="w-6 h-6 rounded-full flex-shrink-0 block" style={{ background: color, boxShadow: "0 0 0 1px rgba(0,0,0,0.12)" }} />
+            <span className="w-6 h-6 rounded-full flex-shrink-0 block" style={{ background: color, outline: "1px solid rgba(0,0,0,0.12)" }} />
             <input
               type="text" value={hexInput} maxLength={7} spellCheck={false} placeholder="#000000"
               onChange={e => {
@@ -262,7 +262,7 @@ export default function ColorPopover({ color, gradient = null, fabricRef, onColo
                     key={c} title={c}
                     onClick={() => { onGradientChange?.(null); onColorChange(c); }}
                     className="w-6 h-6 rounded-full cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
-                    style={{ background: c, boxShadow: color === c && !gradient ? "0 0 0 2px #fff,0 0 0 4px #000" : "0 0 0 1px rgba(0,0,0,0.12)" }}
+                    style={{ background: c, outline: color === c && !gradient ? "2px solid #000" : "1px solid rgba(0,0,0,0.12)", outlineOffset: color === c && !gradient ? "2px" : "0px" }}
                   />
                 ))}
               </div>
@@ -289,7 +289,7 @@ export default function ColorPopover({ color, gradient = null, fabricRef, onColo
                 style={{
                   width: 44,
                   background: `linear-gradient(90deg, ${p.stops.map(s => `${s.color} ${s.offset * 100}%`).join(", ")})`,
-                  boxShadow: "0 0 0 1px rgba(0,0,0,0.1)",
+                  outline: "1px solid rgba(0,0,0,0.1)",
                 }}
               />
             ))}
@@ -306,7 +306,7 @@ export default function ColorPopover({ color, gradient = null, fabricRef, onColo
               ref={trackRef}
               onClick={handleTrackClick}
               className="h-6 rounded-xl cursor-crosshair select-none"
-              style={{ background: cssGrad, boxShadow: "inset 0 1px 3px rgba(0,0,0,0.18)" }}
+              style={{ background: cssGrad, border: "1px solid rgba(0,0,0,0.08)" }}
             />
             {/* Draggable stop handles */}
             {stops.map(stop => {
@@ -325,7 +325,7 @@ export default function ColorPopover({ color, gradient = null, fabricRef, onColo
                     borderRadius: "50%",
                     background: stop.color,
                     border: isSel ? "2.5px solid #000" : "2.5px solid #fff",
-                    boxShadow: isSel ? "0 0 0 1px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.28)" : "0 1px 4px rgba(0,0,0,0.28)",
+                    outline: isSel ? "1px solid rgba(0,0,0,0.45)" : "none",
                     zIndex: isSel ? 10 : 5,
                   }}
                 />
@@ -352,13 +352,13 @@ export default function ColorPopover({ color, gradient = null, fabricRef, onColo
                     key={c}
                     onClick={() => setStopColor(selectedStop.id, c)}
                     className="w-5 h-5 rounded-full cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
-                    style={{ background: c, boxShadow: selectedStop.color === c ? "0 0 0 2px #fff,0 0 0 3.5px #000" : "0 0 0 1px rgba(0,0,0,0.12)" }}
+                    style={{ background: c, outline: selectedStop.color === c ? "2px solid #000" : "1px solid rgba(0,0,0,0.12)", outlineOffset: selectedStop.color === c ? "2px" : "0px" }}
                   />
                 ))}
                 {/* Custom picker for stop */}
                 <label
                   className="w-5 h-5 rounded-full cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
-                  style={{ background: "conic-gradient(red,yellow,lime,cyan,blue,magenta,red)", boxShadow: "0 0 0 1px rgba(0,0,0,0.12)" }}
+                  style={{ background: "conic-gradient(red,yellow,lime,cyan,blue,magenta,red)", outline: "1px solid rgba(0,0,0,0.12)" }}
                 >
                   <input type="color" value={selectedStop.color}
                     onChange={e => setStopColor(selectedStop.id, e.target.value)}
