@@ -146,7 +146,7 @@ export function useCanvasActions({
       top: cy,
       originX: "center",
       originY: "center",
-      fontSize: Math.max(brushSizeRef.current * 2, 24),
+      fontSize: Math.max(brushSizeRef.current * 2, 48),
       fill: colorRef.current,
       fontFamily: "sans-serif",
       editable: true,
