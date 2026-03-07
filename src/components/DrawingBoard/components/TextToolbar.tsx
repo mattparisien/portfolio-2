@@ -31,6 +31,10 @@ interface TextToolbarProps {
   onPopoverOpened?: () => void;
 }
 
+function Divider() {
+  return <div className="w-px self-stretch my-1 bg-black/[0.09] flex-shrink-0" />;
+}
+
 function ToggleBtn({
   active,
   title,
@@ -49,8 +53,31 @@ function ToggleBtn({
       title={title}
       onClick={onClick}
       style={style}
-      className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm transition-colors select-none cursor-pointer
-        ${active ? "bg-black text-white" : "hover:bg-gray-100 text-gray-700"}`}
+      className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm transition-all duration-150 select-none cursor-pointer flex-shrink-0 ${
+        active
+          ? "bg-black text-white shadow-sm"
+          : "hover:bg-black/[0.07] text-gray-600 hover:text-gray-900"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function StepBtn({
+  onClick,
+  title,
+  children,
+}: {
+  onClick: () => void;
+  title?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      title={title}
+      onClick={onClick}
+      className="w-6 h-6 rounded-md flex items-center justify-center text-sm font-semibold text-gray-500 hover:bg-black/[0.07] hover:text-gray-900 transition-all duration-150 select-none cursor-pointer flex-shrink-0"
     >
       {children}
     </button>
@@ -81,29 +108,28 @@ export default function TextToolbar({ textProps, color, fabricRef, onColorChange
 
   return (
     <div
-      className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-2 rounded-2xl overflow-x-auto z-[200]"
+      className="absolute bottom-6 left-1/2 toolbar-enter flex items-center gap-2 px-3 py-2 rounded-2xl z-[200]"
       style={{
-        background: "rgba(255,255,255,0.92)",
-        backdropFilter: "blur(12px)",
-        border: "1px solid rgba(0,0,0,0.08)",
+        background: "rgba(255,255,255,0.94)",
+        backdropFilter: "blur(18px)",
+        WebkitBackdropFilter: "blur(18px)",
+        boxShadow: "0 4px 24px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.06)",
         maxWidth: "calc(100vw - 32px)",
-        whiteSpace: "nowrap",
+        overflowX: "auto",
+        scrollbarWidth: "thin",
+        scrollbarColor: "rgba(0,0,0,0.15) transparent",
       }}
     >
-      {/* Color / gradient trigger — opens ColorPopover */}
-      <div
-        className="relative flex items-center border-r border-gray-200 pr-2 mr-0.5 flex-shrink-0"
-        ref={colorTriggerRef}
-      >
+      {/* ── Color / gradient ── */}
+      <div className="relative flex items-center flex-shrink-0" ref={colorTriggerRef}>
         <button
           title="Text color"
           onClick={(e) => { e.stopPropagation(); setColorOpen((v) => !v); setEffectOpen(false); onPopoverOpened?.(); }}
-          className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-colors hover:bg-black/[0.07]"
-          style={{ background: colorOpen ? "rgba(0,0,0,0.08)" : "transparent" }}
+          className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 hover:scale-105"
+          style={{ background: colorOpen ? "rgba(0,0,0,0.09)" : "transparent" }}
         >
           <span style={swatchStyle} className="flex-shrink-0 block" />
         </button>
-
         {colorOpen && (
           <ColorPopover
             color={color}
@@ -116,18 +142,18 @@ export default function TextToolbar({ textProps, color, fabricRef, onColorChange
         )}
       </div>
 
-      {/* Effects trigger — opens TextEffectsPopover */}
-      <div className="relative flex items-center border-r border-gray-200 pr-2 mr-0.5 flex-shrink-0">
+      {/* ── Effects ── */}
+      <div className="relative flex items-center flex-shrink-0">
         <button
           title="Text effects"
           onClick={(e) => { e.stopPropagation(); setEffectOpen((v) => !v); setColorOpen(false); onPopoverOpened?.(); }}
-          className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-colors hover:bg-black/[0.07] select-none"
+          className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 hover:scale-105 select-none"
           style={{
-            background: effectOpen ? "rgba(0,0,0,0.08)" : effect ? "#000" : "transparent",
-            color: effect && !effectOpen ? "#fff" : "inherit",
+            background: effectOpen ? "rgba(0,0,0,0.09)" : effect ? "#111" : "transparent",
+            color: effect && !effectOpen ? "#fff" : "#444",
           }}
         >
-          <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">
+          <svg viewBox="0 0 20 20" width="15" height="15" fill="currentColor">
             <path d="M10 2a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L10 14.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L2.82 8.125a.75.75 0 0 1 .416-1.28l4.21-.611L9.327 2.418A.75.75 0 0 1 10 2Z" />
           </svg>
         </button>
@@ -140,13 +166,16 @@ export default function TextToolbar({ textProps, color, fabricRef, onColorChange
         )}
       </div>
 
-      {/* Font family */}
-      <div className="flex items-center border-r border-gray-200 pr-2 mr-0.5 flex-shrink-0">
+      <Divider />
+
+      {/* ── Font family ── */}
+      <div className="flex items-center flex-shrink-0">
         <select
           value={fontFamily}
           onChange={(e) => onApply({ fontFamily: e.target.value })}
-          className="text-xs rounded-lg border border-gray-200 px-1 py-1 bg-white cursor-pointer outline-none hover:border-gray-400 transition-colors"
-          style={{ fontFamily, width: 108 }}
+          title="Font family"
+          className="text-xs rounded-lg px-2 py-1.5 bg-transparent cursor-pointer outline-none transition-colors hover:bg-black/[0.05] text-gray-700 font-medium border-0"
+          style={{ fontFamily, minWidth: 100, maxWidth: 116 }}
         >
           {FONT_FAMILIES.map((f) => (
             <option key={f} value={f} style={{ fontFamily: f }}>
@@ -156,83 +185,119 @@ export default function TextToolbar({ textProps, color, fabricRef, onColorChange
         </select>
       </div>
 
-      {/* Font size */}
-      <div className="flex items-center gap-0.5 border-r border-gray-200 pr-2 mr-0.5 flex-shrink-0">
-        <button
+      <Divider />
+
+      {/* ── Font size ── */}
+      <div className="flex items-center gap-1 flex-shrink-0">
+        <StepBtn
+          title="Decrease font size"
           onClick={() => { const i = FONT_SIZES.indexOf(fontSize); if (i > 0) onApply({ fontSize: FONT_SIZES[i - 1] }); }}
-          className="w-5 h-5 rounded flex items-center justify-center text-sm font-bold hover:bg-gray-100 transition-colors select-none cursor-pointer"
-        >−</button>
+        >
+          <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor"><rect x="1" y="5.5" width="10" height="1.5" rx="0.75"/></svg>
+        </StepBtn>
         <select
           value={fontSize}
           onChange={(e) => onApply({ fontSize: Number(e.target.value) })}
-          className="text-xs rounded-lg border border-gray-200 px-0.5 py-1 bg-white cursor-pointer outline-none hover:border-gray-400 transition-colors w-12 text-center"
+          title="Font size"
+          className="text-xs rounded-lg px-1 py-1.5 bg-transparent cursor-pointer outline-none transition-colors hover:bg-black/[0.05] text-gray-700 font-semibold tabular-nums text-center border-0 w-10"
         >
           {FONT_SIZES.map((s) => (
             <option key={s} value={s}>{s}</option>
           ))}
         </select>
-        <button
+        <StepBtn
+          title="Increase font size"
           onClick={() => { const i = FONT_SIZES.indexOf(fontSize); if (i < FONT_SIZES.length - 1) onApply({ fontSize: FONT_SIZES[i + 1] }); }}
-          className="w-5 h-5 rounded flex items-center justify-center text-sm font-bold hover:bg-gray-100 transition-colors select-none cursor-pointer"
-        >+</button>
+        >
+          <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor"><rect x="1" y="5.5" width="10" height="1.5" rx="0.75"/><rect x="5.5" y="1" width="1.5" height="10" rx="0.75"/></svg>
+        </StepBtn>
       </div>
 
-      {/* Style toggles */}
-      <div className="flex items-center gap-0.5 border-r border-gray-200 pr-2 mr-0.5 flex-shrink-0">
-        <ToggleBtn active={bold} title="Bold" onClick={() => onApply({ bold: !bold })} style={{ fontWeight: "bold" }}>B</ToggleBtn>
+      <Divider />
+
+      {/* ── Style toggles: B I U S AA ── */}
+      <div className="flex items-center gap-0.5 flex-shrink-0">
+        <ToggleBtn active={bold} title="Bold" onClick={() => onApply({ bold: !bold })} style={{ fontWeight: 700 }}>B</ToggleBtn>
         <ToggleBtn active={italic} title="Italic" onClick={() => onApply({ italic: !italic })} style={{ fontStyle: "italic" }}>I</ToggleBtn>
         <ToggleBtn active={underline} title="Underline" onClick={() => onApply({ underline: !underline })} style={{ textDecoration: "underline" }}>U</ToggleBtn>
         <ToggleBtn active={linethrough} title="Strikethrough" onClick={() => onApply({ linethrough: !linethrough })} style={{ textDecoration: "line-through" }}>S</ToggleBtn>
-        <ToggleBtn active={uppercase} title="Uppercase" onClick={() => onApply({ uppercase: !uppercase })}>
+        <ToggleBtn active={uppercase} title="All caps" onClick={() => onApply({ uppercase: !uppercase })}>
           <span className="text-[10px] font-bold tracking-wider">AA</span>
         </ToggleBtn>
       </div>
 
-      {/* Line height */}
-      <div className="flex items-center gap-0.5 border-r border-gray-200 pr-2 mr-0.5 flex-shrink-0">
-        <span className="text-gray-400 select-none" title="Line height" style={{ fontSize: 13 }}>↕</span>
-        <button
-          onClick={() => onApply({ lineHeight: Math.max(0.5, Math.round((lineHeight - 0.1) * 10) / 10) })}
-          className="w-5 h-5 rounded flex items-center justify-center text-sm font-bold hover:bg-gray-100 transition-colors select-none cursor-pointer"
-        >−</button>
-        <span className="text-xs w-6 text-center tabular-nums">{lineHeight.toFixed(1)}</span>
-        <button
-          onClick={() => onApply({ lineHeight: Math.min(4, Math.round((lineHeight + 0.1) * 10) / 10) })}
-          className="w-5 h-5 rounded flex items-center justify-center text-sm font-bold hover:bg-gray-100 transition-colors select-none cursor-pointer"
-        >+</button>
-      </div>
+      <Divider />
 
-      {/* Text alignment */}
-      <div className="flex items-center gap-0.5 border-r border-gray-200 pr-2 mr-0.5 flex-shrink-0">
+      {/* ── Text alignment ── */}
+      <div className="flex items-center gap-0.5 flex-shrink-0">
         <ToggleBtn active={textAlign === "left"} title="Align left" onClick={() => onApply({ textAlign: "left" })}>
-          <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
-            <rect x="1" y="2" width="14" height="2" rx="1"/><rect x="1" y="6" width="9" height="2" rx="1"/><rect x="1" y="10" width="12" height="2" rx="1"/><rect x="1" y="14" width="7" height="2" rx="1"/>
+          <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor">
+            <rect x="1" y="2" width="14" height="1.8" rx="0.9"/>
+            <rect x="1" y="5.8" width="9" height="1.8" rx="0.9"/>
+            <rect x="1" y="9.6" width="12" height="1.8" rx="0.9"/>
+            <rect x="1" y="13.4" width="7" height="1.8" rx="0.9"/>
           </svg>
         </ToggleBtn>
         <ToggleBtn active={textAlign === "center"} title="Align center" onClick={() => onApply({ textAlign: "center" })}>
-          <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
-            <rect x="1" y="2" width="14" height="2" rx="1"/><rect x="3.5" y="6" width="9" height="2" rx="1"/><rect x="2" y="10" width="12" height="2" rx="1"/><rect x="4.5" y="14" width="7" height="2" rx="1"/>
+          <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor">
+            <rect x="1" y="2" width="14" height="1.8" rx="0.9"/>
+            <rect x="3.5" y="5.8" width="9" height="1.8" rx="0.9"/>
+            <rect x="2" y="9.6" width="12" height="1.8" rx="0.9"/>
+            <rect x="4.5" y="13.4" width="7" height="1.8" rx="0.9"/>
           </svg>
         </ToggleBtn>
         <ToggleBtn active={textAlign === "right"} title="Align right" onClick={() => onApply({ textAlign: "right" })}>
-          <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
-            <rect x="1" y="2" width="14" height="2" rx="1"/><rect x="6" y="6" width="9" height="2" rx="1"/><rect x="3" y="10" width="12" height="2" rx="1"/><rect x="8" y="14" width="7" height="2" rx="1"/>
+          <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor">
+            <rect x="1" y="2" width="14" height="1.8" rx="0.9"/>
+            <rect x="6" y="5.8" width="9" height="1.8" rx="0.9"/>
+            <rect x="3" y="9.6" width="12" height="1.8" rx="0.9"/>
+            <rect x="8" y="13.4" width="7" height="1.8" rx="0.9"/>
           </svg>
         </ToggleBtn>
       </div>
 
-      {/* Letter spacing */}
-      <div className="flex items-center gap-0.5 flex-shrink-0">
-        <span className="text-gray-400 select-none" title="Letter spacing" style={{ fontSize: 13 }}>↔</span>
-        <button
-          onClick={() => onApply({ charSpacing: Math.max(-200, charSpacing - 25) })}
-          className="w-5 h-5 rounded flex items-center justify-center text-sm font-bold hover:bg-gray-100 transition-colors select-none cursor-pointer"
-        >−</button>
-        <span className="text-xs w-7 text-center tabular-nums">{charSpacing}</span>
-        <button
-          onClick={() => onApply({ charSpacing: Math.min(1000, charSpacing + 25) })}
-          className="w-5 h-5 rounded flex items-center justify-center text-sm font-bold hover:bg-gray-100 transition-colors select-none cursor-pointer"
-        >+</button>
+      <Divider />
+
+      {/* ── Line height ── */}
+      <div className="flex items-center gap-1 flex-shrink-0">
+        <svg viewBox="0 0 16 16" width="13" height="13" fill="none" className="text-gray-400 flex-shrink-0" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+          <line x1="8" y1="1" x2="8" y2="5"/>
+          <polyline points="6,3 8,1 10,3"/>
+          <line x1="3" y1="6.5" x2="13" y2="6.5"/>
+          <line x1="3" y1="9.5" x2="13" y2="9.5"/>
+          <line x1="8" y1="11" x2="8" y2="15"/>
+          <polyline points="6,13 8,15 10,13"/>
+        </svg>
+        <StepBtn title="Decrease line height" onClick={() => onApply({ lineHeight: Math.max(0.5, Math.round((lineHeight - 0.1) * 10) / 10) })}>
+          <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor"><rect x="1" y="5.5" width="10" height="1.5" rx="0.75"/></svg>
+        </StepBtn>
+        <span className="text-xs w-7 text-center tabular-nums text-gray-700 font-medium select-none">{lineHeight.toFixed(1)}</span>
+        <StepBtn title="Increase line height" onClick={() => onApply({ lineHeight: Math.min(4, Math.round((lineHeight + 0.1) * 10) / 10) })}>
+          <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor"><rect x="1" y="5.5" width="10" height="1.5" rx="0.75"/><rect x="5.5" y="1" width="1.5" height="10" rx="0.75"/></svg>
+        </StepBtn>
+      </div>
+
+      <Divider />
+
+      {/* ── Letter spacing ── */}
+      <div className="flex items-center gap-1 flex-shrink-0">
+        <svg viewBox="0 0 16 16" width="13" height="13" fill="none" className="text-gray-400 flex-shrink-0" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+          <line x1="1" y1="8" x2="5" y2="8"/>
+          <polyline points="3,6 1,8 3,10"/>
+          <line x1="4" y1="3" x2="12" y2="3"/>
+          <line x1="4" y1="6" x2="12" y2="6"/>
+          <line x1="4" y1="9" x2="12" y2="9"/>
+          <line x1="4" y1="12" x2="12" y2="12"/>
+          <line x1="11" y1="8" x2="15" y2="8"/>
+          <polyline points="13,6 15,8 13,10"/>
+        </svg>
+        <StepBtn title="Decrease letter spacing" onClick={() => onApply({ charSpacing: Math.max(-200, charSpacing - 25) })}>
+          <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor"><rect x="1" y="5.5" width="10" height="1.5" rx="0.75"/></svg>
+        </StepBtn>
+        <span className="text-xs w-8 text-center tabular-nums text-gray-700 font-medium select-none">{charSpacing}</span>
+        <StepBtn title="Increase letter spacing" onClick={() => onApply({ charSpacing: Math.min(1000, charSpacing + 25) })}>
+          <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor"><rect x="1" y="5.5" width="10" height="1.5" rx="0.75"/><rect x="5.5" y="1" width="1.5" height="10" rx="0.75"/></svg>
+        </StepBtn>
       </div>
     </div>
   );

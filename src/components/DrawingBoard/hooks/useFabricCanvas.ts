@@ -700,6 +700,9 @@ export function useFabricCanvas({
 
       fc.on("selection:created", handleSelectionChange);
       fc.on("selection:updated", handleSelectionChange);
+      // When a text object enters editing mode Fabric fires selection:cleared,
+      // which would hide the lock button.  Re-assert selection state here.
+      fc.on("text:editing:entered", handleSelectionChange);
       fc.on("selection:cleared", () => {
         setHasSelection(false);
         setSelectedIsText(false);
@@ -780,7 +783,7 @@ export function useFabricCanvas({
           const txt = new IText("", {
             left: pointer.x,
             top: pointer.y,
-            fontSize: Math.max(brushSizeRef.current * 2, 16),
+            fontSize: Math.max(brushSizeRef.current * 2, 48),
             fill: colorRef.current,
             fontFamily: "sans-serif",
             editable: true,
