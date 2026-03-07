@@ -89,6 +89,8 @@ export default function TextToolbar({ textProps, color, fabricRef, onColorChange
 
   const [colorOpen, setColorOpen] = useState(false);
   const [effectOpen, setEffectOpen] = useState(false);
+  const [lineHeightOpen, setLineHeightOpen] = useState(false);
+  const [letterSpacingOpen, setLetterSpacingOpen] = useState(false);
   const colorTriggerRef = useRef<HTMLDivElement>(null);
 
   // Close all when a sibling component opens a popover
@@ -96,6 +98,8 @@ export default function TextToolbar({ textProps, color, fabricRef, onColorChange
     if (!closeSignal) return;
     setColorOpen(false);
     setEffectOpen(false);
+    setLineHeightOpen(false);
+    setLetterSpacingOpen(false);
   }, [closeSignal]);
 
   // Determine display swatch — gradient pill or solid dot
@@ -124,7 +128,7 @@ export default function TextToolbar({ textProps, color, fabricRef, onColorChange
       <div className="relative flex items-center flex-shrink-0" ref={colorTriggerRef}>
         <button
           title="Text color"
-          onClick={(e) => { e.stopPropagation(); setColorOpen((v) => !v); setEffectOpen(false); onPopoverOpened?.(); }}
+          onClick={(e) => { e.stopPropagation(); setColorOpen((v) => !v); setEffectOpen(false); setLineHeightOpen(false); setLetterSpacingOpen(false); onPopoverOpened?.(); }}
           className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 hover:scale-105"
           style={{ background: colorOpen ? "rgba(0,0,0,0.09)" : "transparent" }}
         >
@@ -146,7 +150,7 @@ export default function TextToolbar({ textProps, color, fabricRef, onColorChange
       <div className="relative flex items-center flex-shrink-0">
         <button
           title="Text effects"
-          onClick={(e) => { e.stopPropagation(); setEffectOpen((v) => !v); setColorOpen(false); onPopoverOpened?.(); }}
+          onClick={(e) => { e.stopPropagation(); setEffectOpen((v) => !v); setColorOpen(false); setLineHeightOpen(false); setLetterSpacingOpen(false); onPopoverOpened?.(); }}
           className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 hover:scale-105 select-none"
           style={{
             background: effectOpen ? "rgba(0,0,0,0.09)" : effect ? "#111" : "transparent",
@@ -259,45 +263,101 @@ export default function TextToolbar({ textProps, color, fabricRef, onColorChange
       <Divider />
 
       {/* ── Line height ── */}
-      <div className="flex items-center gap-1 flex-shrink-0">
-        <svg viewBox="0 0 16 16" width="13" height="13" fill="none" className="text-gray-400 flex-shrink-0" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
-          <line x1="8" y1="1" x2="8" y2="5"/>
-          <polyline points="6,3 8,1 10,3"/>
-          <line x1="3" y1="6.5" x2="13" y2="6.5"/>
-          <line x1="3" y1="9.5" x2="13" y2="9.5"/>
-          <line x1="8" y1="11" x2="8" y2="15"/>
-          <polyline points="6,13 8,15 10,13"/>
-        </svg>
-        <StepBtn title="Decrease line height" onClick={() => onApply({ lineHeight: Math.max(0.5, Math.round((lineHeight - 0.1) * 10) / 10) })}>
-          <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor"><rect x="1" y="5.5" width="10" height="1.5" rx="0.75"/></svg>
-        </StepBtn>
-        <span className="text-xs w-7 text-center tabular-nums text-gray-700 font-medium select-none">{lineHeight.toFixed(1)}</span>
-        <StepBtn title="Increase line height" onClick={() => onApply({ lineHeight: Math.min(4, Math.round((lineHeight + 0.1) * 10) / 10) })}>
-          <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor"><rect x="1" y="5.5" width="10" height="1.5" rx="0.75"/><rect x="5.5" y="1" width="1.5" height="10" rx="0.75"/></svg>
-        </StepBtn>
+      <div className="relative flex items-center flex-shrink-0">
+        <button
+          title="Line height"
+          onClick={(e) => { e.stopPropagation(); setLineHeightOpen((v) => !v); setLetterSpacingOpen(false); setColorOpen(false); setEffectOpen(false); onPopoverOpened?.(); }}
+          className={`w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 select-none ${lineHeightOpen ? "bg-black/[0.09]" : "hover:bg-black/[0.07]"}`}
+        >
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" className="text-gray-600">
+            <line x1="8" y1="1" x2="8" y2="5"/>
+            <polyline points="6,3 8,1 10,3"/>
+            <line x1="3" y1="6.5" x2="13" y2="6.5"/>
+            <line x1="3" y1="9.5" x2="13" y2="9.5"/>
+            <line x1="8" y1="11" x2="8" y2="15"/>
+            <polyline points="6,13 8,15 10,13"/>
+          </svg>
+        </button>
+        {lineHeightOpen && (
+          <div
+            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-4 pt-3.5 pb-4 rounded-2xl popover-enter"
+            style={{
+              background: "rgba(255,255,255,0.98)",
+              backdropFilter: "blur(18px)",
+              WebkitBackdropFilter: "blur(18px)",
+              width: 200,
+              border: "1px solid rgba(0,0,0,0.07)",
+              boxShadow: "0 4px 24px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06)",
+              zIndex: 300,
+            }}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400 select-none">Line Height</span>
+              <span className="text-sm font-semibold text-gray-800 tabular-nums">{lineHeight.toFixed(1)}</span>
+            </div>
+            <input
+              type="range"
+              min={0.5}
+              max={4}
+              step={0.1}
+              value={lineHeight}
+              onChange={(e) => onApply({ lineHeight: Math.round(Number(e.target.value) * 10) / 10 })}
+              className="toolbar-slider"
+              style={{ background: `linear-gradient(to right, #111 ${((lineHeight - 0.5) / 3.5) * 100}%, #e0e0e0 ${((lineHeight - 0.5) / 3.5) * 100}%)` }}
+            />
+          </div>
+        )}
       </div>
 
       <Divider />
 
       {/* ── Letter spacing ── */}
-      <div className="flex items-center gap-1 flex-shrink-0">
-        <svg viewBox="0 0 16 16" width="13" height="13" fill="none" className="text-gray-400 flex-shrink-0" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
-          <line x1="1" y1="8" x2="5" y2="8"/>
-          <polyline points="3,6 1,8 3,10"/>
-          <line x1="4" y1="3" x2="12" y2="3"/>
-          <line x1="4" y1="6" x2="12" y2="6"/>
-          <line x1="4" y1="9" x2="12" y2="9"/>
-          <line x1="4" y1="12" x2="12" y2="12"/>
-          <line x1="11" y1="8" x2="15" y2="8"/>
-          <polyline points="13,6 15,8 13,10"/>
-        </svg>
-        <StepBtn title="Decrease letter spacing" onClick={() => onApply({ charSpacing: Math.max(-200, charSpacing - 25) })}>
-          <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor"><rect x="1" y="5.5" width="10" height="1.5" rx="0.75"/></svg>
-        </StepBtn>
-        <span className="text-xs w-8 text-center tabular-nums text-gray-700 font-medium select-none">{charSpacing}</span>
-        <StepBtn title="Increase letter spacing" onClick={() => onApply({ charSpacing: Math.min(1000, charSpacing + 25) })}>
-          <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor"><rect x="1" y="5.5" width="10" height="1.5" rx="0.75"/><rect x="5.5" y="1" width="1.5" height="10" rx="0.75"/></svg>
-        </StepBtn>
+      <div className="relative flex items-center flex-shrink-0">
+        <button
+          title="Letter spacing"
+          onClick={(e) => { e.stopPropagation(); setLetterSpacingOpen((v) => !v); setLineHeightOpen(false); setColorOpen(false); setEffectOpen(false); onPopoverOpened?.(); }}
+          className={`w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 select-none ${letterSpacingOpen ? "bg-black/[0.09]" : "hover:bg-black/[0.07]"}`}
+        >
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" className="text-gray-600">
+            <line x1="1" y1="8" x2="5" y2="8"/>
+            <polyline points="3,6 1,8 3,10"/>
+            <line x1="4" y1="3" x2="12" y2="3"/>
+            <line x1="4" y1="6" x2="12" y2="6"/>
+            <line x1="4" y1="9" x2="12" y2="9"/>
+            <line x1="4" y1="12" x2="12" y2="12"/>
+            <line x1="11" y1="8" x2="15" y2="8"/>
+            <polyline points="13,6 15,8 13,10"/>
+          </svg>
+        </button>
+        {letterSpacingOpen && (
+          <div
+            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-4 pt-3.5 pb-4 rounded-2xl popover-enter"
+            style={{
+              background: "rgba(255,255,255,0.98)",
+              backdropFilter: "blur(18px)",
+              WebkitBackdropFilter: "blur(18px)",
+              width: 200,
+              border: "1px solid rgba(0,0,0,0.07)",
+              boxShadow: "0 4px 24px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06)",
+              zIndex: 300,
+            }}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400 select-none">Letter Spacing</span>
+              <span className="text-sm font-semibold text-gray-800 tabular-nums">{charSpacing}</span>
+            </div>
+            <input
+              type="range"
+              min={-200}
+              max={1000}
+              step={5}
+              value={charSpacing}
+              onChange={(e) => onApply({ charSpacing: Number(e.target.value) })}
+              className="toolbar-slider"
+              style={{ background: `linear-gradient(to right, #111 ${((charSpacing + 200) / 1200) * 100}%, #e0e0e0 ${((charSpacing + 200) / 1200) * 100}%)` }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
