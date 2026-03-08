@@ -241,10 +241,25 @@ export function useFabricCanvas({
 
     // ── Window event handlers ──────────────────────────────────────────────
     const handleWheel = (e: WheelEvent) => {
-      e.preventDefault();
       const fc = fabricRef.current;
       const mods = modsRef.current;
       if (!fc || !mods) return;
+      // If the event originated inside a scrollable UI overlay (not the canvas
+      // wrapper), let the browser handle it so popovers can scroll normally.
+      const canvasWrapper = canvasElRef.current?.parentElement;
+      if (canvasWrapper && !canvasWrapper.contains(e.target as Node)) {
+        // Only intercept if there's no scrollable ancestor between the target
+        // and the document root that can absorb this scroll.
+        const target = e.target as HTMLElement | null;
+        let el: HTMLElement | null = target;
+        while (el && el !== document.documentElement) {
+          const { overflowY, overflow } = window.getComputedStyle(el);
+          const scrollable = ["auto", "scroll"].includes(overflowY) || ["auto", "scroll"].includes(overflow);
+          if (scrollable && el.scrollHeight > el.clientHeight) return;
+          el = el.parentElement;
+        }
+      }
+      e.preventDefault();
       if (e.ctrlKey || e.metaKey) {
         const z = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, fc.getZoom() * (1 - e.deltaY * 0.001)));
         fc.zoomToPoint(new mods.Point(e.clientX, e.clientY), z);
