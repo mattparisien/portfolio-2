@@ -44,11 +44,17 @@ export default function ObjectLockButton({ fabricRef, locked, onToggle }: Object
       // Convert world-space bounding box to screen pixels
       const sx  = (r.left + r.width / 2) * vpt[0] + vpt[4];
       // Fabric places the rotation handle ~28px above the selection border in screen space
-      const rawSy = r.top * vpt[3] + vpt[5] - 28;
-      // Clamp so the button never clips off the top or bottom of the viewport
-      const MARGIN = 8;
-      const sy = Math.max(MARGIN + 28, Math.min(window.innerHeight - MARGIN, rawSy));
+      const sy = r.top * vpt[3] + vpt[5] - 28;
 
+      // Hide the button when the object's anchor point is outside the visible viewport
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      if (sx < 0 || sx > W || sy < 0 || sy > H) {
+        btn.style.visibility = "hidden";
+        return;
+      }
+
+      btn.style.visibility = "visible";
       btn.style.left      = `${sx}px`;
       btn.style.top       = `${sy}px`;
       btn.style.transform = "translate(-50%, -100%)";
