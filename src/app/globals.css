@@ -62,8 +62,12 @@
   --foreground: #171717;
 }
 
+html {
+  background-color: #ffffff;
+}
+
 body {
-  background: #ffffff;
+  background-color: #ffffff;
   color: #000000;
   position: relative;
   margin: 0;
