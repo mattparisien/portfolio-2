@@ -534,9 +534,9 @@ export function useFabricCanvas({
       modsRef.current = { Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, ActiveSelection, util, Gradient, Shadow, Pattern };
 
       // Make selection borders and corner handles clearly visible
-      FabricObject.ownDefaults.borderColor = "#2563eb";
-      FabricObject.ownDefaults.cornerColor = "#2563eb";
-      FabricObject.ownDefaults.cornerStrokeColor = "#1d4ed8";
+      FabricObject.ownDefaults.borderColor = "#4597f8";
+      FabricObject.ownDefaults.cornerColor = "#4597f8";
+      FabricObject.ownDefaults.cornerStrokeColor = "#4597f8";
       FabricObject.ownDefaults.cornerSize = 10;
       FabricObject.ownDefaults.transparentCorners = false;
       FabricObject.ownDefaults.borderOpacityWhenMoving = 1;
@@ -547,8 +547,8 @@ export function useFabricCanvas({
         isDrawingMode: false,
         selection: true,
         backgroundColor: BG_COLOR,
-        selectionColor: "rgba(37,99,235,0.15)",
-        selectionBorderColor: "#2563eb",
+        selectionColor: "rgba(69,151,248,0.15)",
+        selectionBorderColor: "#4597f8",
         selectionLineWidth: 2,
       });
       fabricRef.current = fc;
