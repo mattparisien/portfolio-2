@@ -178,7 +178,7 @@ function DrawingBoardInner() {
     broadcast: broadcastEvent,
   });
 
-  const { addText, addShape, addGif, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, applyTextProp } =
+  const { addText, addShape, addGif, addImage, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, applyTextProp } =
     useCanvasActions({
       fabricRef,
       modsRef,
@@ -328,6 +328,7 @@ function DrawingBoardInner() {
         onAddShape={addShape}
         onAddText={addText}
         onAddGif={addGif}
+        onAddImage={addImage}
         closeSignal={drawingToolsClose}
         onPopoverOpened={onDrawingToolsPopoverOpened}
       />

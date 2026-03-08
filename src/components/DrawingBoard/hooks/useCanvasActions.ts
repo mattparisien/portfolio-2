@@ -217,6 +217,43 @@ export function useCanvasActions({
     setTool("shape");
   }, [fabricRef, modsRef, colorRef, saveObject, setTool]);
 
+  // ── Add Image from URL ────────────────────────────────────────────────
+  const addImage = useCallback(async (url: string) => {
+    const fc = fabricRef.current;
+    const mods = modsRef.current;
+    if (!fc || !mods) return;
+
+    try {
+      const img = await mods.FabricImage.fromURL(url, { crossOrigin: "anonymous" });
+      const vpt = fc.viewportTransform as number[];
+      const cx = (window.innerWidth  / 2 - vpt[4]) / vpt[0];
+      const cy = (window.innerHeight / 2 - vpt[5]) / vpt[3];
+      const maxDim = 400;
+      const w = img.width;
+      const h = img.height;
+      const scale = (w && h) ? Math.min(1, maxDim / Math.max(w, h)) : 1;
+
+      img.set({
+        left: cx,
+        top:  cy,
+        originX: "center",
+        originY: "center",
+        scaleX: scale,
+        scaleY: scale,
+        selectable: true,
+        hasControls: true,
+      });
+
+      fc.add(img);
+      fc.setActiveObject(img);
+      fc.requestRenderAll();
+      saveObject(img);
+      setTool("select");
+    } catch (e) {
+      console.error("[addImage] failed to load:", e);
+    }
+  }, [fabricRef, modsRef, saveObject, setTool]);
+
   // ── Add GIF ────────────────────────────────────────────────────────────
   const addGif = useCallback((giphyId: string, url: string) => {
     const fc = fabricRef.current;
@@ -500,5 +537,5 @@ export function useCanvasActions({
     fc.requestRenderAll();
   }, [fabricRef, saveObject]);
 
-  return { addText, addShape, addGif, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, clearCanvas, applyTextProp };
+  return { addText, addShape, addGif, addImage, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, clearCanvas, applyTextProp };
 }
