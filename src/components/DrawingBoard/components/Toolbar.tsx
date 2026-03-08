@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { MdLineWeight, MdOpacity } from "react-icons/md";
 
 interface ToolbarProps {
   color: string;
@@ -130,11 +131,7 @@ export default function Toolbar({ color, opacity, strokeWeight, onOpacityChange,
           label={`${strokeWeight}px`}
           onClick={() => { setOpenPanel((v) => { const next = v === "weight" ? null : "weight"; if (next) onPopoverOpened?.(); return next; }); }}
         >
-          <svg viewBox="0 0 20 20" width="18" height="18" fill="none">
-            <line x1="3" y1="5.5" x2="17" y2="5.5" stroke="#444" strokeWidth="1.5" strokeLinecap="round" />
-            <line x1="3" y1="10"  x2="17" y2="10"  stroke="#444" strokeWidth="2.5" strokeLinecap="round" />
-            <line x1="3" y1="15"  x2="17" y2="15"  stroke="#444" strokeWidth="4"   strokeLinecap="round" />
-          </svg>
+          <MdLineWeight size={18} color="#444" />
         </ToolbarBtn>
 
         {weightOpen && (
@@ -187,11 +184,7 @@ export default function Toolbar({ color, opacity, strokeWeight, onOpacityChange,
           label={`${Math.round(opacity * 100)}%`}
           onClick={() => { setOpenPanel((v) => { const next = v === "opacity" ? null : "opacity"; if (next) onPopoverOpened?.(); return next; }); }}
         >
-          <svg viewBox="0 0 20 20" width="18" height="18" fill="none">
-            <circle cx="10" cy="10" r="7.5" stroke="#444" strokeWidth="1.4" />
-            <path d="M10 2.5 a7.5 7.5 0 0 1 0 15" fill="#444" />
-            <line x1="5" y1="5" x2="15" y2="15" stroke="white" strokeWidth="1.4" strokeLinecap="round" />
-          </svg>
+          <MdOpacity size={18} color="#444" />
         </ToolbarBtn>
 
         {opacityOpen && (

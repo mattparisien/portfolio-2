@@ -1,5 +1,7 @@
 "use client";
 
+import { MdUndo, MdRemove, MdAdd } from "react-icons/md";
+
 interface ZoomNavProps {
   zoom: number;
   onZoomIn: () => void;
@@ -27,9 +29,7 @@ export default function ZoomNav({ zoom, onZoomIn, onZoomOut, onZoomReset, onUndo
             aria-label="Undo"
             className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:text-black hover:bg-black/[0.06] transition-all cursor-pointer select-none"
           >
-            <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor">
-              <path d="M5.5 2.5A.75.75 0 0 1 5.5 1h-4a.5.5 0 0 0-.5.5v4a.75.75 0 0 1 1.5 0V3.56A7 7 0 1 1 1 9a.75.75 0 0 1 1.5 0 5.5 5.5 0 1 0 3.5-5.19V5.5a.75.75 0 0 1-.5.71V2.5z"/>
-            </svg>
+            <MdUndo size={15} />
           </button>
           <div className="w-px h-4 bg-black/[0.08] mx-0.5 flex-shrink-0" />
         </>
@@ -40,9 +40,9 @@ export default function ZoomNav({ zoom, onZoomIn, onZoomOut, onZoomReset, onUndo
         title="Zoom out"
         aria-label="Zoom out"
         disabled={zoom <= 0.25}
-        className="w-7 h-7 flex items-center justify-center rounded-lg text-base font-semibold text-gray-500 hover:text-black hover:bg-black/[0.06] transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer select-none"
+        className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:text-black hover:bg-black/[0.06] transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer select-none"
       >
-        −
+        <MdRemove size={16} />
       </button>
       <button
         onClick={onZoomReset}
@@ -57,9 +57,9 @@ export default function ZoomNav({ zoom, onZoomIn, onZoomOut, onZoomReset, onUndo
         title="Zoom in"
         aria-label="Zoom in"
         disabled={zoom >= 4}
-        className="w-7 h-7 flex items-center justify-center rounded-lg text-base font-semibold text-gray-500 hover:text-black hover:bg-black/[0.06] transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer select-none"
+        className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:text-black hover:bg-black/[0.06] transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer select-none"
       >
-        +
+        <MdAdd size={16} />
       </button>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useRef, useEffect } from "react";
 import type { Canvas } from "fabric";
+import { MdLock, MdLockOpen } from "react-icons/md";
 
 interface ObjectLockButtonProps {
   fabricRef: React.MutableRefObject<Canvas | null>;
@@ -11,17 +12,9 @@ interface ObjectLockButtonProps {
 
 function LockIcon({ open }: { open: boolean }) {
   return open ? (
-    <svg viewBox="0 0 18 18" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="8" width="12" height="8" rx="2" fill="currentColor" stroke="none" opacity="0.15"/>
-      <rect x="3" y="8" width="12" height="8" rx="2"/>
-      <path d="M6 8V5.5a3 3 0 0 1 6 0" />
-    </svg>
+    <MdLockOpen size={13} />
   ) : (
-    <svg viewBox="0 0 18 18" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="8" width="12" height="8" rx="2" fill="currentColor" stroke="none" opacity="0.15"/>
-      <rect x="3" y="8" width="12" height="8" rx="2"/>
-      <path d="M6 8V5.5a3 3 0 0 1 6 0V8" />
-    </svg>
+    <MdLock size={13} />
   );
 }
 
