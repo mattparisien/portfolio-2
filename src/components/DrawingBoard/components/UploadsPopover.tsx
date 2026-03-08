@@ -18,11 +18,13 @@ export default function UploadsPopover({ onSelect }: UploadsPopoverProps) {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadedUrls, setLoadedUrls] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchImages = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setLoadedUrls(new Set());
     try {
       const res = await fetch("/api/cloudinary-images");
       const json = await res.json();
@@ -67,40 +69,42 @@ export default function UploadsPopover({ onSelect }: UploadsPopoverProps) {
   return (
     <div className="flex flex-col gap-2" style={{ width: "min(380px, calc(100vw - 100px))" }}>
       {/* Header row */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2">
         <span className="text-xs font-semibold text-gray-700">Uploads</span>
-        <button
-          title="Upload image"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ background: "#000", color: "#fff" }}
-        >
-          {uploading ? (
-            <>
-              <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              Uploading…
-            </>
-          ) : (
-            <>
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
-                <path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z" />
-              </svg>
-              Upload
-            </>
-          )}
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml"
-          className="hidden"
-          onChange={handleFileChange}
-        />
       </div>
+
+      {/* Full-width upload button */}
+      <button
+        title="Upload image"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={uploading}
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 active:scale-[0.98]"
+        style={{ background: "#000", color: "#fff" }}
+      >
+        {uploading ? (
+          <>
+            <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            Uploading…
+          </>
+        ) : (
+          <>
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+              <path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z" />
+            </svg>
+            Upload Image
+          </>
+        )}
+      </button>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml"
+        className="hidden"
+        onChange={handleFileChange}
+      />
 
       {/* Error */}
       {error && (
@@ -129,24 +133,49 @@ export default function UploadsPopover({ onSelect }: UploadsPopoverProps) {
           </div>
         ) : (
           <div style={{ columns: 3, columnGap: 8 }}>
-            {images.map((img, i) => (
-              <button
-                key={i}
-                title="Add to canvas"
-                onClick={() => onSelect(img.url)}
-                className="rounded-lg overflow-hidden hover:opacity-80 active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-black mb-2 break-inside-avoid w-full cursor-pointer"
-                style={{ display: "block" }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={img.url}
-                  alt="Uploaded image"
-                  loading="lazy"
-                  className="w-full h-auto block"
-                  style={{ minHeight: 40, background: "#f3f4f6" }}
-                />
-              </button>
-            ))}
+            {images.map((img, i) => {
+              const isLoaded = loadedUrls.has(img.url);
+              const aspectRatio =
+                img.width && img.height ? img.width / img.height : null;
+              return (
+                <button
+                  key={img.url || i}
+                  title="Add to canvas"
+                  onClick={() => onSelect(img.url)}
+                  className="rounded-lg overflow-hidden hover:opacity-80 active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-black mb-2 break-inside-avoid w-full cursor-pointer"
+                  style={{ display: "block" }}
+                >
+                  <div
+                    className="relative w-full"
+                    style={
+                      aspectRatio
+                        ? { aspectRatio: String(aspectRatio) }
+                        : { minHeight: 40 }
+                    }
+                  >
+                    {!isLoaded && (
+                      <div className="absolute inset-0 animate-pulse bg-gray-100" />
+                    )}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={img.url}
+                      alt="Uploaded image"
+                      loading="lazy"
+                      className="w-full h-auto block"
+                      style={{
+                        minHeight: 40,
+                        background: "#f3f4f6",
+                        opacity: isLoaded ? 1 : 0,
+                        transition: "opacity 0.25s ease",
+                      }}
+                      onLoad={() =>
+                        setLoadedUrls((prev) => new Set(prev).add(img.url))
+                      }
+                    />
+                  </div>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
