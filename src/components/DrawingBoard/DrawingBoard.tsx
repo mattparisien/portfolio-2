@@ -376,6 +376,7 @@ function DrawingBoardInner() {
           onColorChange={(c) => { setColor(c); recolorSelected(c); }}
           onGradientChange={(g) => applyTextProp({ gradient: g })}
           onClose={closeColorPopover}
+          anchorStyle={{ top: "auto", bottom: 100, left: "calc(50vw - 128px)" }}
         />
       )}
     </div>

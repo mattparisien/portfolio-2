@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import type { TextProps } from "../types";
 import TextEffectsPopover from "./TextEffectsPopover";
 import {
@@ -94,12 +95,35 @@ function StepBtn({
   );
 }
 
+/** Compute a fixed { bottom, left } position to place a 200-wide popover
+ *  centered above the given button element. */
+function getPopoverPos(btn: HTMLButtonElement | null): React.CSSProperties {
+  if (!btn) return {};
+  const rect = btn.getBoundingClientRect();
+  const popoverWidth = 200;
+  const left = Math.max(
+    8,
+    Math.min(
+      window.innerWidth - popoverWidth - 8,
+      rect.left + rect.width / 2 - popoverWidth / 2,
+    ),
+  );
+  return { bottom: window.innerHeight - rect.top + 12, left };
+}
+
 export default function TextToolbar({ textProps, color, onApply, closeSignal, onPopoverOpened, colorPopoverOpen, onOpenColorPopover, onCloseColorPopover }: TextToolbarProps) {
   const { fontFamily, fontSize, bold, italic, underline, linethrough, uppercase, lineHeight, charSpacing, textAlign, gradient, effect } = textProps;
 
   const [effectOpen, setEffectOpen] = useState(false);
   const [lineHeightOpen, setLineHeightOpen] = useState(false);
   const [letterSpacingOpen, setLetterSpacingOpen] = useState(false);
+
+  // Refs for portal-based popovers — needed to position them above their buttons
+  // and to handle click-outside dismissal.
+  const lineHeightBtnRef = useRef<HTMLButtonElement>(null);
+  const lineHeightPopRef = useRef<HTMLDivElement>(null);
+  const letterSpacingBtnRef = useRef<HTMLButtonElement>(null);
+  const letterSpacingPopRef = useRef<HTMLDivElement>(null);
 
   // Close all when a sibling component opens a popover
   useEffect(() => {
@@ -108,6 +132,36 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
     setLineHeightOpen(false);
     setLetterSpacingOpen(false);
   }, [closeSignal]);
+
+  // Click-outside: close line-height popover
+  useEffect(() => {
+    if (!lineHeightOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (
+        !lineHeightPopRef.current?.contains(e.target as Node) &&
+        !lineHeightBtnRef.current?.contains(e.target as Node)
+      ) {
+        setLineHeightOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [lineHeightOpen]);
+
+  // Click-outside: close letter-spacing popover
+  useEffect(() => {
+    if (!letterSpacingOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (
+        !letterSpacingPopRef.current?.contains(e.target as Node) &&
+        !letterSpacingBtnRef.current?.contains(e.target as Node)
+      ) {
+        setLetterSpacingOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [letterSpacingOpen]);
 
   // Determine display swatch — gradient pill or solid dot
   const swatchStyle: React.CSSProperties = (() => {
@@ -248,15 +302,17 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
       {/* ── Line height ── */}
       <div className="relative flex items-center flex-shrink-0">
         <button
+          ref={lineHeightBtnRef}
           title="Line height"
           onClick={(e) => { e.stopPropagation(); setLineHeightOpen((v) => !v); setLetterSpacingOpen(false); onCloseColorPopover?.(); setEffectOpen(false); onPopoverOpened?.(); }}
           className={`w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 select-none ${lineHeightOpen ? "bg-black/[0.09]" : "hover:bg-black/[0.07]"}`}
         >
           <MdFormatLineSpacing size={14} className="text-gray-600" />
         </button>
-        {lineHeightOpen && (
+        {lineHeightOpen && createPortal(
           <div
-            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-4 pt-3.5 pb-4 rounded-2xl popover-enter"
+            ref={lineHeightPopRef}
+            className="fixed px-4 pt-3.5 pb-4 rounded-2xl popover-enter"
             style={{
               background: "rgba(255,255,255,0.98)",
               backdropFilter: "blur(18px)",
@@ -264,6 +320,7 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
               width: 200,
               border: "1px solid rgba(0,0,0,0.07)",
               zIndex: 300,
+              ...getPopoverPos(lineHeightBtnRef.current),
             }}
           >
             <div className="flex items-center justify-between mb-3">
@@ -280,7 +337,8 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
               className="toolbar-slider"
               style={{ background: `linear-gradient(to right, #111 ${((lineHeight - 0.5) / 3.5) * 100}%, #e0e0e0 ${((lineHeight - 0.5) / 3.5) * 100}%)` }}
             />
-          </div>
+          </div>,
+          document.body
         )}
       </div>
 
@@ -289,15 +347,17 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
       {/* ── Letter spacing ── */}
       <div className="relative flex items-center flex-shrink-0">
         <button
+          ref={letterSpacingBtnRef}
           title="Letter spacing"
           onClick={(e) => { e.stopPropagation(); setLetterSpacingOpen((v) => !v); setLineHeightOpen(false); onCloseColorPopover?.(); setEffectOpen(false); onPopoverOpened?.(); }}
           className={`w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 select-none ${letterSpacingOpen ? "bg-black/[0.09]" : "hover:bg-black/[0.07]"}`}
         >
           <MdSpaceBar size={14} className="text-gray-600" />
         </button>
-        {letterSpacingOpen && (
+        {letterSpacingOpen && createPortal(
           <div
-            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-4 pt-3.5 pb-4 rounded-2xl popover-enter"
+            ref={letterSpacingPopRef}
+            className="fixed px-4 pt-3.5 pb-4 rounded-2xl popover-enter"
             style={{
               background: "rgba(255,255,255,0.98)",
               backdropFilter: "blur(18px)",
@@ -305,6 +365,7 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
               width: 200,
               border: "1px solid rgba(0,0,0,0.07)",
               zIndex: 300,
+              ...getPopoverPos(letterSpacingBtnRef.current),
             }}
           >
             <div className="flex items-center justify-between mb-3">
@@ -321,7 +382,8 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
               className="toolbar-slider"
               style={{ background: `linear-gradient(to right, #111 ${((charSpacing + 200) / 1200) * 100}%, #e0e0e0 ${((charSpacing + 200) / 1200) * 100}%)` }}
             />
-          </div>
+          </div>,
+          document.body
         )}
       </div>
       </div>
