@@ -1,5 +1,5 @@
 'use client';
-import { MediaItem } from "@/app/page";
+import { MediaItem } from "@/types/media";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { PALETTE } from "@/app/constants";
 import classNames from "classnames";

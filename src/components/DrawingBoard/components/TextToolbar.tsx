@@ -119,6 +119,66 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
 
   return (
     <div className="absolute bottom-6 left-1/2 -translate-x-1/2 toolbar-enter z-[200]" style={{ maxWidth: "calc(100vw - 32px)" }}>
+      {/* ── Line height popover — rendered outside overflow-x-auto to avoid clipping ── */}
+      {lineHeightOpen && (
+        <div
+          className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-4 pt-3.5 pb-4 rounded-2xl popover-enter"
+          style={{
+            background: "rgba(255,255,255,0.98)",
+            backdropFilter: "blur(18px)",
+            WebkitBackdropFilter: "blur(18px)",
+            width: 200,
+            border: "1px solid rgba(0,0,0,0.07)",
+            zIndex: 300,
+          }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400 select-none">Line Height</span>
+            <span className="text-sm font-semibold text-gray-800 tabular-nums">{lineHeight.toFixed(1)}</span>
+          </div>
+          <input
+            type="range"
+            min={0.5}
+            max={4}
+            step={0.1}
+            value={lineHeight}
+            onChange={(e) => onApply({ lineHeight: Math.round(Number(e.target.value) * 10) / 10 })}
+            className="toolbar-slider"
+            style={{ background: `linear-gradient(to right, #111 ${((lineHeight - 0.5) / 3.5) * 100}%, #e0e0e0 ${((lineHeight - 0.5) / 3.5) * 100}%)` }}
+          />
+        </div>
+      )}
+
+      {/* ── Letter spacing popover — rendered outside overflow-x-auto to avoid clipping ── */}
+      {letterSpacingOpen && (
+        <div
+          className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-4 pt-3.5 pb-4 rounded-2xl popover-enter"
+          style={{
+            background: "rgba(255,255,255,0.98)",
+            backdropFilter: "blur(18px)",
+            WebkitBackdropFilter: "blur(18px)",
+            width: 200,
+            border: "1px solid rgba(0,0,0,0.07)",
+            zIndex: 300,
+          }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400 select-none">Letter Spacing</span>
+            <span className="text-sm font-semibold text-gray-800 tabular-nums">{charSpacing}</span>
+          </div>
+          <input
+            type="range"
+            min={-200}
+            max={1000}
+            step={5}
+            value={charSpacing}
+            onChange={(e) => onApply({ charSpacing: Number(e.target.value) })}
+            className="toolbar-slider"
+            style={{ background: `linear-gradient(to right, #111 ${((charSpacing + 200) / 1200) * 100}%, #e0e0e0 ${((charSpacing + 200) / 1200) * 100}%)` }}
+          />
+        </div>
+      )}
+
       <div
         className="relative flex items-center gap-2 px-3 py-2 rounded-2xl overflow-x-auto"
         style={{
@@ -254,34 +314,6 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
         >
           <MdFormatLineSpacing size={14} className="text-gray-600" />
         </button>
-        {lineHeightOpen && (
-          <div
-            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-4 pt-3.5 pb-4 rounded-2xl popover-enter"
-            style={{
-              background: "rgba(255,255,255,0.98)",
-              backdropFilter: "blur(18px)",
-              WebkitBackdropFilter: "blur(18px)",
-              width: 200,
-              border: "1px solid rgba(0,0,0,0.07)",
-              zIndex: 300,
-            }}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400 select-none">Line Height</span>
-              <span className="text-sm font-semibold text-gray-800 tabular-nums">{lineHeight.toFixed(1)}</span>
-            </div>
-            <input
-              type="range"
-              min={0.5}
-              max={4}
-              step={0.1}
-              value={lineHeight}
-              onChange={(e) => onApply({ lineHeight: Math.round(Number(e.target.value) * 10) / 10 })}
-              className="toolbar-slider"
-              style={{ background: `linear-gradient(to right, #111 ${((lineHeight - 0.5) / 3.5) * 100}%, #e0e0e0 ${((lineHeight - 0.5) / 3.5) * 100}%)` }}
-            />
-          </div>
-        )}
       </div>
 
       <Divider />
@@ -295,34 +327,6 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
         >
           <MdSpaceBar size={14} className="text-gray-600" />
         </button>
-        {letterSpacingOpen && (
-          <div
-            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-4 pt-3.5 pb-4 rounded-2xl popover-enter"
-            style={{
-              background: "rgba(255,255,255,0.98)",
-              backdropFilter: "blur(18px)",
-              WebkitBackdropFilter: "blur(18px)",
-              width: 200,
-              border: "1px solid rgba(0,0,0,0.07)",
-              zIndex: 300,
-            }}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400 select-none">Letter Spacing</span>
-              <span className="text-sm font-semibold text-gray-800 tabular-nums">{charSpacing}</span>
-            </div>
-            <input
-              type="range"
-              min={-200}
-              max={1000}
-              step={5}
-              value={charSpacing}
-              onChange={(e) => onApply({ charSpacing: Number(e.target.value) })}
-              className="toolbar-slider"
-              style={{ background: `linear-gradient(to right, #111 ${((charSpacing + 200) / 1200) * 100}%, #e0e0e0 ${((charSpacing + 200) / 1200) * 100}%)` }}
-            />
-          </div>
-        )}
       </div>
       </div>
     </div>

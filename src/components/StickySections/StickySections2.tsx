@@ -1,5 +1,5 @@
 'use client';
-import { MediaItem } from "@/app/page";
+import { MediaItem } from "@/types/media";
 import classNames from "classnames";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";

@@ -53,6 +53,7 @@ interface DrawingToolsProps {
   onAddShape: (shape: ShapeType) => void;
   onAddText: () => void;
   onAddGif: (id: string, url: string) => void;
+  onAddImage?: (url: string) => void;
   /** Incremented by the parent whenever another component opens a popover */
   closeSignal?: number;
   /** Called when this component opens any of its own popovers */
