@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <clipPath id="logo-circle-clip">
+      <circle cx="16" cy="16" r="14"/>
+    </clipPath>
+  </defs>
+  <!-- Pride flag stripes clipped to a circle -->
+  <rect x="2" y="2"     width="28" height="4.67" fill="#E40303" clip-path="url(#logo-circle-clip)"/>
+  <rect x="2" y="6.67"  width="28" height="4.67" fill="#FF8C00" clip-path="url(#logo-circle-clip)"/>
+  <rect x="2" y="11.33" width="28" height="4.67" fill="#FFED00" clip-path="url(#logo-circle-clip)"/>
+  <rect x="2" y="16"    width="28" height="4.67" fill="#008026" clip-path="url(#logo-circle-clip)"/>
+  <rect x="2" y="20.67" width="28" height="4.67" fill="#004DFF" clip-path="url(#logo-circle-clip)"/>
+  <rect x="2" y="25.33" width="28" height="6.67" fill="#750787" clip-path="url(#logo-circle-clip)"/>
+</svg>
