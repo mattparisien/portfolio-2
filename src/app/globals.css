@@ -134,6 +134,13 @@ body {
 }
 
 /* ── Custom range slider for toolbars ───────────────────────────────────── */
+
+/* Force-hide the native cursor inside the drawing board */
+.board-no-cursor,
+.board-no-cursor * {
+  cursor: none !important;
+}
+
 .toolbar-slider {
   -webkit-appearance: none;
   appearance: none;

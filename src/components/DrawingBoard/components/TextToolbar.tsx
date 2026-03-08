@@ -192,7 +192,7 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
       <div className="relative flex items-center flex-shrink-0">
         <button
           title="Text color"
-          onClick={(e) => { e.stopPropagation(); colorPopoverOpen ? onCloseColorPopover?.() : onOpenColorPopover?.(); setEffectOpen(false); setLineHeightOpen(false); setLetterSpacingOpen(false); onPopoverOpened?.(); }}
+          onClick={(e) => { e.stopPropagation(); colorPopoverOpen ? onCloseColorPopover?.() : onOpenColorPopover?.(); setEffectOpen(false); setLineHeightOpen(false); setLetterSpacingOpen(false); }}
           className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 hover:scale-105"
           style={{ background: colorPopoverOpen ? "rgba(0,0,0,0.09)" : "transparent" }}
         >

@@ -24,8 +24,8 @@ function Cursor({ x, y, name, color }: { x: number; y: number; name: string; col
     >
       {/* Custom cursor arrow */}
       <svg
-        width="20"
-        height="22"
+        width="13"
+        height="15"
         viewBox="0 0 317 354"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
