@@ -42,7 +42,6 @@ function ToolbarBtn({
         className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 hover:scale-105"
         style={{
           background: active ? "rgba(0,0,0,0.09)" : "transparent",
-          boxShadow: active ? "inset 0 1px 2px rgba(0,0,0,0.06)" : "none",
         }}
       >
         {children}

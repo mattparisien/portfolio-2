@@ -172,7 +172,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
       style={{
         background: "rgba(255,255,255,0.92)",
         backdropFilter: "blur(12px)",
-        boxShadow: "0 2px 16px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.06)",
+        border: "1px solid rgba(0,0,0,0.08)",
       }}
     >
       {/* Text */}

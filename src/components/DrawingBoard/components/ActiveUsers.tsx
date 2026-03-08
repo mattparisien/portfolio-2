@@ -70,7 +70,7 @@ export default function ActiveUsers() {
       style={{
         background: "rgba(255,255,255,0.92)",
         backdropFilter: "blur(14px)",
-        boxShadow: "0 2px 12px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.06)",
+        border: "1px solid rgba(0,0,0,0.08)",
       }}
     >
       {/* Stacked avatars — others first, self last */}
