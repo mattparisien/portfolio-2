@@ -4,52 +4,46 @@ import { useState, useRef, useEffect } from "react";
 import type { Tool, ShapeType } from "../types";
 import GifPicker from "./GifPicker";
 import UploadsPopover from "./UploadsPopover";
+import {
+  MdTextFields,
+  MdCreate,
+  MdBrush,
+  MdNearMe,
+  MdCategory,
+  MdRectangle,
+  MdCircle,
+  MdChangeHistory,
+  MdStar,
+  MdFavorite,
+  MdGif,
+  MdAutoFixOff,
+} from "react-icons/md";
 
 const SHAPES: { type: ShapeType; label: string; icon: React.ReactNode }[] = [
   {
     type: "rect",
     label: "Rectangle",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-        <rect x="2" y="6" width="20" height="13" rx="2" />
-      </svg>
-    ),
+    icon: <MdRectangle className="w-5 h-5" />,
   },
   {
     type: "circle",
     label: "Circle",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-        <circle cx="12" cy="12" r="10" />
-      </svg>
-    ),
+    icon: <MdCircle className="w-5 h-5" />,
   },
   {
     type: "triangle",
     label: "Triangle",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-        <polygon points="12,3 22,21 2,21" />
-      </svg>
-    ),
+    icon: <MdChangeHistory className="w-5 h-5" />,
   },
   {
     type: "star",
     label: "Star",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-        <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
-      </svg>
-    ),
+    icon: <MdStar className="w-5 h-5" />,
   },
   {
     type: "heart",
     label: "Heart",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-        <path d="M12 21C12 21 3 14 3 8.5A5.5 5.5 0 0 1 12 5.1 5.5 5.5 0 0 1 21 8.5C21 14 12 21 12 21Z" />
-      </svg>
-    ),
+    icon: <MdFavorite className="w-5 h-5" />,
   },
 ];
 
@@ -219,9 +213,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
         tool === "text",
         () => onAddText(),
         "Text",
-        <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5" aria-label="Text tool">
-          <path d="M5 4v3h5.5v12h3V7H19V4z" />
-        </svg>,
+        <MdTextFields className="w-5 h-5" aria-label="Text tool" />,
       )}
 
       {/* Separator */}
@@ -255,18 +247,11 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
           }}
         >
           {tool === "brush" && !drawOpen ? (
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-              <path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34a1 1 0 0 0-1.41 0L9 12.25 11.75 15l8.96-8.96a1 1 0 0 0 0-1.41z"/>
-            </svg>
+            <MdBrush className="w-5 h-5" />
           ) : tool === "eraser" && !drawOpen ? (
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-              <path d="M20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-9.5 9.5a1 1 0 0 0-.29.71V17a1 1 0 0 0 1 1h4a1 1 0 0 0 .71-.29l7.83-7.83zM10.88 16H9v-1.88l5.5-5.5 1.88 1.88L10.88 16z" />
-              <path d="M3 21h18v-2H3z" />
-            </svg>
+            <MdAutoFixOff className="w-5 h-5" />
           ) : (
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-              <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm2.92 1.5H5v-.92l9.06-9.06.92.92-9.06 9.06zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-            </svg>
+            <MdCreate className="w-5 h-5" />
           )}
         </button>
 
@@ -292,9 +277,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
                 tool === "pencil" ? "bg-black text-white" : "text-[#111] hover:bg-black/[0.07]"
               }`}
             >
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm2.92 1.5H5v-.92l9.06-9.06.92.92-9.06 9.06zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-              </svg>
+              <MdCreate className="w-5 h-5" />
               <span className={`text-xs leading-none ${tool === "pencil" ? "text-white/70" : "text-gray-400"}`}>Pencil</span>
             </button>
 
@@ -306,9 +289,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
                 tool === "brush" ? "bg-black text-white" : "text-[#111] hover:bg-black/[0.07]"
               }`}
             >
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                <path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34a1 1 0 0 0-1.41 0L9 12.25 11.75 15l8.96-8.96a1 1 0 0 0 0-1.41z"/>
-              </svg>
+              <MdBrush className="w-5 h-5" />
               <span className={`text-xs leading-none ${tool === "brush" ? "text-white/70" : "text-gray-400"}`}>Brush</span>
             </button>
 
@@ -320,9 +301,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
                 tool === "select" ? "bg-black text-white" : "text-[#111] hover:bg-black/[0.07]"
               }`}
             >
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                <path d="M4 2 L4 18 L8.5 13.5 L11.5 20 L13.5 19 L10.5 12.5 L16 12.5 Z" />
-              </svg>
+              <MdNearMe className="w-5 h-5" />
               <span className={`text-xs leading-none ${tool === "select" ? "text-white/70" : "text-gray-400"}`}>Select</span>
             </button>
 
@@ -334,10 +313,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
                 tool === "eraser" ? "bg-black text-white" : "text-[#111] hover:bg-black/[0.07]"
               }`}
             >
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                <path d="M20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-9.5 9.5a1 1 0 0 0-.29.71V17a1 1 0 0 0 1 1h4a1 1 0 0 0 .71-.29l7.83-7.83zM10.88 16H9v-1.88l5.5-5.5 1.88 1.88L10.88 16z" />
-                <path d="M3 21h18v-2H3z" />
-              </svg>
+              <MdAutoFixOff className="w-5 h-5" />
               <span className={`text-xs leading-none ${tool === "eraser" ? "text-white/70" : "text-gray-400"}`}>Eraser</span>
             </button>
 
@@ -369,11 +345,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
               : shapeHover ? "bg-black/[0.07] text-[#111]" : "text-[#111] hover:bg-black/[0.07] hover:scale-105"
           }`}
         >
-          <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-            <rect x="2" y="13" width="9" height="9" rx="1.5" />
-            <circle cx="17.5" cy="17.5" r="4.5" />
-            <polygon points="12,2 22,11 2,11" />
-          </svg>
+          <MdCategory className="w-5 h-5" />
         </button>
 
         {shapeOpen && (
@@ -425,9 +397,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
               : gifHover ? "bg-black/[0.07] text-[#111]" : "text-[#111] hover:bg-black/[0.07] hover:scale-105"
           }`}
         >
-          <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-            <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
-          </svg>
+          <MdGif className="w-5 h-5" />
         </button>
 
         {gifOpen && (

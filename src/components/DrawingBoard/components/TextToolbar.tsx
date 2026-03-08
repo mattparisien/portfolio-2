@@ -3,6 +3,16 @@
 import { useState, useEffect } from "react";
 import type { TextProps } from "../types";
 import TextEffectsPopover from "./TextEffectsPopover";
+import {
+  MdAutoAwesome,
+  MdRemove,
+  MdAdd,
+  MdFormatAlignLeft,
+  MdFormatAlignCenter,
+  MdFormatAlignRight,
+  MdFormatLineSpacing,
+  MdSpaceBar,
+} from "react-icons/md";
 
 const FONT_FAMILIES = [
   "sans-serif",
@@ -147,9 +157,7 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
             color: effect && !effectOpen ? "#fff" : "#444",
           }}
         >
-          <svg viewBox="0 0 20 20" width="15" height="15" fill="currentColor">
-            <path d="M10 2a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L10 14.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L2.82 8.125a.75.75 0 0 1 .416-1.28l4.21-.611L9.327 2.418A.75.75 0 0 1 10 2Z" />
-          </svg>
+          <MdAutoAwesome size={15} />
         </button>
         {effectOpen && (
           <TextEffectsPopover
@@ -187,7 +195,7 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
           title="Decrease font size"
           onClick={() => { const i = FONT_SIZES.indexOf(fontSize); if (i > 0) onApply({ fontSize: FONT_SIZES[i - 1] }); }}
         >
-          <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor"><rect x="1" y="5.5" width="10" height="1.5" rx="0.75"/></svg>
+          <MdRemove size={10} />
         </StepBtn>
         <select
           value={fontSize}
@@ -203,7 +211,7 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
           title="Increase font size"
           onClick={() => { const i = FONT_SIZES.indexOf(fontSize); if (i < FONT_SIZES.length - 1) onApply({ fontSize: FONT_SIZES[i + 1] }); }}
         >
-          <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor"><rect x="1" y="5.5" width="10" height="1.5" rx="0.75"/><rect x="5.5" y="1" width="1.5" height="10" rx="0.75"/></svg>
+          <MdAdd size={10} />
         </StepBtn>
       </div>
 
@@ -225,28 +233,13 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
       {/* ── Text alignment ── */}
       <div className="flex items-center gap-0.5 flex-shrink-0">
         <ToggleBtn active={textAlign === "left"} title="Align left" onClick={() => onApply({ textAlign: "left" })}>
-          <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor">
-            <rect x="1" y="2" width="14" height="1.8" rx="0.9"/>
-            <rect x="1" y="5.8" width="9" height="1.8" rx="0.9"/>
-            <rect x="1" y="9.6" width="12" height="1.8" rx="0.9"/>
-            <rect x="1" y="13.4" width="7" height="1.8" rx="0.9"/>
-          </svg>
+          <MdFormatAlignLeft size={13} />
         </ToggleBtn>
         <ToggleBtn active={textAlign === "center"} title="Align center" onClick={() => onApply({ textAlign: "center" })}>
-          <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor">
-            <rect x="1" y="2" width="14" height="1.8" rx="0.9"/>
-            <rect x="3.5" y="5.8" width="9" height="1.8" rx="0.9"/>
-            <rect x="2" y="9.6" width="12" height="1.8" rx="0.9"/>
-            <rect x="4.5" y="13.4" width="7" height="1.8" rx="0.9"/>
-          </svg>
+          <MdFormatAlignCenter size={13} />
         </ToggleBtn>
         <ToggleBtn active={textAlign === "right"} title="Align right" onClick={() => onApply({ textAlign: "right" })}>
-          <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor">
-            <rect x="1" y="2" width="14" height="1.8" rx="0.9"/>
-            <rect x="6" y="5.8" width="9" height="1.8" rx="0.9"/>
-            <rect x="3" y="9.6" width="12" height="1.8" rx="0.9"/>
-            <rect x="8" y="13.4" width="7" height="1.8" rx="0.9"/>
-          </svg>
+          <MdFormatAlignRight size={13} />
         </ToggleBtn>
       </div>
 
@@ -259,14 +252,7 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
           onClick={(e) => { e.stopPropagation(); setLineHeightOpen((v) => !v); setLetterSpacingOpen(false); onCloseColorPopover?.(); setEffectOpen(false); onPopoverOpened?.(); }}
           className={`w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 select-none ${lineHeightOpen ? "bg-black/[0.09]" : "hover:bg-black/[0.07]"}`}
         >
-          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" className="text-gray-600">
-            <line x1="8" y1="1" x2="8" y2="5"/>
-            <polyline points="6,3 8,1 10,3"/>
-            <line x1="3" y1="6.5" x2="13" y2="6.5"/>
-            <line x1="3" y1="9.5" x2="13" y2="9.5"/>
-            <line x1="8" y1="11" x2="8" y2="15"/>
-            <polyline points="6,13 8,15 10,13"/>
-          </svg>
+          <MdFormatLineSpacing size={14} className="text-gray-600" />
         </button>
         {lineHeightOpen && (
           <div
@@ -307,16 +293,7 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
           onClick={(e) => { e.stopPropagation(); setLetterSpacingOpen((v) => !v); setLineHeightOpen(false); onCloseColorPopover?.(); setEffectOpen(false); onPopoverOpened?.(); }}
           className={`w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 select-none ${letterSpacingOpen ? "bg-black/[0.09]" : "hover:bg-black/[0.07]"}`}
         >
-          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" className="text-gray-600">
-            <line x1="1" y1="8" x2="5" y2="8"/>
-            <polyline points="3,6 1,8 3,10"/>
-            <line x1="4" y1="3" x2="12" y2="3"/>
-            <line x1="4" y1="6" x2="12" y2="6"/>
-            <line x1="4" y1="9" x2="12" y2="9"/>
-            <line x1="4" y1="12" x2="12" y2="12"/>
-            <line x1="11" y1="8" x2="15" y2="8"/>
-            <polyline points="13,6 15,8 13,10"/>
-          </svg>
+          <MdSpaceBar size={14} className="text-gray-600" />
         </button>
         {letterSpacingOpen && (
           <div
