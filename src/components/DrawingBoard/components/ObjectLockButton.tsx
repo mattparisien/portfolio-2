@@ -44,7 +44,10 @@ export default function ObjectLockButton({ fabricRef, locked, onToggle }: Object
       // Convert world-space bounding box to screen pixels
       const sx  = (r.left + r.width / 2) * vpt[0] + vpt[4];
       // Fabric places the rotation handle ~28px above the selection border in screen space
-      const sy  = r.top * vpt[3] + vpt[5] - 28;
+      const rawSy = r.top * vpt[3] + vpt[5] - 28;
+      // Clamp so the button never clips off the top or bottom of the viewport
+      const MARGIN = 8;
+      const sy = Math.max(MARGIN + 28, Math.min(window.innerHeight - MARGIN, rawSy));
 
       btn.style.left      = `${sx}px`;
       btn.style.top       = `${sy}px`;

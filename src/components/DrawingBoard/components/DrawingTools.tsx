@@ -180,7 +180,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
         tool === "text",
         () => onAddText(),
         "Text",
-        <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+        <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5" aria-label="Text tool">
           <path d="M5 4v3h5.5v12h3V7H19V4z" />
         </svg>,
       )}
@@ -197,6 +197,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
         <button
           ref={drawRef}
           title="Draw"
+          aria-label="Draw tools"
           onClick={() => {
             if (drawPinned) {
               setDrawPinned(false);
@@ -214,9 +215,20 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
             color: drawPinned || ((tool === "pencil" || tool === "brush" || tool === "eraser") && !drawOpen) ? "#fff" : "#111",
           }}
         >
-          <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm2.92 1.5H5v-.92l9.06-9.06.92.92-9.06 9.06zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-          </svg>
+          {tool === "brush" && !drawOpen ? (
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+              <path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34a1 1 0 0 0-1.41 0L9 12.25 11.75 15l8.96-8.96a1 1 0 0 0 0-1.41z"/>
+            </svg>
+          ) : tool === "eraser" && !drawOpen ? (
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+              <path d="M20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-9.5 9.5a1 1 0 0 0-.29.71V17a1 1 0 0 0 1 1h4a1 1 0 0 0 .71-.29l7.83-7.83zM10.88 16H9v-1.88l5.5-5.5 1.88 1.88L10.88 16z" />
+              <path d="M3 21h18v-2H3z" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+              <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm2.92 1.5H5v-.92l9.06-9.06.92.92-9.06 9.06zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+            </svg>
+          )}
         </button>
 
         {drawOpen && (
@@ -306,6 +318,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
         <button
           ref={shapeRef}
           title="Shapes"
+          aria-label="Shapes"
           onClick={() => {
             const nowPinned = !shapePinned;
             setShapePinned(nowPinned);
@@ -361,6 +374,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
         <button
           ref={gifRef}
           title="Add GIF or Sticker"
+          aria-label="Add GIF or Sticker"
           onClick={() => {
             const nowPinned = !gifPinned;
             setGifPinned(nowPinned);
@@ -381,7 +395,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
           <div
             ref={gifPopoverRef}
             className="absolute top-0 left-[calc(100%+12px)] p-3 rounded-2xl z-50 popover-enter-right"
-            style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)", border: "1px solid rgba(0,0,0,0.08)", width: 420 }}
+            style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)", border: "1px solid rgba(0,0,0,0.08)", width: "min(420px, calc(100vw - 100px))" }}
           >
             <GifPicker
               onSelect={(id, url) => {

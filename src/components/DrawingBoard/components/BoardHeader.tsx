@@ -14,7 +14,7 @@ export default function BoardHeader({ isSyncing }: BoardHeaderProps) {
         border: "1px solid rgba(0,0,0,0.08)",
       }}
     >
-      Queer Montréal ✦ Collective Board
+      Collective Board
       {isSyncing && (
         <span
           title="Syncing board…"

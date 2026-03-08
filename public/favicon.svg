@@ -1,13 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <defs>
-    <clipPath id="favicon-circle-clip">
-      <circle cx="32" cy="32" r="30"/>
-    </clipPath>
-  </defs>
-  <rect x="4" y="4"     width="56" height="9.33" fill="#E40303" clip-path="url(#favicon-circle-clip)"/>
-  <rect x="4" y="13.33" width="56" height="9.33" fill="#FF8C00" clip-path="url(#favicon-circle-clip)"/>
-  <rect x="4" y="22.67" width="56" height="9.33" fill="#FFED00" clip-path="url(#favicon-circle-clip)"/>
-  <rect x="4" y="32"    width="56" height="9.33" fill="#008026" clip-path="url(#favicon-circle-clip)"/>
-  <rect x="4" y="41.33" width="56" height="9.33" fill="#004DFF" clip-path="url(#favicon-circle-clip)"/>
-  <rect x="4" y="50.67" width="56" height="13.33" fill="#750787" clip-path="url(#favicon-circle-clip)"/>
+  <rect width="64" height="64" rx="14" fill="#111"/>
+  <path d="M18 42 L36 14 L50 22 L32 50 Z" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"/>
+  <line x1="36" y1="14" x2="50" y2="22" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+  <line x1="18" y1="42" x2="14" y2="50" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+  <line x1="14" y1="50" x2="22" y2="50" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
 </svg>

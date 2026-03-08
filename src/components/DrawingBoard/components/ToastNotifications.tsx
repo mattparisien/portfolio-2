@@ -36,7 +36,7 @@ export default function ToastNotifications() {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed bottom-24 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-[300] pointer-events-none">
+    <div className="fixed bottom-36 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-[300] pointer-events-none">
       {toasts.map((t) => (
         <div
           key={t.id}

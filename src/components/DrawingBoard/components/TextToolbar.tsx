@@ -90,7 +90,6 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
   const [effectOpen, setEffectOpen] = useState(false);
   const [lineHeightOpen, setLineHeightOpen] = useState(false);
   const [letterSpacingOpen, setLetterSpacingOpen] = useState(false);
-  const colorTriggerRef = useRef<HTMLDivElement>(null);
 
   // Close all when a sibling component opens a popover
   useEffect(() => {
@@ -109,24 +108,27 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
   })();
 
   return (
-    <div
-      className="absolute bottom-6 left-1/2 toolbar-enter flex items-center gap-2 px-3 py-2 rounded-2xl z-[200]"
-      style={{
-        background: "rgba(255,255,255,0.94)",
-        backdropFilter: "blur(18px)",
-        WebkitBackdropFilter: "blur(18px)",
-        boxShadow: "0 4px 24px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.06)",
-        maxWidth: "calc(100vw - 32px)",
-        overflowX: "auto",
-        scrollbarWidth: "thin",
-        scrollbarColor: "rgba(0,0,0,0.15) transparent",
-      }}
-    >
+    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 toolbar-enter z-[200]" style={{ maxWidth: "calc(100vw - 32px)" }}>
+      <div
+        className="relative flex items-center gap-2 px-3 py-2 rounded-2xl overflow-x-auto"
+        style={{
+          background: "rgba(255,255,255,0.94)",
+          backdropFilter: "blur(18px)",
+          WebkitBackdropFilter: "blur(18px)",
+          border: "1px solid rgba(0,0,0,0.08)",
+          scrollbarWidth: "none",
+        }}
+      >
+        {/* Right-side scroll fade — hints at hidden controls */}
+        <div
+          className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 rounded-r-2xl"
+          style={{ background: "linear-gradient(to right, transparent, rgba(255,255,255,0.94))" }}
+        />
       {/* ── Color / gradient ── */}
       <div className="relative flex items-center flex-shrink-0">
         <button
           title="Text color"
-          onClick={(e) => { e.stopPropagation(); setColorOpen((v) => !v); setEffectOpen(false); setLineHeightOpen(false); setLetterSpacingOpen(false); onPopoverOpened?.(); }}
+          onClick={(e) => { e.stopPropagation(); colorPopoverOpen ? onCloseColorPopover?.() : onOpenColorPopover?.(); setEffectOpen(false); setLineHeightOpen(false); setLetterSpacingOpen(false); onPopoverOpened?.(); }}
           className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 hover:scale-105"
           style={{ background: colorPopoverOpen ? "rgba(0,0,0,0.09)" : "transparent" }}
         >
@@ -138,7 +140,7 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
       <div className="relative flex items-center flex-shrink-0">
         <button
           title="Text effects"
-          onClick={(e) => { e.stopPropagation(); setEffectOpen((v) => !v); setColorOpen(false); setLineHeightOpen(false); setLetterSpacingOpen(false); onPopoverOpened?.(); }}
+          onClick={(e) => { e.stopPropagation(); setEffectOpen((v) => !v); onCloseColorPopover?.(); setLineHeightOpen(false); setLetterSpacingOpen(false); onPopoverOpened?.(); }}
           className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 hover:scale-105 select-none"
           style={{
             background: effectOpen ? "rgba(0,0,0,0.09)" : effect ? "#111" : "transparent",
@@ -254,7 +256,7 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
       <div className="relative flex items-center flex-shrink-0">
         <button
           title="Line height"
-          onClick={(e) => { e.stopPropagation(); setLineHeightOpen((v) => !v); setLetterSpacingOpen(false); setColorOpen(false); setEffectOpen(false); onPopoverOpened?.(); }}
+          onClick={(e) => { e.stopPropagation(); setLineHeightOpen((v) => !v); setLetterSpacingOpen(false); onCloseColorPopover?.(); setEffectOpen(false); onPopoverOpened?.(); }}
           className={`w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 select-none ${lineHeightOpen ? "bg-black/[0.09]" : "hover:bg-black/[0.07]"}`}
         >
           <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" className="text-gray-600">
@@ -275,7 +277,6 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
               WebkitBackdropFilter: "blur(18px)",
               width: 200,
               border: "1px solid rgba(0,0,0,0.07)",
-              boxShadow: "0 4px 24px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06)",
               zIndex: 300,
             }}
           >
@@ -303,7 +304,7 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
       <div className="relative flex items-center flex-shrink-0">
         <button
           title="Letter spacing"
-          onClick={(e) => { e.stopPropagation(); setLetterSpacingOpen((v) => !v); setLineHeightOpen(false); setColorOpen(false); setEffectOpen(false); onPopoverOpened?.(); }}
+          onClick={(e) => { e.stopPropagation(); setLetterSpacingOpen((v) => !v); setLineHeightOpen(false); onCloseColorPopover?.(); setEffectOpen(false); onPopoverOpened?.(); }}
           className={`w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 select-none ${letterSpacingOpen ? "bg-black/[0.09]" : "hover:bg-black/[0.07]"}`}
         >
           <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" className="text-gray-600">
@@ -326,7 +327,6 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
               WebkitBackdropFilter: "blur(18px)",
               width: 200,
               border: "1px solid rgba(0,0,0,0.07)",
-              boxShadow: "0 4px 24px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06)",
               zIndex: 300,
             }}
           >
@@ -346,6 +346,7 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
             />
           </div>
         )}
+      </div>
       </div>
     </div>
   );

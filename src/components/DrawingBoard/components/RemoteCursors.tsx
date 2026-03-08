@@ -39,7 +39,7 @@ function Cursor({ x, y, name, color }: { x: number; y: number; name: string; col
 
       {/* Name label */}
       <div
-        className="absolute text-white font-semibold whitespace-nowrap select-none"
+        className="absolute text-white font-semibold select-none"
         style={{
           top: 18,
           left: 12,
@@ -49,6 +49,10 @@ function Cursor({ x, y, name, color }: { x: number; y: number; name: string; col
           fontSize: 13,
           lineHeight: "18px",
           letterSpacing: "0.01em",
+          maxWidth: 140,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
         }}
       >
         {name}

@@ -357,6 +357,14 @@ export function useCanvasActions({
     setVpt(fc.viewportTransform as number[]);
   }, [fabricRef, modsRef, setZoom, setVpt]);
 
+  const zoomReset = useCallback(() => {
+    const fc = fabricRef.current; const mods = modsRef.current;
+    if (!fc || !mods) return;
+    fc.zoomToPoint(new mods.Point(window.innerWidth / 2, window.innerHeight / 2), 1);
+    setZoom(1);
+    setVpt(fc.viewportTransform as number[]);
+  }, [fabricRef, modsRef, setZoom, setVpt]);
+
   // ── Clear canvas ───────────────────────────────────────────────────────
   const clearCanvas = useCallback(() => {
     const fc = fabricRef.current;
@@ -492,5 +500,5 @@ export function useCanvasActions({
     fc.requestRenderAll();
   }, [fabricRef, saveObject]);
 
-  return { addText, addShape, addGif, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, clearCanvas, applyTextProp };
+  return { addText, addShape, addGif, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, clearCanvas, applyTextProp };
 }

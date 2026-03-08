@@ -80,7 +80,7 @@ export default function Toolbar({ color, opacity, strokeWeight, onOpacityChange,
 
   return (
     <div
-      className="absolute bottom-6 left-1/2 toolbar-enter flex items-end gap-1 px-3 pt-2.5 pb-2 rounded-2xl z-[200]"
+      className="absolute bottom-6 left-1/2 -translate-x-1/2 toolbar-enter flex items-end gap-1 px-3 pt-2.5 pb-2 rounded-2xl z-[200]"
       style={{
         background: "rgba(255,255,255,0.94)",
         backdropFilter: "blur(18px)",

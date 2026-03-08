@@ -178,7 +178,7 @@ function DrawingBoardInner() {
     broadcast: broadcastEvent,
   });
 
-  const { addText, addShape, addGif, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, applyTextProp } =
+  const { addText, addShape, addGif, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, applyTextProp } =
     useCanvasActions({
       fabricRef,
       modsRef,
@@ -331,7 +331,7 @@ function DrawingBoardInner() {
         closeSignal={drawingToolsClose}
         onPopoverOpened={onDrawingToolsPopoverOpened}
       />
-      <ZoomNav zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} />
+      <ZoomNav zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} onUndo={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "z", ctrlKey: true, metaKey: true, bubbles: true }))} />
       <BoardHeader isSyncing={isSyncing} />
       <ActiveUsers />
       {/* Lock/unlock button floats above the selected object — self-positions via RAF */}
@@ -355,6 +355,7 @@ function DrawingBoardInner() {
           fabricRef={fabricRef}
           onColorChange={(c) => { setColor(c); if (hasSelection) recolorSelected(c); }}
           onClose={closeColorPopover}
+          anchorStyle={{ top: "auto", bottom: 100, left: "calc(50vw - 140px)" }}
         />
       )}
       {colorPopoverSlot === "toolbar-stroke" && (
@@ -363,6 +364,7 @@ function DrawingBoardInner() {
           fabricRef={fabricRef}
           onColorChange={(c) => { setShapeStrokeColor(c); restrokeSelected(c); }}
           onClose={closeColorPopover}
+          anchorStyle={{ top: "auto", bottom: 100, left: "calc(50vw - 140px)" }}
         />
       )}
       {colorPopoverSlot === "text" && (

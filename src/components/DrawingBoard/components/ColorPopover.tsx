@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import type { Canvas } from "fabric";
 import type { TextGradient } from "../types";
@@ -124,8 +124,8 @@ export default function ColorPopover({ color, gradient = null, fabricRef, onColo
   const setAndEmit = (s: GStop[]) => { setStops(s); emit(s, angle); };
   const setAngleAndEmit = (a: number) => { setAngle(a); emit(stops, a); };
 
-  // ── Document colors ──────────────────────────────────────────────────────
-  const docColors = (() => {
+  // ── Document colors — computed once on open, memoized ───────────────────
+  const docColors = useMemo(() => {
     const fc = fabricRef?.current;
     if (!fc) return [] as string[];
     const seen = new Set<string>();
@@ -135,7 +135,8 @@ export default function ColorPopover({ color, gradient = null, fabricRef, onColo
       if (typeof o.stroke === "string" && o.stroke !== "transparent") seen.add(o.stroke as string);
     });
     return [...seen].filter(Boolean).slice(0, 16);
-  })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally empty — compute once on mount
 
   // ── Stop track interaction ───────────────────────────────────────────────
   const getOffset = (clientX: number): number => {

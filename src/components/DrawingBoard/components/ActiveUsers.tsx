@@ -98,7 +98,7 @@ export default function ActiveUsers() {
 
       {/* Count badge */}
       <span className="text-xs font-semibold text-gray-500 tabular-nums select-none leading-none">
-        {total} online
+        {total === 1 ? "Just you" : `${total} online`}
       </span>
     </div>
   );

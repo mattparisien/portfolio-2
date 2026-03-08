@@ -6,8 +6,8 @@ import "./globals.css";
 import SmoothScroller from "@/components/SmoothScroller";
 
 export const metadata: Metadata = {
-  title: "Queer Wall * The internet's first infinite queer artboard",
-  description: "Queer Wall — The internet's first infinite queer artboard",
+  title: "Collective Board — Infinite artboard",
+  description: "Collective Board — An infinite collaborative artboard",
   icons: [
     { rel: "icon", type: "image/svg+xml", url: "/favicon.svg", sizes: "16x16" }, // optional
 
