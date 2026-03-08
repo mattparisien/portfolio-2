@@ -3,7 +3,11 @@
 import { useState, useRef, useEffect } from "react";
 import type { Tool, ShapeType } from "../types";
 import GifPicker from "./GifPicker";
+<<<<<<< HEAD
 import UploadsPopover from "./UploadsPopover";
+=======
+import { IoTriangleSharp } from "react-icons/io5";
+>>>>>>> deff4b9 (S)
 import {
   MdTextFields,
   MdCreate,
@@ -19,6 +23,8 @@ import {
   MdAutoFixOff,
 } from "react-icons/md";
 
+import { PiGifFill } from "react-icons/pi";
+
 const SHAPES: { type: ShapeType; label: string; icon: React.ReactNode }[] = [
   {
     type: "rect",
@@ -33,7 +39,7 @@ const SHAPES: { type: ShapeType; label: string; icon: React.ReactNode }[] = [
   {
     type: "triangle",
     label: "Triangle",
-    icon: <MdChangeHistory className="w-5 h-5" />,
+    icon: <IoTriangleSharp className="w-5 h-5" />,
   },
   {
     type: "star",
@@ -345,7 +351,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
               : shapeHover ? "bg-black/[0.07] text-[#111]" : "text-[#111] hover:bg-black/[0.07] hover:scale-105"
           }`}
         >
-          <MdCategory className="w-5 h-5" />
+          <IoTriangleSharp className="w-5 h-5" />
         </button>
 
         {shapeOpen && (
@@ -397,7 +403,7 @@ export default function DrawingTools({ tool, color, onToolChange, onAddShape, on
               : gifHover ? "bg-black/[0.07] text-[#111]" : "text-[#111] hover:bg-black/[0.07] hover:scale-105"
           }`}
         >
-          <MdGif className="w-5 h-5" />
+          <PiGifFill className="w-5 h-5" />
         </button>
 
         {gifOpen && (
