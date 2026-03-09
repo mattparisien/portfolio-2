@@ -66,7 +66,7 @@ export default function ActiveUsers() {
 
   return (
     <div
-      className="absolute top-5 right-5 flex items-center gap-2 px-3 py-2 rounded-2xl z-[200]"
+      className="flex items-center gap-2 px-3 py-2 rounded-2xl"
       style={{
         background: "rgba(255,255,255,0.92)",
         backdropFilter: "blur(14px)",

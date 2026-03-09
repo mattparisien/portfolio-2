@@ -27,6 +27,16 @@ import {
   useMyPresence,
   useSelf,
 } from "@/liveblocks.config";
+import { MdFormatColorFill } from "react-icons/md";
+
+// Returns true when the given hex colour is perceived as "light"
+function isLightColor(hex: string): boolean {
+  const h = hex.replace("#", "").padEnd(6, "0").slice(0, 6);
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return (r * 299 + g * 587 + b * 114) / 1000 > 160;
+}
 
 // React 19 / Liveblocks JSX compat shim — remove once Liveblocks ships React 19 types
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -75,7 +85,7 @@ function CapacityWall() {
 }
 
 // ── Shared color popover slot type — one instance managed by the board ───────
-type ColorSlot = "toolbar-fill" | "toolbar-stroke" | "text";
+type ColorSlot = "toolbar-fill" | "toolbar-stroke" | "text" | "background";
 
 // ── Inner board — uses Liveblocks hooks (must be inside RoomProvider) ─────
 function DrawingBoardInner() {
@@ -84,6 +94,7 @@ function DrawingBoardInner() {
 
   const [tool, setTool]                         = useState<Tool>("select");
   const [color, setColor]                       = useState("#000000");
+  const [bgColor, setBgColor]                   = useState(BG_COLOR);
   const [brushSize, setBrushSize]               = useState(5);
   const [isSyncing, setIsSyncing]               = useState(false);
   const [zoom, setZoom]                         = useState(1);
@@ -117,6 +128,14 @@ function DrawingBoardInner() {
       setDrawingToolsClose(n => n + 1);
       setTextToolbarClose(n => n + 1);
     }
+  }, []);
+
+  const changeBgColor = useCallback((c: string) => {
+    setBgColor(c);
+    const fc = fabricRef.current;
+    if (!fc) return;
+    fc.backgroundColor = c;
+    fc.renderAll();
   }, []);
 
   const onDrawingToolsPopoverOpened = () => { setToolbarClose(n => n + 1); setTextToolbarClose(n => n + 1); setColorPopoverSlot(null); };
@@ -352,7 +371,26 @@ function DrawingBoardInner() {
       />
       <ZoomNav zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} onUndo={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "z", ctrlKey: true, metaKey: true, bubbles: true }))} />
       <BoardHeader isSyncing={isSyncing} />
-      <ActiveUsers />
+
+      {/* Top-right cluster: background colour button + active users */}
+      <div className="absolute top-5 right-5 flex items-center gap-2 z-[200]">
+        {/* Canvas background colour button */}
+        <button
+          onClick={() => openColorPopover("background")}
+          title="Change canvas background color"
+          className="flex items-center justify-center w-8 h-8 rounded-full cursor-pointer transition-transform hover:scale-110 flex-shrink-0"
+          style={{
+            background: bgColor,
+            boxShadow: "0 0 0 2px #fff, 0 0 0 3.5px rgba(0,0,0,0.15)",
+          }}
+        >
+          <MdFormatColorFill
+            size={15}
+            style={{ color: isLightColor(bgColor) ? "#555" : "#ffffffcc" }}
+          />
+        </button>
+        <ActiveUsers />
+      </div>
       {/* Lock/unlock button floats above the selected object — self-positions via RAF */}
       {hasSelection && (
         <ObjectLockButton
@@ -395,6 +433,15 @@ function DrawingBoardInner() {
           onGradientChange={(g) => applyTextProp({ gradient: g })}
           onClose={closeColorPopover}
           anchorStyle={{ top: 64, bottom: "auto", left: "calc(50% - 120px)" }}
+        />
+      )}
+      {colorPopoverSlot === "background" && (
+        <ColorPopover
+          color={bgColor}
+          fabricRef={fabricRef}
+          onColorChange={changeBgColor}
+          onClose={closeColorPopover}
+          anchorStyle={{ top: 64, bottom: "auto", right: 20, left: "auto" }}
         />
       )}
     </div>
