@@ -204,10 +204,11 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
         <button
           title="Text effects"
           onClick={(e) => { e.stopPropagation(); setEffectOpen((v) => !v); onCloseColorPopover?.(); setLineHeightOpen(false); setLetterSpacingOpen(false); onPopoverOpened?.(); }}
-          className="px-2 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 hover:scale-105 select-none text-[12px] font-medium"
+          className="px-2 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 hover:bg-black/[0.07] select-none text-[12px] font-medium"
           style={{
-            background: effectOpen ? "rgba(0,0,0,0.09)" : effect ? "#111" : "transparent",
-            color: effect && !effectOpen ? "#fff" : "#444",
+            background: effectOpen ? "rgba(0,0,0,0.09)" : "transparent",
+            color: effect ? "#111" : "#444",
+            fontWeight: effect ? 600 : undefined,
           }}
         >
           Effects

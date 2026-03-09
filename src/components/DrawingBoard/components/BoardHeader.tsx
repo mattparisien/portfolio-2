@@ -14,7 +14,7 @@ export default function BoardHeader({ isSyncing }: BoardHeaderProps) {
         border: "1px solid rgba(0,0,0,0.08)",
       }}
     >
-      Collective Board
+      <img src={"/logo.png"} alt="Logo" className="w-40" />
       {isSyncing && (
         <span
           title="Syncing board…"

@@ -18,6 +18,14 @@
 }
 
 @font-face {
+  font-family: "Waldeck";
+  src: url("/assets/fonts/Waldeck-trial-Black.otf") format("opentype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: 'Freigeist';
   src: url('/assets/fonts/ItemsTextTrial-Light.otf') format('opentype');
   font-weight: 300;
