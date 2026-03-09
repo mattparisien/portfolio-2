@@ -11,6 +11,7 @@ import ZoomNav from "./components/ZoomNav";
 import ActiveUsers from "./components/ActiveUsers";
 import ObjectLockButton from "./components/ObjectLockButton";
 import ColorPopover from "./components/ColorPopover";
+import { MdFormatColorFill } from "react-icons/md";
 import { useGifLoop } from "./hooks/useGifLoop";
 import { useBoardSync } from "./hooks/useBoardSync";
 import { useFabricCanvas } from "./hooks/useFabricCanvas";
@@ -75,7 +76,7 @@ function CapacityWall() {
 }
 
 // ── Shared color popover slot type — one instance managed by the board ───────
-type ColorSlot = "toolbar-fill" | "toolbar-stroke" | "text";
+type ColorSlot = "toolbar-fill" | "toolbar-stroke" | "text" | "bg";
 
 // ── Inner board — uses Liveblocks hooks (must be inside RoomProvider) ─────
 function DrawingBoardInner() {
@@ -96,6 +97,9 @@ function DrawingBoardInner() {
   const [shapeStrokeColor, setShapeStrokeColor] = useState("#000000");
   const [opacity, setOpacity]                   = useState(1);
   const [textProps, setTextProps]               = useState<TextProps>(DEFAULT_TEXT_PROPS);
+  const [bgColor, setBgColor]                   = useState(BG_COLOR);
+  const bgColorRef = useRef(BG_COLOR);
+  bgColorRef.current = bgColor;
 
   // Whenever any component opens a popover, we increment the other two signals
   // so they close themselves — guaranteeing only one popover is ever visible.
@@ -208,7 +212,7 @@ function DrawingBoardInner() {
 
     if (event.type === "CANVAS_CLEARED") {
       fc.clear();
-      fc.backgroundColor = BG_COLOR;
+      fc.backgroundColor = bgColorRef.current;
       fc.renderAll();
       gifCountRef.current = 0;
       stopGifLoop();
@@ -352,7 +356,23 @@ function DrawingBoardInner() {
       />
       <ZoomNav zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} onUndo={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "z", ctrlKey: true, metaKey: true, bubbles: true }))} />
       <BoardHeader isSyncing={isSyncing} />
-      <ActiveUsers />
+      {/* Top-right cluster: background color button + active users bar */}
+      <div className="absolute top-5 right-5 flex items-center gap-2 z-[200]">
+        {/* Background color button */}
+        <button
+          title="Canvas background color"
+          onClick={() => openColorPopover("bg")}
+          className="w-9 h-9 rounded-2xl flex items-center justify-center cursor-pointer transition-all duration-150 hover:scale-105"
+          style={{
+            background: colorPopoverSlot === "bg" ? "rgba(0,0,0,0.09)" : "rgba(255,255,255,0.92)",
+            backdropFilter: "blur(14px)",
+            border: "1px solid rgba(0,0,0,0.08)",
+          }}
+        >
+          <MdFormatColorFill size={18} color={bgColor === "#ffffff" ? "#888" : bgColor} />
+        </button>
+        <ActiveUsers />
+      </div>
       {/* Lock/unlock button floats above the selected object — self-positions via RAF */}
       {hasSelection && (
         <ObjectLockButton
@@ -395,6 +415,19 @@ function DrawingBoardInner() {
           onGradientChange={(g) => applyTextProp({ gradient: g })}
           onClose={closeColorPopover}
           anchorStyle={{ top: 64, bottom: "auto", left: "calc(50% - 120px)" }}
+        />
+      )}
+      {colorPopoverSlot === "bg" && (
+        <ColorPopover
+          color={bgColor}
+          fabricRef={fabricRef}
+          onColorChange={(c) => {
+            setBgColor(c);
+            const fc = fabricRef.current;
+            if (fc) { fc.backgroundColor = c; fc.renderAll(); }
+          }}
+          onClose={closeColorPopover}
+          anchorStyle={{ top: 64, bottom: "auto", right: 20, left: "auto" }}
         />
       )}
     </div>
