@@ -1,186 +1,171 @@
 'use client';
-import classNames from "classnames";
-import { useEffect, useRef, useState } from "react";
+import { MediaItem } from "@/types/media";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { PALETTE } from "@/app/constants";
-import { isMetaTrue } from "@/app/helpers";
-import type { MediaItem } from "@/types/media";
+import classNames from "classnames";
 
-// Re-export the canonical type under the legacy alias so existing imports keep working
-export type { MediaItem as MediaGridItem };
-
-// Number of sections to keep rendered before and after the current viewport section.
-// Increasing these values improves visual continuity at the cost of DOM size.
-const SCROLL_BUFFER_BEFORE = 3;
-const SCROLL_BUFFER_AFTER = 2;
+// Items to keep rendered behind and ahead of the active panel
+const KEEP_BEHIND = 2;
+const KEEP_AHEAD  = 2; // total window = KEEP_BEHIND + 1 (active) + KEEP_AHEAD = 4
 
 interface MediaGridProps {
     items: MediaItem[];
     isActive: boolean;
+    /** Number of vh units already consumed by preceding sections. StickySections scroll math starts after this offset. */
+    scrollOffsetVh?: number;
 }
 
-/** Returns the inline styles shared by both <video> and <img> media elements. */
-function getMediaStyles(item: MediaItem): React.CSSProperties {
-    const fullScreen = isMetaTrue(item.meta?.isFullScreen);
-    return {
-        backfaceVisibility: "hidden",
-        transform: "translateZ(0)",
-        width: fullScreen ? "100%" : "auto",
-        height: fullScreen ? "100%" : "auto",
-        maxWidth: fullScreen ? "100%" : "90vw",
-        maxHeight: fullScreen ? "100%" : "90vh",
+export type MediaGridItem = MediaItem & {
+    width: number | null;
+    height: number | null;
+    aspectRatio: number | null;
+    meta?: {
+        isFullScreen?: "true" | "false";
+        removeBackground?: "true" | "false";
+        rotate?: string;
+        context?: string;
+        transform?: never;
     };
+};
+
+function applyPanelTransform(panel: HTMLDivElement, progress: number) {
+    panel.style.transform = `translateY(${(1 - progress) * 100}%)`;
+    panel.style.opacity   = '1';
 }
 
-const StickySections = ({ items }: MediaGridProps) => {
-    const [visibleRange, setVisibleRange] = useState({ start: 0, end: 6 });
-    const [currentSection, setCurrentSection] = useState(0);
+function getInitialTransform(): string {
+    return 'translateY(100%)';
+}
 
-    const sectionRefs = useRef<React.RefObject<HTMLDivElement>[]>([]);
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
+const StickySections = ({ items, scrollOffsetVh = 0 }: MediaGridProps) => {
+    // Map from global item index → DOM element (survives window shifts)
+    const panelRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+    const itemsRef  = useRef(items);
+    itemsRef.current = items;
 
-    const addToRefs = (el: HTMLDivElement | null) => {
-        if (el) {
-            const ref = { current: el };
-            if (!sectionRefs.current.find((r) => r.current === el)) {
-                sectionRefs.current.push(ref);
-            }
-        }
-    };
+    // Virtual window — which indices are currently mounted
+    const initialEnd = Math.min(items.length - 1, KEEP_AHEAD);
+    const [windowStart, setWindowStart] = useState(0);
+    const [windowEnd,   setWindowEnd]   = useState(initialEnd);
+    const windowRef = useRef({ start: 0, end: initialEnd });
 
+    // Apply scroll-driven transforms to all currently mounted panels
+    const updateTransforms = useCallback(() => {
+        const vh      = window.innerHeight;
+        const scrollY = window.scrollY;
+        panelRefs.current.forEach((panel, i) => {
+            const start    = (i + scrollOffsetVh) * vh;
+            const end      = (i + scrollOffsetVh + 1) * vh;
+            const progress = Math.min(1, Math.max(0, (scrollY - start) / (end - start)));
+            applyPanelTransform(panel, progress);
+        });
+    }, [scrollOffsetVh]);
+
+    // Re-apply transforms whenever the window changes so newly mounted panels
+    // receive the correct position immediately (no frame of flash)
     useEffect(() => {
-        let ticking = false;
+        updateTransforms();
+    }, [windowStart, windowEnd, updateTransforms]);
+
+    // Main scroll listener — moves the virtual window and drives animations
+    useEffect(() => {
+        if (!items || items.length === 0) return;
+
         const onScroll = () => {
-            if (ticking) return;
-            ticking = true;
+            const vh         = window.innerHeight;
+            const scrollY    = window.scrollY;
+            const total      = itemsRef.current.length;
+            const active     = Math.max(0, Math.min(total - 1, Math.floor((scrollY - scrollOffsetVh * vh) / vh)));
+            const newStart   = Math.max(0, active - KEEP_BEHIND);
+            const newEnd     = Math.min(total - 1, active + KEEP_AHEAD);
 
-            requestAnimationFrame(() => {
-                const vh = window.innerHeight;
-                const scrollY = window.scrollY;
+            if (newStart !== windowRef.current.start || newEnd !== windowRef.current.end) {
+                windowRef.current = { start: newStart, end: newEnd };
+                setWindowStart(newStart);
+                setWindowEnd(newEnd);
+            }
 
-                const current = Math.floor(scrollY / vh);
-
-                let start = Math.max(0, current - SCROLL_BUFFER_BEFORE);
-                const end = Math.min(items.length, current + SCROLL_BUFFER_AFTER + 1);
-
-                // If any section in or near the visible range removes its background
-                // (transparent overlay), render from the start so there is always a
-                // coloured section visible underneath.
-                for (let i = Math.max(0, current - 1); i <= current + 2 && i < items.length; i++) {
-                    if (isMetaTrue(items[i]?.meta?.removeBackground)) {
-                        start = 0;
-                        break;
-                    }
-                }
-
-                setVisibleRange({ start, end });
-                setCurrentSection(current);
-
-                ticking = false;
-            });
+            updateTransforms();
         };
 
-        window.addEventListener("scroll", onScroll, { passive: true });
-        onScroll(); // set initial state
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll);
+        onScroll();
 
         return () => {
-            window.removeEventListener("scroll", onScroll);
+            window.removeEventListener('scroll', onScroll);
+            window.removeEventListener('resize', onScroll);
         };
-    }, [items]);
-
-    useEffect(() => {
-        videoRefs.current.forEach((video, index) => {
-            if (index === currentSection) {
-                video.play().catch(() => {});
-            } else {
-                video.pause();
-            }
-        });
-    }, [currentSection]);
+    }, [items, updateTransforms, scrollOffsetVh]);
 
     return (
-        <div className="pointer-events-none" ref={scrollContainerRef}>
-            <div className="relative top-0 left-0 w-screen">
-                {/* Initial spacer to push the first section below the viewport */}
-                <div className="h-screen pointer-events-none" />
+        <>
+            {/* Provides scroll space: one vh per panel to slide in, plus one vh to view the last panel */}
+            <div style={{ height: `${(items.length + 1) * 100}vh` }} />
 
-                {items.map((item, actualIndex) => {
-                    const isInRange =
-                        actualIndex >= visibleRange.start &&
-                        actualIndex < visibleRange.end;
-                    const bgColor = isMetaTrue(item.meta?.removeBackground)
-                        ? "transparent"
-                        : PALETTE[actualIndex % PALETTE.length];
+            {items.slice(windowStart, windowEnd + 1).map((item, localI) => {
+                const i         = windowStart + localI; // global index
+                const bgColor = item.meta?.removeBackground === "true"
+                    ? "transparent"
+                    : PALETTE[i % PALETTE.length];
 
-                    if (!isInRange) {
-                        return (
-                            <div
-                                key={actualIndex}
-                                className="sticky left-0 top-0 h-screen w-screen"
-                                style={{ backgroundColor: bgColor, zIndex: actualIndex }}
-                            />
-                        );
-                    }
-
-                    const isFullScreen = isMetaTrue(item.meta?.isFullScreen);
-                    const mediaStyles = getMediaStyles(item);
-
-                    return (
+                return (
+                    <div
+                        key={i}
+                        ref={el => {
+                            if (el) panelRefs.current.set(i, el);
+                            else    panelRefs.current.delete(i);
+                        }}
+                        className="flex items-center justify-center rounded-t-xl pointer-events-auto"
+                        style={{
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100vh',
+                            zIndex: i + 1,
+                            transform: getInitialTransform(),
+                            opacity: 1,
+                            transformOrigin: 'center center',
+                            willChange: 'transform',
+                            backgroundColor: bgColor,
+                        }}
+                    >
                         <div
-                            key={actualIndex}
-                            className="sticky left-0 top-0 w-screen h-screen flex items-center justify-center rounded-t-xl pointer-events-auto relative"
-                            ref={addToRefs}
-                            style={{ backgroundColor: bgColor, zIndex: actualIndex }}
+                            className={classNames("rounded-md overflow-hidden inline-flex", {
+                                "w-full h-full": item.meta?.isFullScreen === "true",
+                            })}
+                            style={{
+                                width:     item.meta?.isFullScreen === "true" ? "100%" : "auto",
+                                height:    item.meta?.isFullScreen === "true" ? "100%" : "auto",
+                                maxWidth:  item.meta?.isFullScreen === "true" ? "100%" : "90vw",
+                                maxHeight: item.meta?.isFullScreen === "true" ? "100%" : "90vh",
+                                transform: `rotate(${item.meta?.rotate ?? 0}deg)`,
+                            }}
                         >
-                            <div
-                                className={classNames("rounded-md overflow-hidden inline-flex", {
-                                    "w-full h-full": isFullScreen,
-                                })}
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                                src={item.url}
+                                alt=""
+                                className={classNames({ "w-full h-full object-cover": item.meta?.isFullScreen === "true" })}
+                                loading="eager"
+                                decoding="async"
                                 style={{
-                                    width: isFullScreen ? "100%" : "auto",
-                                    height: isFullScreen ? "100%" : "auto",
-                                    maxWidth: isFullScreen ? "100%" : "90vw",
-                                    maxHeight: isFullScreen ? "100%" : "90vh",
-                                    transform: `rotate(${item.meta?.rotate ?? 0}deg)`,
+                                    backfaceVisibility: "hidden",
+                                    transform:  "translateZ(0)",
+                                    maxWidth:   item.meta?.isFullScreen === "true" ? "100%" : "90vw",
+                                    maxHeight:  item.meta?.isFullScreen === "true" ? "100%" : "90vh",
+                                    width:      item.meta?.isFullScreen === "true" ? "100%" : "auto",
+                                    height:     item.meta?.isFullScreen === "true" ? "100%" : "auto",
                                 }}
-                            >
-                                {item.type === "video" ? (
-                                    <video
-                                        ref={(el) => {
-                                            if (el) {
-                                                videoRefs.current.set(actualIndex, el);
-                                            } else {
-                                                videoRefs.current.delete(actualIndex);
-                                            }
-                                        }}
-                                        src={item.url}
-                                        className={classNames({
-                                            "w-full h-full object-cover": isFullScreen,
-                                        })}
-                                        loop
-                                        muted
-                                        playsInline
-                                        style={mediaStyles}
-                                    />
-                                ) : (
-                                    <img
-                                        src={item.url}
-                                        className={classNames({
-                                            "w-full h-full object-cover": isFullScreen,
-                                        })}
-                                        alt=""
-                                        loading={actualIndex < 3 ? "eager" : "lazy"}
-                                        decoding="async"
-                                        style={mediaStyles}
-                                    />
-                                )}
-                            </div>
+                            />
                         </div>
-                    );
-                })}
-            </div>
-        </div>
+                    </div>
+                );
+            })}
+        </>
     );
 };
 
 export default StickySections;
+

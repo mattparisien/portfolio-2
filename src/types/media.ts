@@ -4,7 +4,7 @@
  * "true" | "false" literals instead of plain booleans.
  */
 export type MediaMeta = {
-  isFullScreen?: "true" | "false";
+  isFullScreen?: "true" | "false";  
   removeBackground?: "true" | "false";
   rotate?: string;
   context?: string;
