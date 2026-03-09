@@ -19,9 +19,9 @@ const Page = () => {
   
 
     return <div className="w-screen h-screen bg-[#F6F6F6] flex items-center justify-center">
-        <div className={classNames("text-[5vw] rounded-full px-4 pt-3 pb-4 cursor-pointer border-2 rounded-full leading-none  hover:bg-[var(--current-color)]", {
+        <div className={classNames("text-[5vw] rounded-full pb-1 pl-2 pr-3 pb-2 cursor-pointer border rounded-full leading-none  hover:bg-[var(--current-color)]", {
             "border-[var(--current-color)]": isMouseEntered,
-            "border-black/20": !isMouseEntered,
+            "border-black": !isMouseEntered,
         })}
             // ref={splitTextRef}
             onMouseEnter={() => {
