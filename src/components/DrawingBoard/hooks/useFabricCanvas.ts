@@ -556,6 +556,58 @@ export function useFabricCanvas({
       FabricObject.ownDefaults.transparentCorners = false;
       FabricObject.ownDefaults.borderOpacityWhenMoving = 1;
 
+      // Move the rotation control from the top to the bottom and replace the
+      // plain square handle with a circular rotate-icon button.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const mtr = (FabricObject.ownDefaults.controls as any).mtr;
+      if (mtr) {
+        mtr.y = 0.5;          // bottom edge
+        mtr.offsetY = 28;     // px below the bottom edge
+        mtr.withConnection = false; // no line from object to icon
+        mtr.render = (ctx: CanvasRenderingContext2D, left: number, top: number) => {
+          const SIZE = 22;
+          ctx.save();
+          ctx.translate(left, top);
+
+          // Blue circular background
+          ctx.beginPath();
+          ctx.arc(0, 0, SIZE / 2, 0, Math.PI * 2);
+          ctx.fillStyle = "#4597f8";
+          ctx.fill();
+
+          // White clockwise-arrow arc
+          ctx.strokeStyle = "#ffffff";
+          ctx.lineWidth = 1.8;
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+
+          const R = 6;
+          // 270° arc: start just past 3-o'clock, end just before 12-o'clock (clockwise)
+          const arcStart = 0.15;
+          const arcEnd   = Math.PI * 1.5 - 0.15;
+          ctx.beginPath();
+          ctx.arc(0, 0, R, arcStart, arcEnd, false);
+          ctx.stroke();
+
+          // Arrowhead at arcEnd (~12-o'clock), pointing right
+          const ex = R * Math.cos(arcEnd);
+          const ey = R * Math.sin(arcEnd);
+          const tx = -Math.sin(arcEnd); // tangent x (clockwise direction)
+          const ty =  Math.cos(arcEnd); // tangent y
+          const px = -ty;               // perpendicular x
+          const py =  tx;               // perpendicular y
+          const AH = 3.5;
+          const w  = 0.55;
+          ctx.beginPath();
+          ctx.moveTo(ex + AH * (-tx + w * px), ey + AH * (-ty + w * py));
+          ctx.lineTo(ex, ey);
+          ctx.lineTo(ex + AH * (-tx - w * px), ey + AH * (-ty - w * py));
+          ctx.stroke();
+
+          ctx.restore();
+        };
+      }
+
       const fc = new Canvas(canvasEl, {
         width: window.innerWidth,
         height: window.innerHeight,
