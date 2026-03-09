@@ -9,7 +9,7 @@ const KEEP_BEHIND = 2;
 const KEEP_AHEAD  = 2; // total window = KEEP_BEHIND + 1 (active) + KEEP_AHEAD = 4
 
 interface MediaGridProps {
-    items: MediaGridItem[];
+    items: MediaItem[];
     isActive: boolean;
     /** Number of vh units already consumed by preceding sections. StickySections scroll math starts after this offset. */
     scrollOffsetVh?: number;

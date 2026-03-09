@@ -1,5 +1,22 @@
 @import "tailwindcss";
 
+/* Figma-style flat aesthetic: disable all box shadows */
+@theme {
+  --shadow-sm: none;
+  --shadow: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --shadow-xl: none;
+  --shadow-2xl: none;
+  --shadow-inner: none;
+  --inset-shadow-sm: none;
+  --inset-shadow: none;
+}
+
+*:not(:focus-visible) {
+  box-shadow: none;
+}
+
 @font-face {
   font-family: 'Freigeist';
   src: url('/assets/fonts/ItemsTextTrial-Light.otf') format('opentype');

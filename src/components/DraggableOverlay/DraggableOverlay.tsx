@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { fitImageToFrame } from "@/app/helpers";
 
-interface DraggableOverlaytProps {
+interface DraggableOverlayProps {
     items: {
         url: string;
         width: number;
@@ -15,7 +15,7 @@ interface DraggableOverlaytProps {
     style?: React.CSSProperties;
 }
 
-const DraggableOverlay = ({ items }: DraggableOverlaytProps) => {
+const DraggableOverlay = ({ items }: DraggableOverlayProps) => {
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [canvasItems, setCanvasItems] = useState<{
