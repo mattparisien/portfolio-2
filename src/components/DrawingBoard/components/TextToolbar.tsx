@@ -5,7 +5,6 @@ import { createPortal } from "react-dom";
 import type { TextProps } from "../types";
 import TextEffectsPopover from "./TextEffectsPopover";
 import {
-  MdAutoAwesome,
   MdRemove,
   MdAdd,
   MdFormatAlignLeft,
@@ -205,13 +204,13 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
         <button
           title="Text effects"
           onClick={(e) => { e.stopPropagation(); setEffectOpen((v) => !v); onCloseColorPopover?.(); setLineHeightOpen(false); setLetterSpacingOpen(false); onPopoverOpened?.(); }}
-          className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 hover:scale-105 select-none"
+          className="px-2 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 hover:scale-105 select-none text-[12px] font-medium"
           style={{
             background: effectOpen ? "rgba(0,0,0,0.09)" : effect ? "#111" : "transparent",
             color: effect && !effectOpen ? "#fff" : "#444",
           }}
         >
-          <MdAutoAwesome size={15} />
+          Effects
         </button>
         {effectOpen && (
           <TextEffectsPopover
