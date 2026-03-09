@@ -62,7 +62,7 @@ interface DrawingToolsProps {
   onPopoverOpened?: () => void;
 }
 
-export default function DrawingTools({ tool, color, onToolChange, onAddShape, onAddText, onAddGif, onAddImage, closeSignal, onPopoverOpened }: DrawingToolsProps) {
+export default function DrawingTools({ tool, onToolChange, onAddShape, onAddText, onAddGif, onAddImage, closeSignal, onPopoverOpened }: DrawingToolsProps) {
   // pinned = user clicked to keep open; hover = mouse is over trigger or popover
   const [shapePinned, setShapePinned] = useState(false);
   const [shapeHover, setShapeHover] = useState(false);
