@@ -36,8 +36,8 @@ export default function ObjectLockButton({ fabricRef, locked, onToggle }: Object
       const r   = obj.getBoundingRect();
       // Convert world-space bounding box to screen pixels
       const sx  = (r.left + r.width / 2) * vpt[0] + vpt[4];
-      // Place above the rotation handle (~40px above top edge in screen space)
-      const sy = r.top * vpt[3] + vpt[5] - 62;
+      // Place just above the object's top edge
+      const sy = r.top * vpt[3] + vpt[5] - 10;
 
       // Hide the button when the object's anchor point is outside the visible viewport
       const W = window.innerWidth;

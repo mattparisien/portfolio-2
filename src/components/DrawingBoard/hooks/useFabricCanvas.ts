@@ -545,7 +545,7 @@ export function useFabricCanvas({
     canvasEl.addEventListener("touchend",   onTouchEnd);
 
     // ── Fabric async init ─────────────────────────────────────────────────
-    import("fabric").then(({ Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, ActiveSelection, util, Gradient, Shadow, Pattern, FabricObject }) => {
+    import("fabric").then(({ Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, ActiveSelection, util, Gradient, Shadow, Pattern, FabricObject, Control, controlsUtils }) => {
       modsRef.current = { Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, ActiveSelection, util, Gradient, Shadow, Pattern };
 
       // Make selection borders and corner handles clearly visible
@@ -555,6 +555,80 @@ export function useFabricCanvas({
       FabricObject.ownDefaults.cornerSize = 10;
       FabricObject.ownDefaults.transparentCorners = false;
       FabricObject.ownDefaults.borderOpacityWhenMoving = 1;
+
+      // ── Replace the default top rotate handle with a bottom rotate icon button ──
+      // Remove the top-center rotate handle (mtr = middle-top-rotate)
+      delete (FabricObject.ownDefaults.controls as Record<string, unknown>).mtr;
+
+      // Add a custom rotate icon button at the bottom-center
+      (FabricObject.ownDefaults.controls as Record<string, unknown>).rotateBtn = new Control({
+        x: 0,
+        y: 0.5,
+        offsetY: 30,
+        sizeX: 28,
+        sizeY: 28,
+        withConnection: false,
+        actionHandler: controlsUtils.rotationWithSnapping,
+        cursorStyleHandler: controlsUtils.rotationStyleHandler,
+        actionName: "rotate",
+        render(ctx: CanvasRenderingContext2D, left: number, top: number) {
+          const size = 28;
+          ctx.save();
+          ctx.translate(left, top);
+
+          // Drop shadow
+          ctx.shadowColor = "rgba(0,0,0,0.18)";
+          ctx.shadowBlur = 5;
+          ctx.shadowOffsetY = 1.5;
+
+          // White circular background
+          ctx.beginPath();
+          ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
+          ctx.fillStyle = "#ffffff";
+          ctx.fill();
+
+          // Reset shadow before stroke/icon
+          ctx.shadowColor = "transparent";
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetY = 0;
+
+          // Blue border circle
+          ctx.beginPath();
+          ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
+          ctx.strokeStyle = "#4597f8";
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+
+          // Rotation arrow icon
+          const r = 7.5;
+          ctx.strokeStyle = "#4597f8";
+          ctx.lineWidth = 2;
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+
+          // Arc from 150° to 30° going clockwise (≈ 240° arc, leaving 120° gap at top)
+          const startAngle = (150 * Math.PI) / 180;
+          const endAngle = (30 * Math.PI) / 180;
+          ctx.beginPath();
+          ctx.arc(0, 0, r, startAngle, endAngle);
+          ctx.stroke();
+
+          // Arrowhead at the end of the arc (at 30°, pointing clockwise)
+          const ax = Math.cos(endAngle) * r;
+          const ay = Math.sin(endAngle) * r;
+          // Tangent direction for clockwise arc at endAngle = endAngle + 90°
+          const tang = endAngle + Math.PI / 2;
+          const arrowLen = 4.5;
+          ctx.beginPath();
+          ctx.moveTo(ax + Math.cos(tang - 0.55) * arrowLen, ay + Math.sin(tang - 0.55) * arrowLen);
+          ctx.lineTo(ax, ay);
+          ctx.lineTo(ax + Math.cos(tang + 0.55) * arrowLen, ay + Math.sin(tang + 0.55) * arrowLen);
+          ctx.stroke();
+
+          ctx.restore();
+        },
+      });
+      // ──────────────────────────────────────────────────────────────────────────
 
       const fc = new Canvas(canvasEl, {
         width: window.innerWidth,
