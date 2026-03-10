@@ -7,7 +7,7 @@ interface BoardHeaderProps {
 export default function BoardHeader({ isSyncing }: BoardHeaderProps) {
   return (
     <div
-      className="absolute top-5 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full text-sm font-mono tracking-widest uppercase flex items-center gap-2 z-[200] select-none"
+      className="absolute top-5 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full text-sm font-mono tracking-widest uppercase flex items-center gap-2 z-[400] select-none"
       style={{
         background: "rgba(255,255,255,0.85)",
         backdropFilter: "blur(10px)",
