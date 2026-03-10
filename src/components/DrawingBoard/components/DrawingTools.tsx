@@ -251,7 +251,7 @@ export default function DrawingTools({
         {drawOpen && (
           <div
             ref={drawPopoverRef}
-            className="fixed right-5 bottom-24 flex gap-2 p-3 rounded-2xl popover-enter-up z-[300]"
+            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 flex gap-2 p-3 rounded-2xl popover-enter-up z-[300]"
             style={popoverStyle}
           >
             {(
@@ -303,7 +303,7 @@ export default function DrawingTools({
         {shapeOpen && (
           <div
             ref={shapePopoverRef}
-            className="fixed right-5 bottom-24 flex gap-2 p-3 rounded-2xl popover-enter-up z-[300]"
+            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 flex gap-2 p-3 rounded-2xl popover-enter-up z-[300]"
             style={{ ...popoverStyle, minWidth: 220 }}
           >
             {SHAPES.map((s) => (
@@ -346,7 +346,7 @@ export default function DrawingTools({
         {gifOpen && (
           <div
             ref={gifPopoverRef}
-            className="fixed right-5 bottom-24 p-3 rounded-2xl z-[300] popover-enter-up"
+            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-3 rounded-2xl z-[300] popover-enter-up"
             style={{ ...popoverStyle, width: "min(420px, calc(100vw - 100px))" }}
           >
             <GifPicker

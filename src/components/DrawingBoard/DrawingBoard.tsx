@@ -364,7 +364,7 @@ function DrawingBoardInner() {
             </svg>
           ) : (tool === "shape" && !isOverUI) ? (
             /* Crosshair — center aligns with mouse position */
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ transform: "translate(-50%, -50%)" }} xmlns="http://www.w3.org/2000/svg">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" style={{ transform: "translate(-50%, -50%)" }} xmlns="http://www.w3.org/2000/svg">
               <line x1="10" y1="1" x2="10" y2="8"  stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
               <line x1="10" y1="12" x2="10" y2="19" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
               <line x1="1"  y1="10" x2="8"  y2="10" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
