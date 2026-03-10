@@ -8,44 +8,23 @@ import {
   MdCircle,
   MdCreate,
   MdFavorite,
+  MdKeyboardArrowUp,
   MdNearMe,
   MdRectangle,
   MdStar,
   MdTextFields,
-  MdUpload
+  MdUpload,
 } from "react-icons/md";
 import type { ShapeType, Tool } from "../types";
 import GifPicker from "./GifPicker";
-
 import { PiGifFill } from "react-icons/pi";
 
-
 const SHAPES: { type: ShapeType; label: string; icon: React.ReactNode }[] = [
-  {
-    type: "rect",
-    label: "Rectangle",
-    icon: <MdRectangle className="w-5 h-5" />,
-  },
-  {
-    type: "circle",
-    label: "Circle",
-    icon: <MdCircle className="w-5 h-5" />,
-  },
-  {
-    type: "triangle",
-    label: "Triangle",
-    icon: <IoTriangleSharp className="w-5 h-5" />,
-  },
-  {
-    type: "star",
-    label: "Star",
-    icon: <MdStar className="w-5 h-5" />,
-  },
-  {
-    type: "heart",
-    label: "Heart",
-    icon: <MdFavorite className="w-5 h-5" />,
-  },
+  { type: "rect",     label: "Rectangle", icon: <MdRectangle className="w-5 h-5" /> },
+  { type: "circle",   label: "Circle",    icon: <MdCircle className="w-5 h-5" /> },
+  { type: "triangle", label: "Triangle",  icon: <IoTriangleSharp className="w-5 h-5" /> },
+  { type: "star",     label: "Star",      icon: <MdStar className="w-5 h-5" /> },
+  { type: "heart",    label: "Heart",     icon: <MdFavorite className="w-5 h-5" /> },
 ];
 
 interface DrawingToolsProps {
@@ -62,93 +41,69 @@ interface DrawingToolsProps {
   onPopoverOpened?: () => void;
 }
 
-export default function DrawingTools({ tool, onToolChange, onAddShape, onAddText, onAddGif, onAddImage, closeSignal, onPopoverOpened }: DrawingToolsProps) {
-  // pinned = user clicked to keep open; hover = mouse is over trigger or popover
-  const [shapePinned, setShapePinned] = useState(false);
-  const [shapeHover, setShapeHover] = useState(false);
-  const [gifPinned, setGifPinned] = useState(false);
-  const [gifHover, setGifHover] = useState(false);
-  const [drawPinned, setDrawPinned] = useState(false);
-  const [drawHover, setDrawHover] = useState(false);
-  const [uploading, setUploading] = useState(false);
+export default function DrawingTools({
+  tool, onToolChange, onAddShape, onAddText, onAddGif, onAddImage, closeSignal, onPopoverOpened,
+}: DrawingToolsProps) {
+  const [lastShape, setLastShape]   = useState<ShapeType>("rect");
+  const [drawOpen, setDrawOpen]     = useState(false);
+  const [shapeOpen, setShapeOpen]   = useState(false);
+  const [gifOpen, setGifOpen]       = useState(false);
+  const [uploading, setUploading]   = useState(false);
   const uploadFileRef = useRef<HTMLInputElement>(null);
 
   // Close all when a sibling component opens a popover
   useEffect(() => {
     if (!closeSignal) return;
-    setShapePinned(false); setShapeHover(false);
-    setGifPinned(false); setGifHover(false);
-    setDrawPinned(false); setDrawHover(false);
+    setDrawOpen(false);
+    setShapeOpen(false);
+    setGifOpen(false);
   }, [closeSignal]);
 
-  const shapeOpen = shapePinned || shapeHover;
-  const gifOpen = gifPinned || gifHover;
-  const drawOpen = drawPinned || drawHover;
-
-  const shapeRef = useRef<HTMLButtonElement>(null);
-  const popoverRef = useRef<HTMLDivElement>(null);
-  const gifRef = useRef<HTMLButtonElement>(null);
-  const gifPopoverRef = useRef<HTMLDivElement>(null);
-  const drawRef = useRef<HTMLButtonElement>(null);
+  const drawWrapRef    = useRef<HTMLDivElement>(null);
   const drawPopoverRef = useRef<HTMLDivElement>(null);
-  const uploadsRef = useRef<HTMLButtonElement>(null);
+  const shapeWrapRef    = useRef<HTMLDivElement>(null);
+  const shapePopoverRef = useRef<HTMLDivElement>(null);
+  const gifWrapRef    = useRef<HTMLDivElement>(null);
+  const gifPopoverRef = useRef<HTMLDivElement>(null);
 
-  const shapeLeaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const gifLeaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const drawLeaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const cancelShapeLeave = () => { if (shapeLeaveTimer.current) clearTimeout(shapeLeaveTimer.current); };
-  const cancelGifLeave = () => { if (gifLeaveTimer.current) clearTimeout(gifLeaveTimer.current); };
-  const cancelDrawLeave = () => { if (drawLeaveTimer.current) clearTimeout(drawLeaveTimer.current); };
-
-  // click-outside dismisses only when pinned
+  // Click-outside: draw popover
   useEffect(() => {
-    if (!shapePinned) return;
+    if (!drawOpen) return;
     const handler = (e: MouseEvent) => {
       if (
-        !shapeRef.current?.contains(e.target as Node) &&
-        !popoverRef.current?.contains(e.target as Node)
-      ) {
-        setShapePinned(false);
-      }
+        !drawWrapRef.current?.contains(e.target as Node) &&
+        !drawPopoverRef.current?.contains(e.target as Node)
+      ) setDrawOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [shapePinned]);
+  }, [drawOpen]);
 
+  // Click-outside: shape popover
   useEffect(() => {
-    if (!gifPinned) return;
+    if (!shapeOpen) return;
     const handler = (e: MouseEvent) => {
       if (
-        !gifRef.current?.contains(e.target as Node) &&
+        !shapeWrapRef.current?.contains(e.target as Node) &&
+        !shapePopoverRef.current?.contains(e.target as Node)
+      ) setShapeOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [shapeOpen]);
+
+  // Click-outside: gif popover
+  useEffect(() => {
+    if (!gifOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (
+        !gifWrapRef.current?.contains(e.target as Node) &&
         !gifPopoverRef.current?.contains(e.target as Node)
-      ) {
-        setGifPinned(false);
-      }
+      ) setGifOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [gifPinned]);
-
-  // (draw popover is closed only via the ✕ button or by opening another section)
-
-  const handleUploadFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch("/api/upload-image", { method: "POST", body: formData });
-      const json = await res.json();
-      if (res.ok && json.url) {
-        onAddImage?.(json.url);
-      }
-    } finally {
-      setUploading(false);
-    }
-  };
+  }, [gifOpen]);
 
   // Stop canvas scroll/touch handlers stealing events inside GIF popover
   useEffect(() => {
@@ -165,182 +120,183 @@ export default function DrawingTools({ tool, onToolChange, onAddShape, onAddText
     };
   }, [gifOpen]);
 
-  const toolBtn = (
-    active: boolean,
-    onClick: () => void,
-    title: string,
-    icon: React.ReactNode,
-  ) => (
+  const handleUploadFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload-image", { method: "POST", body: formData });
+      const json = await res.json();
+      if (res.ok && json.url) onAddImage?.(json.url);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const toolBtn = (active: boolean, onClick: () => void, title: string, icon: React.ReactNode) => (
     <button
       title={title}
       onClick={onClick}
-      className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer ${active
-          ? "bg-black text-white"
-          : "text-[#111] hover:bg-black/[0.07] hover:scale-105"
-        }`}
+      className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+        active ? "bg-[#DDFF00] text-black" : "text-[#111] hover:bg-black/[0.07] hover:scale-105"
+      }`}
     >
       {icon}
     </button>
   );
 
+  // Chevron button appended to split buttons
+  const Chevron = ({ open, onClick }: { open: boolean; active: boolean; onClick: () => void }) => (
+    <button
+      onClick={onClick}
+      title="More options"
+      className={`w-6 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-all ${
+        open ? "bg-black/[0.08] text-[#111]" : "text-[#aaa] hover:bg-black/[0.07] hover:text-[#111]"
+      }`}
+    >
+      <MdKeyboardArrowUp
+        className={`w-4 h-4 transition-transform duration-150 ${open ? "" : "rotate-180"}`}
+      />
+    </button>
+  );
+
+  const popoverStyle: React.CSSProperties = {
+    background: "rgba(255,255,255,0.97)",
+    backdropFilter: "blur(12px)",
+    border: "1px solid rgba(0,0,0,0.08)",
+  };
+
+  const isDrawActive = tool === "pencil" || tool === "brush" || tool === "eraser";
+  const drawIcon = tool === "brush" && isDrawActive
+    ? <MdBrush className="w-5 h-5" />
+    : tool === "eraser" && isDrawActive
+    ? <MdAutoFixOff className="w-5 h-5" />
+    : <MdCreate className="w-5 h-5" />;
+
+  const lastShapeIcon = SHAPES.find(s => s.type === lastShape)?.icon ?? <IoTriangleSharp className="w-5 h-5" />;
+
+  const sep = <div className="w-px h-6 bg-black/[0.1] mx-0.5 self-center flex-shrink-0" />;
+
   return (
     <div
-      className="fixed bottom-5 left-1/2 -translate-x-1/2 flex gap-1 p-2 rounded-2xl z-[200]"
+      className="fixed bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-1 p-2 rounded-2xl z-[200]"
       style={{
         background: "rgba(255,255,255,0.92)",
         backdropFilter: "blur(12px)",
         boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
       }}
     >
+      {/* Select */}
+      {toolBtn(
+        tool === "select",
+        () => onToolChange("select"),
+        "Select",
+        <MdNearMe className="w-5 h-5 -scale-x-100" />,
+      )}
+
+      {sep}
+
       {/* Text */}
       {toolBtn(
         tool === "text",
         () => onAddText(),
         "Text",
-        <MdTextFields className="w-5 h-5" aria-label="Text tool" />,
+        <MdTextFields className="w-5 h-5" />,
       )}
 
-      {/* Separator */}
-      <div className="h-px bg-black/[0.07] -mx-1 my-0.5" />
+      {sep}
 
-      {/* Draw popover: pencil, brush, select */}
-      <div
-        className="relative"
-        onMouseEnter={() => { cancelDrawLeave(); setDrawHover(true); }}
-        onMouseLeave={() => { drawLeaveTimer.current = setTimeout(() => setDrawHover(false), 120); }}
-      >
+      {/* Draw: primary = activate current draw tool (default pencil), chevron = brush / eraser picker */}
+      <div ref={drawWrapRef} className="relative flex items-center">
         <button
-          ref={drawRef}
-          title="Draw"
-          aria-label="Draw tools"
+          title={tool === "brush" ? "Brush" : tool === "eraser" ? "Eraser" : "Pencil"}
           onClick={() => {
-            if (drawPinned) {
-              setDrawPinned(false);
-              setDrawHover(false);
-              onToolChange("select");
-            } else {
-              setDrawPinned(true);
-              setShapePinned(false); setShapeHover(false); setGifPinned(false); setGifHover(false);
-              onPopoverOpened?.();
-            }
+            if (!isDrawActive) onToolChange("pencil");
+            setDrawOpen(false);
           }}
-          className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
-          style={{
-            background: drawPinned ? "#000" : (tool === "pencil" || tool === "brush" || tool === "eraser") && !drawOpen ? "#000" : drawHover ? "rgba(0,0,0,0.07)" : "transparent",
-            color: drawPinned || ((tool === "pencil" || tool === "brush" || tool === "eraser") && !drawOpen) ? "#fff" : "#111",
-          }}
+          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+            isDrawActive ? "bg-[#DDFF00] text-black" : "text-[#111] hover:bg-black/[0.07]"
+          }`}
         >
-          {tool === "brush" && !drawOpen ? (
-            <MdBrush className="w-5 h-5" />
-          ) : tool === "eraser" && !drawOpen ? (
-            <MdAutoFixOff className="w-5 h-5" />
-          ) : (
-            <MdCreate className="w-5 h-5" />
-          )}
+          {drawIcon}
         </button>
+        <Chevron
+          open={drawOpen}
+          active={isDrawActive}
+          onClick={() => {
+            const next = !drawOpen;
+            setDrawOpen(next);
+            if (next) { setShapeOpen(false); setGifOpen(false); onPopoverOpened?.(); }
+          }}
+        />
 
         {drawOpen && (
           <div
             ref={drawPopoverRef}
             className="absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 flex gap-2 p-3 rounded-2xl popover-enter-up"
-            style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)", border: "1px solid rgba(0,0,0,0.08)" }}
+            style={popoverStyle}
           >
-            {/* Close button */}
-            <button
-              title="Close"
-              onClick={() => { setDrawPinned(false); setDrawHover(false); onToolChange("select"); }}
-              className="absolute -top-2.5 -right-2.5 w-5 h-5 rounded-full bg-white text-gray-500 flex items-center justify-center text-xs leading-none cursor-pointer hover:text-black transition-colors z-10"
-            >
-              ✕
-            </button>
-            {/* Pencil */}
-            <button
-              title="Pencil"
-              onClick={() => { onToolChange("pencil"); setDrawPinned(true); }}
-              className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px] cursor-pointer ${tool === "pencil" ? "bg-black text-white" : "text-[#111] hover:bg-black/[0.07]"
+            {(
+              [
+                { t: "pencil" as Tool, icon: <MdCreate className="w-5 h-5" />,     label: "Pencil" },
+                { t: "brush"  as Tool, icon: <MdBrush className="w-5 h-5" />,      label: "Brush"  },
+                { t: "eraser" as Tool, icon: <MdAutoFixOff className="w-5 h-5" />, label: "Eraser" },
+              ] as const
+            ).map(({ t, icon, label }) => (
+              <button
+                key={t}
+                title={label}
+                onClick={() => { onToolChange(t); setDrawOpen(false); }}
+                className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px] cursor-pointer ${
+                  tool === t ? "bg-[#DDFF00] text-black" : "text-[#111] hover:bg-black/[0.07]"
                 }`}
-            >
-              <MdCreate className="w-5 h-5" />
-              <span className={`text-xs leading-none ${tool === "pencil" ? "text-white/70" : "text-gray-400"}`}>Pencil</span>
-            </button>
-
-            {/* Brush */}
-            <button
-              title="Brush"
-              onClick={() => { onToolChange("brush"); setDrawPinned(true); }}
-              className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px] cursor-pointer ${tool === "brush" ? "bg-black text-white" : "text-[#111] hover:bg-black/[0.07]"
-                }`}
-            >
-              <MdBrush className="w-5 h-5" />
-              <span className={`text-xs leading-none ${tool === "brush" ? "text-white/70" : "text-gray-400"}`}>Brush</span>
-            </button>
-
-            {/* Select */}
-            <button
-              title="Select"
-              onClick={() => { onToolChange("select"); setDrawPinned(true); }}
-              className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px] cursor-pointer ${tool === "select" ? "bg-black text-white" : "text-[#111] hover:bg-black/[0.07]"
-                }`}
-            >
-              <MdNearMe className="w-5 h-5" />
-              <span className={`text-xs leading-none ${tool === "select" ? "text-white/70" : "text-gray-400"}`}>Select</span>
-            </button>
-
-            {/* Eraser */}
-            <button
-              title="Eraser"
-              onClick={() => { onToolChange("eraser"); setDrawPinned(true); }}
-              className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px] cursor-pointer ${tool === "eraser" ? "bg-black text-white" : "text-[#111] hover:bg-black/[0.07]"
-                }`}
-            >
-              <MdAutoFixOff className="w-5 h-5" />
-              <span className={`text-xs leading-none ${tool === "eraser" ? "text-white/70" : "text-gray-400"}`}>Eraser</span>
-            </button>
-
+              >
+                {icon}
+                <span className={`text-xs leading-none ${tool === t ? "text-black/50" : "text-gray-400"}`}>{label}</span>
+              </button>
+            ))}
           </div>
         )}
       </div>
 
-      {/* Separator */}
-      <div className="h-px bg-black/[0.07] -mx-1 my-0.5" />
+      {sep}
 
-      {/* Shapes */}
-      <div
-        className="relative"
-        onMouseEnter={() => { cancelShapeLeave(); setShapeHover(true); }}
-        onMouseLeave={() => { shapeLeaveTimer.current = setTimeout(() => setShapeHover(false), 120); }}
-      >
+      {/* Shapes: primary = add last-used shape, chevron = shape picker */}
+      <div ref={shapeWrapRef} className="relative flex items-center">
         <button
-          ref={shapeRef}
-          title="Shapes"
-          aria-label="Shapes"
-          onClick={() => {
-            const nowPinned = !shapePinned;
-            setShapePinned(nowPinned);
-            if (nowPinned) { setGifPinned(false); setGifHover(false); setDrawPinned(false); setDrawHover(false); onToolChange("shape"); onPopoverOpened?.(); }
-          }}
-          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer ${shapePinned
-              ? "bg-black text-white"
-              : shapeHover ? "bg-black/[0.07] text-[#111]" : "text-[#111] hover:bg-black/[0.07] hover:scale-105"
-            }`}
+          title={`Add ${lastShape}`}
+          onClick={() => onAddShape(lastShape)}
+          className="w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer text-[#111] hover:bg-black/[0.07]"
         >
-          <IoTriangleSharp className="w-5 h-5" />
+          {lastShapeIcon}
         </button>
+        <Chevron
+          open={shapeOpen}
+          active={false}
+          onClick={() => {
+            const next = !shapeOpen;
+            setShapeOpen(next);
+            if (next) { setDrawOpen(false); setGifOpen(false); onPopoverOpened?.(); }
+          }}
+        />
 
         {shapeOpen && (
           <div
-            ref={popoverRef}
+            ref={shapePopoverRef}
             className="absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 flex gap-2 p-3 rounded-2xl popover-enter-up"
-            style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)", border: "1px solid rgba(0,0,0,0.08)", minWidth: 220 }}
+            style={{ ...popoverStyle, minWidth: 220 }}
           >
             {SHAPES.map((s) => (
               <button
                 key={s.type}
                 title={s.label}
                 onClick={() => {
+                  setLastShape(s.type);
                   onAddShape(s.type);
-                  setShapePinned(false);
-                  setShapeHover(false);
+                  setShapeOpen(false);
                 }}
                 className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-black/[0.07] transition-colors flex-1 cursor-pointer text-[#1a1a1a]"
               >
@@ -352,28 +308,20 @@ export default function DrawingTools({ tool, onToolChange, onAddShape, onAddText
         )}
       </div>
 
-      {/* Separator */}
-      <div className="h-px bg-black/[0.07] -mx-1 my-0.5" />
+      {sep}
 
       {/* GIF / Sticker picker */}
-      <div
-        className="relative"
-        onMouseEnter={() => { cancelGifLeave(); setGifHover(true); }}
-        onMouseLeave={() => { gifLeaveTimer.current = setTimeout(() => setGifHover(false), 120); }}
-      >
+      <div ref={gifWrapRef} className="relative">
         <button
-          ref={gifRef}
           title="Add GIF or Sticker"
-          aria-label="Add GIF or Sticker"
           onClick={() => {
-            const nowPinned = !gifPinned;
-            setGifPinned(nowPinned);
-            if (nowPinned) { setShapePinned(false); setShapeHover(false); setDrawPinned(false); setDrawHover(false); onPopoverOpened?.(); }
+            const next = !gifOpen;
+            setGifOpen(next);
+            if (next) { setDrawOpen(false); setShapeOpen(false); onPopoverOpened?.(); }
           }}
-          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer ${gifPinned
-              ? "bg-black text-white"
-              : gifHover ? "bg-black/[0.07] text-[#111]" : "text-[#111] hover:bg-black/[0.07] hover:scale-105"
-            }`}
+          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+            gifOpen ? "bg-black/[0.07] text-[#111]" : "text-[#111] hover:bg-black/[0.07] hover:scale-105"
+          }`}
         >
           <PiGifFill className="w-5 h-5" />
         </button>
@@ -382,30 +330,26 @@ export default function DrawingTools({ tool, onToolChange, onAddShape, onAddText
           <div
             ref={gifPopoverRef}
             className="absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 p-3 rounded-2xl z-50 popover-enter-up"
-            style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)", border: "1px solid rgba(0,0,0,0.08)", width: "min(420px, calc(100vw - 100px))" }}
+            style={{ ...popoverStyle, width: "min(420px, calc(100vw - 100px))" }}
           >
             <GifPicker
               onSelect={(id, url) => {
                 onAddGif(id, url);
-                setGifPinned(false);
-                setGifHover(false);
+                setGifOpen(false);
               }}
             />
           </div>
         )}
       </div>
 
-      {/* Separator */}
-      <div className="h-px bg-black/[0.07] -mx-1 my-0.5" />
+      {sep}
 
       {/* Upload image — opens file dialog directly */}
       <button
-        ref={uploadsRef}
         title="Upload image"
-        aria-label="Upload image"
         disabled={uploading}
         onClick={() => uploadFileRef.current?.click()}
-        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-[#111] hover:bg-black/[0.07] hover:scale-105`}
+        className="w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-[#111] hover:bg-black/[0.07] hover:scale-105"
       >
         {uploading ? (
           <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
