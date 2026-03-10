@@ -185,11 +185,11 @@ export default function DrawingTools({ tool, onToolChange, onAddShape, onAddText
 
   return (
     <div
-      className="absolute top-5 left-5 flex flex-col gap-1 p-2 rounded-2xl z-[200]"
+      className="fixed bottom-5 left-1/2 -translate-x-1/2 flex gap-1 p-2 rounded-2xl z-[200]"
       style={{
         background: "rgba(255,255,255,0.92)",
         backdropFilter: "blur(12px)",
-        border: "1px solid rgba(0,0,0,0.08)",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
       }}
     >
       {/* Text */}
@@ -242,7 +242,7 @@ export default function DrawingTools({ tool, onToolChange, onAddShape, onAddText
         {drawOpen && (
           <div
             ref={drawPopoverRef}
-            className="absolute top-0 left-[calc(100%+12px)] flex gap-2 p-3 rounded-2xl popover-enter-right"
+            className="absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 flex gap-2 p-3 rounded-2xl popover-enter-up"
             style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)", border: "1px solid rgba(0,0,0,0.08)" }}
           >
             {/* Close button */}
@@ -330,7 +330,7 @@ export default function DrawingTools({ tool, onToolChange, onAddShape, onAddText
         {shapeOpen && (
           <div
             ref={popoverRef}
-            className="absolute top-0 left-[calc(100%+12px)] flex gap-2 p-3 rounded-2xl popover-enter-right"
+            className="absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 flex gap-2 p-3 rounded-2xl popover-enter-up"
             style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)", border: "1px solid rgba(0,0,0,0.08)", minWidth: 220 }}
           >
             {SHAPES.map((s) => (
@@ -381,7 +381,7 @@ export default function DrawingTools({ tool, onToolChange, onAddShape, onAddText
         {gifOpen && (
           <div
             ref={gifPopoverRef}
-            className="absolute top-0 left-[calc(100%+12px)] p-3 rounded-2xl z-50 popover-enter-right"
+            className="absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 p-3 rounded-2xl z-50 popover-enter-up"
             style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)", border: "1px solid rgba(0,0,0,0.08)", width: "min(420px, calc(100vw - 100px))" }}
           >
             <GifPicker
