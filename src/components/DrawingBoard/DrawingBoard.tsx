@@ -362,6 +362,18 @@ function DrawingBoardInner() {
               <ellipse cx="2.2" cy="17.8" rx="1.8" ry="1.2" fill="#555"/>
               <line x1="12.5" y1="3.5" x2="16.5" y2="7.5" stroke="white" strokeWidth="0.8"/>
             </svg>
+          ) : (tool === "shape" && !isOverUI) ? (
+            /* Crosshair — center aligns with mouse position */
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ transform: "translate(-50%, -50%)" }} xmlns="http://www.w3.org/2000/svg">
+              <line x1="10" y1="1" x2="10" y2="8"  stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+              <line x1="10" y1="12" x2="10" y2="19" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+              <line x1="1"  y1="10" x2="8"  y2="10" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+              <line x1="12" y1="10" x2="19" y2="10" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+              <line x1="10" y1="1" x2="10" y2="8"  stroke="#1a1a1a" strokeWidth="1.2" strokeLinecap="round"/>
+              <line x1="10" y1="12" x2="10" y2="19" stroke="#1a1a1a" strokeWidth="1.2" strokeLinecap="round"/>
+              <line x1="1"  y1="10" x2="8"  y2="10" stroke="#1a1a1a" strokeWidth="1.2" strokeLinecap="round"/>
+              <line x1="12" y1="10" x2="19" y2="10" stroke="#1a1a1a" strokeWidth="1.2" strokeLinecap="round"/>
+            </svg>
           ) : (
             <svg width="13" height="15" viewBox="0 0 317 354" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path
