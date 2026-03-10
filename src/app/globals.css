@@ -2,6 +2,7 @@
 
 /* Figma-style flat aesthetic: disable all box shadows */
 @theme {
+  --color-accent: #0a99ff;
   --shadow-sm: none;
   --shadow: none;
   --shadow-md: none;

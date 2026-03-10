@@ -156,7 +156,7 @@ export default function DrawingTools({
       title={title}
       onClick={onClick}
       className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
-        active ? "bg-[#DDFF00] text-black" : "text-[#111] hover:bg-black/[0.07]"
+        active ? "bg-accent text-white" : "text-[#111] hover:bg-black/[0.07]"
       }`}
     >
       {icon}
@@ -233,7 +233,7 @@ export default function DrawingTools({
             setDrawOpen(false);
           }}
           className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
-            isDrawActive ? "bg-[#DDFF00] text-black" : "text-[#111] hover:bg-black/[0.07]"
+            isDrawActive ? "bg-accent text-white" : "text-[#111] hover:bg-black/[0.07]"
           }`}
         >
           {drawIcon}
@@ -266,11 +266,11 @@ export default function DrawingTools({
                 title={label}
                 onClick={() => { onToolChange(t); setDrawOpen(false); }}
                 className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px] cursor-pointer ${
-                  tool === t ? "bg-[#DDFF00] text-black" : "text-[#111] hover:bg-black/[0.07]"
+                  tool === t ? "bg-accent text-white" : "text-[#111] hover:bg-black/[0.07]"
                 }`}
               >
                 {icon}
-                <span className={`text-xs leading-none ${tool === t ? "text-black/50" : "text-gray-400"}`}>{label}</span>
+                <span className={`text-xs leading-none ${tool === t ? "text-white/70" : "text-gray-400"}`}>{label}</span>
               </button>
             ))}
           </div>
@@ -285,7 +285,7 @@ export default function DrawingTools({
           title={`Draw ${lastShape}`}
           onClick={() => onAddShape(lastShape)}
           className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
-            tool === "shape" ? "bg-[#DDFF00] text-black" : "text-[#111] hover:bg-black/[0.07]"
+            tool === "shape" ? "bg-accent text-white" : "text-[#111] hover:bg-black/[0.07]"
           }`}
         >
           {lastShapeIcon}
