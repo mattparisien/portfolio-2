@@ -6,8 +6,8 @@ import "./globals.css";
 import SmoothScroller from "@/components/SmoothScroller";
 
 export const metadata: Metadata = {
-  title: "Collective Board — Infinite artboard",
-  description: "Collective Board — An infinite collaborative artboard",
+  title: "Crumb | A queer collective infinite wall",
+  description: "Crumb — A queer collective infinite wall for collaborative creativity.",
   icons: [
     { rel: "icon", type: "image/svg+xml", url: "/favicon.svg", sizes: "16x16" }, // optional
 
