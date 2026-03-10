@@ -32,7 +32,7 @@ const Page = () => {
             style={{
                                 "--current-color": PALETTE[hoverCount % PALETTE.length],
 
-            }}
+            } as React.CSSProperties}
         >
             <div className="logo text-black" style={{
                 fontFamily:"Waldeck",
