@@ -51,6 +51,10 @@ export interface PropertiesPanelProps {
   onOpenStrokeColor: () => void;
   onOpenTextColor: () => void;
   onCloseColor: () => void;
+  /** Direct hex change from the inline input (bypasses popover) */
+  onFillColorChange: (hex: string) => void;
+  onStrokeColorChange?: (hex: string) => void;
+  onTextColorChange: (hex: string) => void;
 }
 
 // ── Primitives ───────────────────────────────────────────────────────────────
@@ -72,32 +76,53 @@ const SWATCH_SHADOW =
 
 function ColorRow({
   color,
-  label,
   isOpen,
-  onClick,
+  onSwatchClick,
+  onColorChange,
 }: {
   color: string;
-  label?: string;
   isOpen: boolean;
-  onClick: () => void;
+  onSwatchClick: () => void;
+  onColorChange: (hex: string) => void;
 }) {
+  const [hex, setHex] = useState(color);
+
+  // Sync when external color changes (e.g. from the picker)
+  useEffect(() => { setHex(color); }, [color]);
+
   return (
-    <button
-      onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className="w-full flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer transition-colors duration-100 text-left"
-      style={{ background: isOpen ? "rgba(0,0,0,0.06)" : "rgba(0,0,0,0.025)" }}
-    >
-      <span
-        className="flex-shrink-0 rounded-full"
-        style={{ width: 16, height: 16, background: color, boxShadow: SWATCH_SHADOW }}
+    <div className="flex items-center gap-2 px-1">
+      {/* Swatch button — opens/closes the color popover */}
+      <button
+        title="Pick colour"
+        onClick={(e) => { e.stopPropagation(); onSwatchClick(); }}
+        className="flex-shrink-0 rounded-full cursor-pointer transition-transform hover:scale-110 active:scale-95"
+        style={{
+          width: 22,
+          height: 22,
+          background: color,
+          boxShadow: isOpen
+            ? `0 0 0 2px #fff, 0 0 0 4px #000`
+            : SWATCH_SHADOW,
+        }}
       />
-      <span className="text-[11px] font-mono font-medium text-black/50 uppercase tracking-wider flex-1">
-        {color}
-      </span>
-      {label && (
-        <span className="text-[10px] text-black/25 select-none">{label}</span>
-      )}
-    </button>
+      {/* Editable hex input */}
+      <input
+        type="text"
+        value={hex}
+        maxLength={7}
+        spellCheck={false}
+        placeholder="#000000"
+        onClick={(e) => e.stopPropagation()}
+        onChange={(e) => {
+          const v = e.target.value;
+          setHex(v);
+          if (/^#[0-9a-fA-F]{6}$/.test(v)) onColorChange(v);
+        }}
+        onBlur={() => setHex(color)}
+        className="flex-1 min-w-0 text-[11px] font-mono font-medium text-black/60 uppercase tracking-wider bg-black/[0.04] rounded-lg px-2 py-1.5 border-0 outline-none focus:bg-black/[0.08] transition-colors"
+      />
+    </div>
   );
 }
 
@@ -214,6 +239,9 @@ export default function PropertiesPanel({
   onOpenStrokeColor,
   onOpenTextColor,
   onCloseColor,
+  onFillColorChange,
+  onStrokeColorChange,
+  onTextColorChange,
 }: PropertiesPanelProps) {
   const {
     fontFamily,
@@ -237,19 +265,6 @@ export default function PropertiesPanel({
     setEffectOpen(false);
   }, [closeSignal]);
 
-  // Gradient swatch style for text
-  const textSwatchStyle: React.CSSProperties = (() => {
-    if (!gradient) return {};
-    const sorted = [...gradient.stops].sort((a, b) => a.offset - b.offset);
-    const parts = sorted.map((s) => `${s.color} ${Math.round(s.offset * 100)}%`).join(", ");
-    return {
-      background: `linear-gradient(${gradient.angle}deg, ${parts})`,
-      borderRadius: 5,
-      width: 28,
-      height: 16,
-    };
-  })();
-
   return (
     <div
       className="drawing-ui-overlay fixed right-0 top-0 h-screen w-[220px] panel-slide-in z-[200] flex flex-col overflow-y-auto"
@@ -271,27 +286,17 @@ export default function PropertiesPanel({
             <SectionLabel>Color</SectionLabel>
 
             {/* Color / gradient swatch row */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (textColorOpen) onCloseColor(); else onOpenTextColor();
-                setEffectOpen(false);
-              }}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer transition-colors duration-100 text-left"
-              style={{ background: textColorOpen ? "rgba(0,0,0,0.06)" : "rgba(0,0,0,0.025)" }}
-            >
-              {gradient ? (
-                <span className="flex-shrink-0 rounded" style={textSwatchStyle} />
-              ) : (
-                <span
-                  className="flex-shrink-0 rounded-full"
-                  style={{ width: 16, height: 16, background: color, boxShadow: SWATCH_SHADOW }}
-                />
-              )}
-              <span className="text-[11px] font-mono font-medium text-black/50 uppercase tracking-wider">
-                {gradient ? "Gradient" : color}
-              </span>
-            </button>
+            <ColorRow
+              color={gradient ? "#000000" : color}
+              isOpen={textColorOpen}
+              onSwatchClick={() => { if (textColorOpen) onCloseColor(); else onOpenTextColor(); setEffectOpen(false); }}
+              onColorChange={onTextColorChange}
+            />
+            {gradient && (
+              <div className="mt-1 px-1">
+                <span className="text-[11px] font-mono font-medium text-black/40">Gradient</span>
+              </div>
+            )}
 
             {/* Effects */}
             <div className="relative mt-1.5">
@@ -486,7 +491,8 @@ export default function PropertiesPanel({
             <ColorRow
               color={color}
               isOpen={fillColorOpen}
-              onClick={() => (fillColorOpen ? onCloseColor() : onOpenFillColor())}
+              onSwatchClick={() => (fillColorOpen ? onCloseColor() : onOpenFillColor())}
+              onColorChange={onFillColorChange}
             />
           </div>
 
@@ -499,7 +505,8 @@ export default function PropertiesPanel({
                 <ColorRow
                   color={strokeColor}
                   isOpen={strokeColorOpen}
-                  onClick={() => (strokeColorOpen ? onCloseColor() : onOpenStrokeColor())}
+                  onSwatchClick={() => (strokeColorOpen ? onCloseColor() : onOpenStrokeColor())}
+                  onColorChange={onStrokeColorChange ?? (() => {})}
                 />
               </div>
             </>

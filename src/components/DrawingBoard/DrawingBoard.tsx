@@ -126,6 +126,7 @@ function DrawingBoardInner() {
   const onTextToolbarPopoverOpened  = () => { setDrawingToolsClose(n => n + 1); setToolbarClose(n => n + 1); setColorPopoverSlot(null); };
 
   const selectedIsShape = hasSelection && !selectedIsText && !selectedIsGif && !selectedIsPath;
+  const panelVisible    = selectedIsText || (!selectedIsGif && (tool === "pencil" || tool === "brush" || hasSelection));
 
   // Keep refs in sync so async canvas callbacks always read the latest values
   const toolRef      = useRef<Tool>("select");
@@ -343,7 +344,7 @@ function DrawingBoardInner() {
       <RemoteCursors vpt={vpt} />
 
       {/* Local cursor */}
-      {localCursor && (
+      {localCursor && !isOverUI && (
         <div
           className="pointer-events-none fixed z-[9999]"
           style={{ left: 0, top: 0, transform: `translate(${localCursor.x}px, ${localCursor.y}px)`, willChange: "transform" }}
@@ -373,7 +374,7 @@ function DrawingBoardInner() {
       )}
 
       {/* Properties panel — slides in from the right when a drawing tool is active or an object is selected */}
-      {(selectedIsText || (!selectedIsGif && (tool === "pencil" || tool === "brush" || hasSelection))) && (
+      {panelVisible && (
         <PropertiesPanel
           tool={tool}
           hasSelection={hasSelection}
@@ -396,6 +397,9 @@ function DrawingBoardInner() {
           onOpenStrokeColor={() => openColorPopover("toolbar-stroke")}
           onOpenTextColor={() => openColorPopover("text")}
           onCloseColor={closeColorPopover}
+          onFillColorChange={(c) => { setColor(c); if (hasSelection) recolorSelected(c); }}
+          onStrokeColorChange={(c) => { setShapeStrokeColor(c); restrokeSelected(c); }}
+          onTextColorChange={(c) => { setColor(c); recolorSelected(c); }}
         />
       )}
       <DrawingTools
@@ -411,13 +415,15 @@ function DrawingBoardInner() {
         activeShapeType={shapeType}
         onPopoverOpened={onDrawingToolsPopoverOpened}
       />
-      <ZoomNav zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} onUndo={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "z", ctrlKey: true, metaKey: true, bubbles: true }))} />
+      {!panelVisible && <ZoomNav zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} onUndo={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "z", ctrlKey: true, metaKey: true, bubbles: true }))} />}
       <BoardHeader isSyncing={isSyncing} />
 
       {/* Top-right cluster: active users */}
-      <div className="absolute top-5 right-5 z-[200]">
-        <ActiveUsers />
-      </div>
+      {!panelVisible && (
+        <div className="absolute top-5 right-5 z-[200]">
+          <ActiveUsers />
+        </div>
+      )}
       {/* Lock/unlock button floats above the selected object — self-positions via RAF */}
       {hasSelection && (
         <ObjectLockButton

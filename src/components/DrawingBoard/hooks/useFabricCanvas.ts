@@ -263,12 +263,12 @@ export function useFabricCanvas({
       }
       e.preventDefault();
       if (e.ctrlKey || e.metaKey) {
-        const z = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, fc.getZoom() * (1 - e.deltaY * 0.001)));
+        const z = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, fc.getZoom() * (1 - e.deltaY * 0.003)));
         fc.zoomToPoint(new mods.Point(e.clientX, e.clientY), z);
         setZoom(z);
         setVpt(fc.viewportTransform as number[]);
       } else {
-        fc.relativePan(new mods.Point(-e.deltaX, -e.deltaY));
+        fc.relativePan(new mods.Point(-e.deltaX * 2, -e.deltaY * 2));
         setVpt(fc.viewportTransform as number[]);
       }
     };

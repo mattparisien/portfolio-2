@@ -182,6 +182,19 @@ body {
   cursor: none !important;
 }
 
+/* Restore the native cursor over any UI overlay (toolbars, sidebars, etc.) */
+.board-no-cursor .drawing-ui-overlay,
+.board-no-cursor .drawing-ui-overlay * {
+  cursor: auto !important;
+}
+.board-no-cursor .drawing-ui-overlay button,
+.board-no-cursor .drawing-ui-overlay a,
+.board-no-cursor .drawing-ui-overlay input,
+.board-no-cursor .drawing-ui-overlay select,
+.board-no-cursor .drawing-ui-overlay [role="button"] {
+  cursor: pointer !important;
+}
+
 .toolbar-slider {
   -webkit-appearance: none;
   appearance: none;
