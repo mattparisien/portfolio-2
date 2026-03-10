@@ -20,26 +20,56 @@ export const BG_COLOR = "#F6F6F6";
 // ── Presence / multiplayer ────────────────────────────────────────────────
 
 export const CURSOR_COLORS= [
-  "#E4649D","#0053A3", "#00A23D", "#A0D921", "#FFABC2", "#F65C2C", "#5F2D3C", "#0E7AA9", "#328B77",
+  "#E4649D","#0973d6", "#00A23D", "#A0D921", "#FFABC2", "#7241a1", "#5F2D3C", "#0E7AA9", "#328B77", "#F17EDD", "#DED7B9"
 ] as const;
 
-export const CURSOR_ADJECTIVES = [
-  "Sickening", "Gagged", "Snatched", "Fierce", "Serving",
-  "Campy", "Shady", "Iconic", "Lewky", "Extra",
-  "Delusional", "Unclocked", "Opulent", "Messy", "Legendary", "Questioning", "Anal"
-] as const;
-
-export const CURSOR_ANIMALS = [
-  "Lewk", "Realness", "Moment", "Situation", "Fantasy",
-  "Queen", "Era", "Creature", "Bestie", "Legend",
-  "Diva", "Witch", "Slayful", "Gaggina", "Creature", "Top", "Bottom", "Unicorn", "Teaspill"
+export const CURSOR_NAMES = [
+   "serve",
+  "slay",
+  "werk",
+  "shade",
+  "read",
+  "reading",
+  "tea",
+  "spill",
+  "sickening",
+  "snatched",
+  "cunty",
+  "camp",
+  "fierce",
+  "iconic",
+  "legendary",
+  "mother",
+  "mothering",
+  "ate",
+  "gagged",
+  "clocked",
+  "trade",
+  "vogue",
+  "ballroom",
+  "runway",
+  "category",
+  "face",
+  "realness",
+  "yassified",
+  "boots",
+  "kiki",
+  "glam",
+  "diva",
+  "femme",
+  "twirl",
+  "stunt",
+  "drama",
+  "fantasy",
+  "extra",
+  "fab"
 ] as const;
 
 export function getOrCreateUser(): { name: string } {
   if (typeof window === "undefined") return { name: "User" };
   const stored = sessionStorage.getItem("lb_user");
   if (stored) return JSON.parse(stored) as { name: string };
-  const name = `${CURSOR_ADJECTIVES[Math.floor(Math.random() * CURSOR_ADJECTIVES.length)]} ${CURSOR_ANIMALS[Math.floor(Math.random() * CURSOR_ANIMALS.length)]}`;
+  const name = `${CURSOR_NAMES[Math.floor(Math.random() * CURSOR_NAMES.length)]}`;
   const user = { name };
   sessionStorage.setItem("lb_user", JSON.stringify(user));
   return user;

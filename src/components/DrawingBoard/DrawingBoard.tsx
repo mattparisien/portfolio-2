@@ -2,8 +2,7 @@
 
 import { useRef, useState, useEffect, useCallback } from "react";
 import type { Canvas } from "fabric";
-import Toolbar from "./components/Toolbar";
-import TextToolbar from "./components/TextToolbar";
+import PropertiesPanel from "./components/PropertiesPanel";
 import BoardHeader from "./components/BoardHeader";
 import DrawingTools from "./components/DrawingTools";
 import RemoteCursors from "./components/RemoteCursors";
@@ -373,36 +372,30 @@ function DrawingBoardInner() {
         </div>
       )}
 
-      {/* Text-specific toolbar */}
-      {selectedIsText && (
-        <TextToolbar
-          textProps={textProps}
+      {/* Properties panel — slides in from the right when a drawing tool is active or an object is selected */}
+      {(selectedIsText || (!selectedIsGif && (tool === "pencil" || tool === "brush" || hasSelection))) && (
+        <PropertiesPanel
+          tool={tool}
+          hasSelection={hasSelection}
+          selectedIsText={selectedIsText}
+          selectedIsShape={selectedIsShape}
           color={color}
-          onApply={applyTextProp}
-          closeSignal={textToolbarClose}
-          onPopoverOpened={onTextToolbarPopoverOpened}
-          colorPopoverOpen={colorPopoverSlot === "text"}
-          onOpenColorPopover={() => openColorPopover("text")}
-          onCloseColorPopover={closeColorPopover}
-        />
-      )}
-
-      {/* Stroke/fill toolbar — active pencil/brush or any non-text, non-gif selection */}
-      {!selectedIsText && !selectedIsGif && (tool === "pencil" || tool === "brush" || hasSelection) && (
-        <Toolbar
-          color={color}
+          strokeColor={selectedIsShape ? shapeStrokeColor : undefined}
           opacity={opacity}
           strokeWeight={brushSize}
+          textProps={textProps}
           onOpacityChange={(v) => { setOpacity(v); if (hasSelection) reOpacitySelected(v); }}
           onStrokeWeightChange={(v) => { setBrushSize(v); if (hasSelection) reweightSelected(v); }}
-          strokeColor={selectedIsShape ? shapeStrokeColor : undefined}
-          onStrokeColorChange={selectedIsShape ? (c) => { setShapeStrokeColor(c); restrokeSelected(c); } : undefined}
-          closeSignal={toolbarClose}
-          onPopoverOpened={onToolbarPopoverOpened}
-          colorPopoverOpenFor={colorPopoverSlot === "toolbar-fill" ? "fill" : colorPopoverSlot === "toolbar-stroke" ? "stroke" : null}
-          onOpenFillColorPopover={() => openColorPopover("toolbar-fill")}
-          onOpenStrokeColorPopover={() => openColorPopover("toolbar-stroke")}
-          onCloseColorPopover={closeColorPopover}
+          onApplyText={applyTextProp}
+          closeSignal={selectedIsText ? textToolbarClose : toolbarClose}
+          onPopoverOpened={selectedIsText ? onTextToolbarPopoverOpened : onToolbarPopoverOpened}
+          fillColorOpen={colorPopoverSlot === "toolbar-fill"}
+          strokeColorOpen={colorPopoverSlot === "toolbar-stroke"}
+          textColorOpen={colorPopoverSlot === "text"}
+          onOpenFillColor={() => openColorPopover("toolbar-fill")}
+          onOpenStrokeColor={() => openColorPopover("toolbar-stroke")}
+          onOpenTextColor={() => openColorPopover("text")}
+          onCloseColor={closeColorPopover}
         />
       )}
       <DrawingTools
@@ -446,7 +439,7 @@ function DrawingBoardInner() {
           fabricRef={fabricRef}
           onColorChange={(c) => { setColor(c); if (hasSelection) recolorSelected(c); }}
           onClose={closeColorPopover}
-          anchorStyle={{ top: 80, right: 20, bottom: "auto", left: "auto" }}
+          anchorStyle={{ top: 120, right: 228, bottom: "auto", left: "auto" }}
         />
       )}
       {colorPopoverSlot === "toolbar-stroke" && (
@@ -455,7 +448,7 @@ function DrawingBoardInner() {
           fabricRef={fabricRef}
           onColorChange={(c) => { setShapeStrokeColor(c); restrokeSelected(c); }}
           onClose={closeColorPopover}
-          anchorStyle={{ top: "auto", bottom: 100, left: "calc(50vw - 140px)" }}
+          anchorStyle={{ top: 200, right: 228, bottom: "auto", left: "auto" }}
         />
       )}
       {colorPopoverSlot === "text" && (
@@ -466,7 +459,7 @@ function DrawingBoardInner() {
           onColorChange={(c) => { setColor(c); recolorSelected(c); }}
           onGradientChange={(g) => applyTextProp({ gradient: g })}
           onClose={closeColorPopover}
-          anchorStyle={{ top: 64, bottom: "auto", left: "calc(50% - 120px)" }}
+          anchorStyle={{ top: 120, right: 228, bottom: "auto", left: "auto" }}
         />
       )}
     </div>

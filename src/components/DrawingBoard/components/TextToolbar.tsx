@@ -166,9 +166,9 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
   })();
 
   return (
-    <div className="fixed right-5 top-20 toolbar-enter z-[200]" style={{ maxHeight: "calc(100vh - 120px)" }}>
+    <div className="drawing-ui-overlay fixed right-5 top-20 toolbar-enter z-[200]" style={{ maxHeight: "calc(100vh - 120px)" }}>
       <div
-        className="relative flex flex-col items-stretch gap-1 px-2 py-3 rounded-2xl overflow-y-auto"
+        className="relative flex flex-col items-center gap-1 px-2 py-3 rounded-2xl overflow-y-auto"
         style={{
           background: "rgba(255,255,255,0.94)",
           backdropFilter: "blur(18px)",

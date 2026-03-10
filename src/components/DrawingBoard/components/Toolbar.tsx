@@ -81,7 +81,7 @@ export default function Toolbar({ color, opacity, strokeWeight, onOpacityChange,
 
   return (
     <div
-      className="fixed right-5 top-20 toolbar-enter flex flex-col items-center gap-1 px-2 py-3 rounded-2xl z-[200]"
+      className="drawing-ui-overlay fixed right-5 top-20 toolbar-enter flex flex-col items-center gap-1 px-2 py-3 rounded-2xl z-[200]"
       style={{
         background: "rgba(255,255,255,0.94)",
         backdropFilter: "blur(18px)",
@@ -91,7 +91,7 @@ export default function Toolbar({ color, opacity, strokeWeight, onOpacityChange,
     >
       {/* Color swatch button(s) — open ColorPopover via parent */}
       {showDual ? (
-        <div className="flex items-end gap-1">
+        <div className="flex items-center gap-1">
           <ToolbarBtn
             active={colorPopoverOpenFor === "fill"}
             title="Fill colour"

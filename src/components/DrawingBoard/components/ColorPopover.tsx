@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import type { Canvas } from "fabric";
 import type { TextGradient } from "../types";
 import { COLORS } from "../constants";
+import ColorPicker from "./ColorPicker";
 
 // ── Internal stop type (id only used inside this component for React keys) ─
 interface GStop { id: string; offset: number; color: string; }
@@ -94,9 +95,6 @@ export default function ColorPopover({ color, gradient = null, fabricRef, onColo
   const showGradientTab = typeof onGradientChange === "function";
   const [tab, setTab] = useState<"solid" | "gradient">(gradient && showGradientTab ? "gradient" : "solid");
 
-  // ── Solid state ─────────────────────────────────────────────────────────
-  const [hexInput, setHexInput] = useState(color.startsWith("#") ? color : "#000000");
-
   // ── Gradient state ───────────────────────────────────────────────────────
   const [stops, setStops] = useState<GStop[]>(() => initStops(gradient));
   const [angle, setAngle] = useState(gradient?.angle ?? 90);
@@ -104,8 +102,6 @@ export default function ColorPopover({ color, gradient = null, fabricRef, onColo
 
   const popoverRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => { if (color.startsWith("#")) setHexInput(color); }, [color]);
 
   // Click-outside to close
   useEffect(() => {
@@ -134,7 +130,7 @@ export default function ColorPopover({ color, gradient = null, fabricRef, onColo
       if (typeof o.fill === "string" && o.fill !== "transparent") seen.add(o.fill as string);
       if (typeof o.stroke === "string" && o.stroke !== "transparent") seen.add(o.stroke as string);
     });
-    return [...seen].filter(Boolean).slice(0, 16);
+    return [...seen].filter(Boolean).slice(0, 4);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // intentionally empty — compute once on mount
 
@@ -216,53 +212,23 @@ export default function ColorPopover({ color, gradient = null, fabricRef, onColo
       {/* ══ SOLID TAB ══ */}
       {tab === "solid" && (
         <>
-          <SectionLabel>Colors</SectionLabel>
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {COLORS.map(c => (
-              <button
-                key={c} title={c}
-                onClick={() => { onGradientChange?.(null); onColorChange(c); }}
-                className="w-6 h-6 rounded-full cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
-                style={{ background: c, outline: color === c && !gradient ? "2px solid #000" : "1px solid rgba(0,0,0,0.12)", outlineOffset: color === c && !gradient ? "2px" : "0px" }}
-              />
-            ))}
-            {/* Rainbow custom picker */}
-            <label
-              title="Custom color"
-              className="w-6 h-6 rounded-full cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
-              style={{ background: "conic-gradient(red,yellow,lime,cyan,blue,magenta,red)", outline: "1px solid rgba(0,0,0,0.12)" }}
-            >
-              <input type="color" value={color.startsWith("#") ? color : "#000000"}
-                onChange={e => { onGradientChange?.(null); onColorChange(e.target.value); setHexInput(e.target.value); }}
-                className="opacity-0 w-0 h-0 absolute pointer-events-none" tabIndex={-1} />
-            </label>
-          </div>
-
-          {/* Hex input */}
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-6 h-6 rounded-full flex-shrink-0 block" style={{ background: color, outline: "1px solid rgba(0,0,0,0.12)" }} />
-            <input
-              type="text" value={hexInput} maxLength={7} spellCheck={false} placeholder="#000000"
-              onChange={e => {
-                const v = e.target.value;
-                setHexInput(v);
-                if (/^#[0-9a-fA-F]{6}$/.test(v)) { onGradientChange?.(null); onColorChange(v); }
-              }}
-              onBlur={() => setHexInput(color.startsWith("#") ? color : hexInput)}
-              className="flex-1 text-xs font-mono border border-gray-200 rounded-lg px-2 py-1 outline-none focus:border-gray-400 transition-colors"
+          <div className="mb-3">
+            <ColorPicker
+              color={color.startsWith("#") ? color : "#000000"}
+              onChange={c => { onGradientChange?.(null); onColorChange(c); }}
             />
           </div>
 
-          {/* Document colors */}
+          {/* Document colours — up to 4 */}
           {docColors.length > 0 && (
             <>
-              <SectionLabel>Used in document</SectionLabel>
-              <div className="flex flex-wrap gap-1.5">
+              <SectionLabel>In this document</SectionLabel>
+              <div className="flex gap-2">
                 {docColors.map(c => (
                   <button
                     key={c} title={c}
                     onClick={() => { onGradientChange?.(null); onColorChange(c); }}
-                    className="w-6 h-6 rounded-full cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
+                    className="w-7 h-7 rounded-full cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
                     style={{ background: c, outline: color === c && !gradient ? "2px solid #000" : "1px solid rgba(0,0,0,0.12)", outlineOffset: color === c && !gradient ? "2px" : "0px" }}
                   />
                 ))}
@@ -347,25 +313,11 @@ export default function ColorPopover({ color, gradient = null, fabricRef, onColo
                   className="text-[11px] text-gray-300 hover:text-red-400 disabled:opacity-30 disabled:pointer-events-none cursor-pointer transition-colors"
                 >✕ Remove</button>
               </div>
-              <div className="flex flex-wrap gap-1.5">
-                {COLORS.map(c => (
-                  <button
-                    key={c}
-                    onClick={() => setStopColor(selectedStop.id, c)}
-                    className="w-5 h-5 rounded-full cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
-                    style={{ background: c, outline: selectedStop.color === c ? "2px solid #000" : "1px solid rgba(0,0,0,0.12)", outlineOffset: selectedStop.color === c ? "2px" : "0px" }}
-                  />
-                ))}
-                {/* Custom picker for stop */}
-                <label
-                  className="w-5 h-5 rounded-full cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
-                  style={{ background: "conic-gradient(red,yellow,lime,cyan,blue,magenta,red)", outline: "1px solid rgba(0,0,0,0.12)" }}
-                >
-                  <input type="color" value={selectedStop.color}
-                    onChange={e => setStopColor(selectedStop.id, e.target.value)}
-                    className="opacity-0 w-0 h-0 absolute pointer-events-none" tabIndex={-1} />
-                </label>
-              </div>
+              <ColorPicker
+                color={selectedStop.color}
+                onChange={c => setStopColor(selectedStop.id, c)}
+                squareHeight={100}
+              />
             </div>
           )}
 

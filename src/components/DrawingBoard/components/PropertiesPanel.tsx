@@ -1,0 +1,536 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import type { TextProps, Tool } from "../types";
+import TextEffectsPopover from "./TextEffectsPopover";
+import {
+  MdRemove,
+  MdAdd,
+  MdFormatAlignLeft,
+  MdFormatAlignCenter,
+  MdFormatAlignRight,
+} from "react-icons/md";
+
+const FONT_FAMILIES = [
+  "sans-serif",
+  "serif",
+  "monospace",
+  "Arial",
+  "Georgia",
+  "Impact",
+  "Courier New",
+  "Trebuchet MS",
+  "Comic Sans MS",
+  "Palatino",
+];
+
+const FONT_SIZES = [10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72, 96, 128];
+
+export interface PropertiesPanelProps {
+  tool: Tool;
+  hasSelection: boolean;
+  selectedIsText: boolean;
+  selectedIsShape: boolean;
+  /** Fill / drawing color */
+  color: string;
+  /** Shape stroke color — only passed when a shape is selected */
+  strokeColor?: string;
+  opacity: number;
+  strokeWeight: number;
+  textProps: TextProps;
+  onOpacityChange: (v: number) => void;
+  onStrokeWeightChange: (v: number) => void;
+  onApplyText: (updates: Partial<TextProps>) => void;
+  closeSignal?: number;
+  onPopoverOpened?: () => void;
+  /** Which color slot is open — managed by parent */
+  fillColorOpen: boolean;
+  strokeColorOpen: boolean;
+  textColorOpen: boolean;
+  onOpenFillColor: () => void;
+  onOpenStrokeColor: () => void;
+  onOpenTextColor: () => void;
+  onCloseColor: () => void;
+}
+
+// ── Primitives ───────────────────────────────────────────────────────────────
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-black/30 mb-2 select-none">
+      {children}
+    </p>
+  );
+}
+
+function Rule() {
+  return <div className="h-px bg-black/[0.07]" />;
+}
+
+const SWATCH_SHADOW =
+  "0 0 0 1.5px rgba(0,0,0,0.14), 0 0 0 3.5px #fff, 0 0 0 5px rgba(0,0,0,0.07)";
+
+function ColorRow({
+  color,
+  label,
+  isOpen,
+  onClick,
+}: {
+  color: string;
+  label?: string;
+  isOpen: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      className="w-full flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer transition-colors duration-100 text-left"
+      style={{ background: isOpen ? "rgba(0,0,0,0.06)" : "rgba(0,0,0,0.025)" }}
+    >
+      <span
+        className="flex-shrink-0 rounded-full"
+        style={{ width: 16, height: 16, background: color, boxShadow: SWATCH_SHADOW }}
+      />
+      <span className="text-[11px] font-mono font-medium text-black/50 uppercase tracking-wider flex-1">
+        {color}
+      </span>
+      {label && (
+        <span className="text-[10px] text-black/25 select-none">{label}</span>
+      )}
+    </button>
+  );
+}
+
+function InlineSlider({
+  label,
+  value,
+  displayValue,
+  min,
+  max,
+  step = 1,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  displayValue: string;
+  min: number;
+  max: number;
+  step?: number;
+  onChange: (v: number) => void;
+}) {
+  const pct = Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-[11px] font-medium text-black/40 select-none">{label}</span>
+        <span className="text-[11px] font-semibold tabular-nums text-black/60 select-none">
+          {displayValue}
+        </span>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="toolbar-slider w-full"
+        style={{
+          background: `linear-gradient(to right, #111 ${pct}%, #e0e0e0 ${pct}%)`,
+        }}
+      />
+    </div>
+  );
+}
+
+function ToggleBtn({
+  active,
+  title,
+  onClick,
+  children,
+  style,
+}: {
+  active: boolean;
+  title: string;
+  onClick: () => void;
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <button
+      title={title}
+      onClick={onClick}
+      style={style}
+      className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm transition-all duration-150 select-none cursor-pointer flex-shrink-0 ${
+        active
+          ? "bg-black text-white shadow-sm"
+          : "hover:bg-black/[0.07] text-gray-600 hover:text-gray-900"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function StepBtn({
+  title,
+  onClick,
+  children,
+}: {
+  title: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      title={title}
+      onClick={onClick}
+      className="w-7 h-7 rounded-md bg-black/[0.04] hover:bg-black/[0.09] flex items-center justify-center text-gray-500 transition-colors cursor-pointer flex-shrink-0"
+    >
+      {children}
+    </button>
+  );
+}
+
+// ── Main component ─────────────────────────────────────────────────────────
+
+export default function PropertiesPanel({
+  selectedIsText,
+  selectedIsShape,
+  color,
+  strokeColor,
+  opacity,
+  strokeWeight,
+  textProps,
+  onOpacityChange,
+  onStrokeWeightChange,
+  onApplyText,
+  closeSignal,
+  onPopoverOpened,
+  fillColorOpen,
+  strokeColorOpen,
+  textColorOpen,
+  onOpenFillColor,
+  onOpenStrokeColor,
+  onOpenTextColor,
+  onCloseColor,
+}: PropertiesPanelProps) {
+  const {
+    fontFamily,
+    fontSize,
+    bold,
+    italic,
+    underline,
+    linethrough,
+    uppercase,
+    lineHeight,
+    charSpacing,
+    textAlign,
+    gradient,
+    effect,
+  } = textProps;
+
+  const [effectOpen, setEffectOpen] = useState(false);
+
+  useEffect(() => {
+    if (!closeSignal) return;
+    setEffectOpen(false);
+  }, [closeSignal]);
+
+  // Gradient swatch style for text
+  const textSwatchStyle: React.CSSProperties = (() => {
+    if (!gradient) return {};
+    const sorted = [...gradient.stops].sort((a, b) => a.offset - b.offset);
+    const parts = sorted.map((s) => `${s.color} ${Math.round(s.offset * 100)}%`).join(", ");
+    return {
+      background: `linear-gradient(${gradient.angle}deg, ${parts})`,
+      borderRadius: 5,
+      width: 28,
+      height: 16,
+    };
+  })();
+
+  return (
+    <div
+      className="drawing-ui-overlay fixed right-0 top-0 h-screen w-[220px] panel-slide-in z-[200] flex flex-col overflow-y-auto"
+      style={{
+        background: "rgba(255,255,255,0.97)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderLeft: "1px solid rgba(0,0,0,0.08)",
+        paddingTop: 76,
+        paddingBottom: 88,
+        scrollbarWidth: "none",
+      }}
+    >
+      {selectedIsText ? (
+        /* ═══════════════════ TEXT VIEW ═══════════════════ */
+        <>
+          {/* ── Color ── */}
+          <div className="px-4 pt-3 pb-3">
+            <SectionLabel>Color</SectionLabel>
+
+            {/* Color / gradient swatch row */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (textColorOpen) onCloseColor(); else onOpenTextColor();
+                setEffectOpen(false);
+              }}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer transition-colors duration-100 text-left"
+              style={{ background: textColorOpen ? "rgba(0,0,0,0.06)" : "rgba(0,0,0,0.025)" }}
+            >
+              {gradient ? (
+                <span className="flex-shrink-0 rounded" style={textSwatchStyle} />
+              ) : (
+                <span
+                  className="flex-shrink-0 rounded-full"
+                  style={{ width: 16, height: 16, background: color, boxShadow: SWATCH_SHADOW }}
+                />
+              )}
+              <span className="text-[11px] font-mono font-medium text-black/50 uppercase tracking-wider">
+                {gradient ? "Gradient" : color}
+              </span>
+            </button>
+
+            {/* Effects */}
+            <div className="relative mt-1.5">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEffectOpen((v) => !v);
+                  onCloseColor();
+                  onPopoverOpened?.();
+                }}
+                className="w-full text-left px-3 py-2 rounded-xl text-[12px] font-medium cursor-pointer transition-colors"
+                style={{
+                  background: effectOpen ? "rgba(0,0,0,0.06)" : "transparent",
+                  color: effect ? "#111" : "#999",
+                  fontWeight: effect ? 600 : 400,
+                }}
+              >
+                {effect
+                  ? `✦ ${(effect.presetId ?? "").charAt(0).toUpperCase() + (effect.presetId ?? "").slice(1).replace(/-/g, " ")}`
+                  : "Add effect…"}
+              </button>
+              {effectOpen && (
+                <TextEffectsPopover
+                  effect={effect ?? null}
+                  onApply={(e) => onApplyText({ effect: e })}
+                  onClose={() => setEffectOpen(false)}
+                />
+              )}
+            </div>
+          </div>
+
+          <Rule />
+
+          {/* ── Typography ── */}
+          <div className="px-4 pt-3 pb-3">
+            <SectionLabel>Typography</SectionLabel>
+
+            {/* Font family */}
+            <select
+              value={fontFamily}
+              onChange={(e) => onApplyText({ fontFamily: e.target.value })}
+              title="Font family"
+              className="w-full text-[12px] rounded-lg px-2.5 py-1.5 bg-black/[0.04] text-gray-700 font-medium border-0 outline-none cursor-pointer mb-2.5"
+              style={{ fontFamily }}
+            >
+              {FONT_FAMILIES.map((f) => (
+                <option key={f} value={f} style={{ fontFamily: f }}>
+                  {f}
+                </option>
+              ))}
+            </select>
+
+            {/* Font size + B I */}
+            <div className="flex items-center gap-1.5 mb-2">
+              <StepBtn
+                title="Decrease font size"
+                onClick={() => {
+                  const i = FONT_SIZES.indexOf(fontSize);
+                  if (i > 0) onApplyText({ fontSize: FONT_SIZES[i - 1] });
+                }}
+              >
+                <MdRemove size={11} />
+              </StepBtn>
+              <select
+                value={fontSize}
+                onChange={(e) => onApplyText({ fontSize: Number(e.target.value) })}
+                title="Font size"
+                className="text-[12px] rounded-md px-1 py-1.5 bg-black/[0.04] cursor-pointer outline-none text-gray-700 font-semibold tabular-nums text-center border-0 w-12"
+              >
+                {FONT_SIZES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+              <StepBtn
+                title="Increase font size"
+                onClick={() => {
+                  const i = FONT_SIZES.indexOf(fontSize);
+                  if (i < FONT_SIZES.length - 1)
+                    onApplyText({ fontSize: FONT_SIZES[i + 1] });
+                }}
+              >
+                <MdAdd size={11} />
+              </StepBtn>
+              <div className="flex items-center gap-0.5 ml-auto">
+                <ToggleBtn
+                  active={bold}
+                  title="Bold"
+                  onClick={() => onApplyText({ bold: !bold })}
+                  style={{ fontWeight: 700 }}
+                >
+                  B
+                </ToggleBtn>
+                <ToggleBtn
+                  active={italic}
+                  title="Italic"
+                  onClick={() => onApplyText({ italic: !italic })}
+                  style={{ fontStyle: "italic" }}
+                >
+                  I
+                </ToggleBtn>
+              </div>
+            </div>
+
+            {/* U S AA */}
+            <div className="flex items-center gap-0.5 mb-2.5">
+              <ToggleBtn
+                active={underline}
+                title="Underline"
+                onClick={() => onApplyText({ underline: !underline })}
+                style={{ textDecoration: "underline" }}
+              >
+                U
+              </ToggleBtn>
+              <ToggleBtn
+                active={linethrough}
+                title="Strikethrough"
+                onClick={() => onApplyText({ linethrough: !linethrough })}
+                style={{ textDecoration: "line-through" }}
+              >
+                S
+              </ToggleBtn>
+              <ToggleBtn
+                active={uppercase}
+                title="All caps"
+                onClick={() => onApplyText({ uppercase: !uppercase })}
+              >
+                <span className="text-[10px] font-bold tracking-wider">AA</span>
+              </ToggleBtn>
+            </div>
+
+            {/* Text alignment */}
+            <div className="flex items-center gap-0.5">
+              <ToggleBtn
+                active={textAlign === "left"}
+                title="Align left"
+                onClick={() => onApplyText({ textAlign: "left" })}
+              >
+                <MdFormatAlignLeft size={14} />
+              </ToggleBtn>
+              <ToggleBtn
+                active={textAlign === "center"}
+                title="Align center"
+                onClick={() => onApplyText({ textAlign: "center" })}
+              >
+                <MdFormatAlignCenter size={14} />
+              </ToggleBtn>
+              <ToggleBtn
+                active={textAlign === "right"}
+                title="Align right"
+                onClick={() => onApplyText({ textAlign: "right" })}
+              >
+                <MdFormatAlignRight size={14} />
+              </ToggleBtn>
+            </div>
+          </div>
+
+          <Rule />
+
+          {/* ── Spacing ── */}
+          <div className="px-4 pt-3 pb-3">
+            <SectionLabel>Spacing</SectionLabel>
+            <div className="flex flex-col gap-4">
+              <InlineSlider
+                label="Line height"
+                value={lineHeight}
+                displayValue={lineHeight.toFixed(1)}
+                min={0.5}
+                max={4}
+                step={0.1}
+                onChange={(v) => onApplyText({ lineHeight: Math.round(v * 10) / 10 })}
+              />
+              <InlineSlider
+                label="Letter spacing"
+                value={charSpacing}
+                displayValue={String(charSpacing)}
+                min={-200}
+                max={1000}
+                step={5}
+                onChange={(v) => onApplyText({ charSpacing: v })}
+              />
+            </div>
+          </div>
+        </>
+      ) : (
+        /* ═══════════════════ OBJECT / DRAWING VIEW ═══════════════════ */
+        <>
+          {/* ── Fill color ── */}
+          <div className="px-4 pt-3 pb-3">
+            <SectionLabel>Fill</SectionLabel>
+            <ColorRow
+              color={color}
+              isOpen={fillColorOpen}
+              onClick={() => (fillColorOpen ? onCloseColor() : onOpenFillColor())}
+            />
+          </div>
+
+          {/* ── Stroke color — shapes only ── */}
+          {selectedIsShape && strokeColor !== undefined && (
+            <>
+              <Rule />
+              <div className="px-4 pt-3 pb-3">
+                <SectionLabel>Stroke</SectionLabel>
+                <ColorRow
+                  color={strokeColor}
+                  isOpen={strokeColorOpen}
+                  onClick={() => (strokeColorOpen ? onCloseColor() : onOpenStrokeColor())}
+                />
+              </div>
+            </>
+          )}
+
+          <Rule />
+
+          {/* ── Weight + Opacity ── */}
+          <div className="px-4 pt-3 pb-3">
+            <SectionLabel>Properties</SectionLabel>
+            <div className="flex flex-col gap-4">
+              <InlineSlider
+                label="Weight"
+                value={strokeWeight}
+                displayValue={`${strokeWeight}px`}
+                min={1}
+                max={60}
+                onChange={onStrokeWeightChange}
+              />
+              <InlineSlider
+                label="Opacity"
+                value={Math.round(opacity * 100)}
+                displayValue={`${Math.round(opacity * 100)}%`}
+                min={0}
+                max={100}
+                onChange={(v) => onOpacityChange(v / 100)}
+              />
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
