@@ -35,14 +35,18 @@ interface DrawingToolsProps {
   onAddText: () => void;
   onAddGif: (id: string, url: string) => void;
   onAddImage?: (url: string) => void;
+  /** The shape type currently active in the parent (set by keyboard shortcut) */
+  activeShapeType?: ShapeType;
   /** Incremented by the parent whenever another component opens a popover */
   closeSignal?: number;
+  /** Incremented by the parent to programmatically trigger the upload dialog */
+  uploadSignal?: number;
   /** Called when this component opens any of its own popovers */
   onPopoverOpened?: () => void;
 }
 
 export default function DrawingTools({
-  tool, onToolChange, onAddShape, onAddText, onAddGif, onAddImage, closeSignal, onPopoverOpened,
+  tool, onToolChange, onAddShape, onAddText, onAddGif, onAddImage, closeSignal, uploadSignal, activeShapeType, onPopoverOpened,
 }: DrawingToolsProps) {
   const [lastShape, setLastShape]   = useState<ShapeType>("rect");
   const [drawOpen, setDrawOpen]     = useState(false);
@@ -58,6 +62,17 @@ export default function DrawingTools({
     setShapeOpen(false);
     setGifOpen(false);
   }, [closeSignal]);
+
+  // Open upload dialog when parent signals (e.g. keyboard shortcut)
+  useEffect(() => {
+    if (!uploadSignal) return;
+    uploadFileRef.current?.click();
+  }, [uploadSignal]);
+
+  // Sync lastShape when parent activates a shape tool via keyboard shortcut
+  useEffect(() => {
+    if (tool === "shape" && activeShapeType) setLastShape(activeShapeType);
+  }, [tool, activeShapeType]);
 
   const drawWrapRef    = useRef<HTMLDivElement>(null);
   const drawPopoverRef = useRef<HTMLDivElement>(null);
@@ -140,8 +155,8 @@ export default function DrawingTools({
     <button
       title={title}
       onClick={onClick}
-      className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
-        active ? "bg-[#DDFF00] text-black" : "text-[#111] hover:bg-black/[0.07] hover:scale-105"
+      className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
+        active ? "bg-[#DDFF00] text-black" : "text-[#111] hover:bg-black/[0.07]"
       }`}
     >
       {icon}
@@ -153,7 +168,7 @@ export default function DrawingTools({
     <button
       onClick={onClick}
       title="More options"
-      className={`w-6 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-all ${
+      className={`w-6 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors ${
         open ? "bg-black/[0.08] text-[#111]" : "text-[#aaa] hover:bg-black/[0.07] hover:text-[#111]"
       }`}
     >
@@ -182,7 +197,7 @@ export default function DrawingTools({
 
   return (
     <div
-      className="fixed bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-1 p-2 rounded-2xl z-[200]"
+      className="drawing-ui-overlay fixed bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-1 p-2 rounded-2xl z-[200]"
       style={{
         background: "rgba(255,255,255,0.92)",
         backdropFilter: "blur(12px)",
@@ -217,7 +232,7 @@ export default function DrawingTools({
             if (!isDrawActive) onToolChange("pencil");
             setDrawOpen(false);
           }}
-          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
             isDrawActive ? "bg-[#DDFF00] text-black" : "text-[#111] hover:bg-black/[0.07]"
           }`}
         >
@@ -236,7 +251,7 @@ export default function DrawingTools({
         {drawOpen && (
           <div
             ref={drawPopoverRef}
-            className="absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 flex gap-2 p-3 rounded-2xl popover-enter-up"
+            className="fixed right-5 bottom-24 flex gap-2 p-3 rounded-2xl popover-enter-up z-[300]"
             style={popoverStyle}
           >
             {(
@@ -264,18 +279,20 @@ export default function DrawingTools({
 
       {sep}
 
-      {/* Shapes: primary = add last-used shape, chevron = shape picker */}
+      {/* Shapes: primary = activate shape draw mode, chevron = shape picker */}
       <div ref={shapeWrapRef} className="relative flex items-center">
         <button
-          title={`Add ${lastShape}`}
+          title={`Draw ${lastShape}`}
           onClick={() => onAddShape(lastShape)}
-          className="w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer text-[#111] hover:bg-black/[0.07]"
+          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
+            tool === "shape" ? "bg-[#DDFF00] text-black" : "text-[#111] hover:bg-black/[0.07]"
+          }`}
         >
           {lastShapeIcon}
         </button>
         <Chevron
           open={shapeOpen}
-          active={false}
+          active={tool === "shape"}
           onClick={() => {
             const next = !shapeOpen;
             setShapeOpen(next);
@@ -286,7 +303,7 @@ export default function DrawingTools({
         {shapeOpen && (
           <div
             ref={shapePopoverRef}
-            className="absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 flex gap-2 p-3 rounded-2xl popover-enter-up"
+            className="fixed right-5 bottom-24 flex gap-2 p-3 rounded-2xl popover-enter-up z-[300]"
             style={{ ...popoverStyle, minWidth: 220 }}
           >
             {SHAPES.map((s) => (
@@ -319,8 +336,8 @@ export default function DrawingTools({
             setGifOpen(next);
             if (next) { setDrawOpen(false); setShapeOpen(false); onPopoverOpened?.(); }
           }}
-          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
-            gifOpen ? "bg-black/[0.07] text-[#111]" : "text-[#111] hover:bg-black/[0.07] hover:scale-105"
+          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
+            gifOpen ? "bg-black/[0.07] text-[#111]" : "text-[#111] hover:bg-black/[0.07]"
           }`}
         >
           <PiGifFill className="w-5 h-5" />
@@ -329,7 +346,7 @@ export default function DrawingTools({
         {gifOpen && (
           <div
             ref={gifPopoverRef}
-            className="absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 p-3 rounded-2xl z-50 popover-enter-up"
+            className="fixed right-5 bottom-24 p-3 rounded-2xl z-[300] popover-enter-up"
             style={{ ...popoverStyle, width: "min(420px, calc(100vw - 100px))" }}
           >
             <GifPicker
@@ -349,7 +366,7 @@ export default function DrawingTools({
         title="Upload image"
         disabled={uploading}
         onClick={() => uploadFileRef.current?.click()}
-        className="w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-[#111] hover:bg-black/[0.07] hover:scale-105"
+        className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-[#111] hover:bg-black/[0.07]"
       >
         {uploading ? (
           <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">

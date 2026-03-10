@@ -110,10 +110,15 @@ export function useCanvasActions({
         b.width = brushSize;
       }
       fc.freeDrawingBrush = b;
-    } else if (tool === "select" || tool === "shape") {
+    } else if (tool === "select") {
       fc.isDrawingMode = false;
       fc.selection = true;
       fc.getObjects().forEach((o) => { o.selectable = true; o.evented = true; });
+    } else if (tool === "shape") {
+      fc.isDrawingMode = false;
+      fc.selection = false;
+      fc.discardActiveObject();
+      fc.getObjects().forEach((o) => { o.selectable = false; o.evented = false; });
     } else if (tool === "eraser") {
       fc.isDrawingMode = false;
       fc.selection = false;
@@ -129,6 +134,7 @@ export function useCanvasActions({
       tool === "text"                       ? "text"      :
       tool === "pencil" || tool === "brush" ? "crosshair" :
       tool === "eraser"                     ? "cell"      :
+      tool === "shape"                      ? "crosshair" :
       "default";
     fc.requestRenderAll();
   }, [tool, color, brushSize, simplify, fabricRef, modsRef]);

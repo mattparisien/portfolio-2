@@ -1,7 +1,7 @@
 import { useRef, useEffect } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { Canvas, IText } from "fabric";
-import type { Tool, FabricMods, TextProps } from "../types";
+import type { Tool, FabricMods, TextProps, ShapeType } from "../types";
 import { DEFAULT_TEXT_PROPS } from "../types";
 import type { SaveableObj } from "./useBoardSync";
 import { BOARD_ID, BG_COLOR } from "../constants";
@@ -172,6 +172,7 @@ interface UseFabricCanvasOptions {
   setTextProps: Dispatch<SetStateAction<TextProps>>;
   setIsSyncing: (v: boolean) => void;
   broadcast?: (event: RoomEvent) => void;
+  shapeTypeRef: React.MutableRefObject<ShapeType>;
 }
 
 /** Initialises the Fabric canvas, registers all event listeners, loads
@@ -202,6 +203,7 @@ export function useFabricCanvas({
   setTextProps,
   setIsSyncing,
   broadcast,
+  shapeTypeRef,
 }: UseFabricCanvasOptions) {
   const modsRef = useRef<FabricMods | null>(null);
   type GifMeta = {
@@ -424,6 +426,14 @@ export function useFabricCanvas({
           }
         }
         isUndoingRef.current = false;
+        return;
+      }
+
+      // ── Select tool ('V') ─────────────────────────────────────────────
+      if (e.key === "v" || e.key === "V") {
+        if (isEditingText) return;
+        e.preventDefault();
+        setTool("select");
         return;
       }
 
@@ -790,11 +800,121 @@ export function useFabricCanvas({
         eraseAtEvent(e);
       });
 
+      // ── Shape drag-to-draw ───────────────────────────────────────────────
+      let isDrawingShape = false;
+      let shapeStart = { x: 0, y: 0 };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let shapePreview: any = null;
+      let shapeNaturalW = 1;
+      let shapeNaturalH = 1;
+
+      const STAR_PATH  = "M 50 5 L 61 35 L 95 35 L 68 57 L 79 91 L 50 70 L 21 91 L 32 57 L 5 35 L 39 35 Z";
+      const HEART_PATH = "M 50 85 C 10 60 -10 35 10 18 C 25 5 42 10 50 22 C 58 10 75 5 90 18 C 110 35 90 60 50 85 Z";
+
+      function buildPreviewShape(type: ShapeType, left: number, top: number, w: number, h: number) {
+        const mods = modsRef.current;
+        if (!mods) return null;
+        const common = {
+          left, top,
+          fill: colorRef.current,
+          stroke: "transparent",
+          strokeWidth: 1,
+          paintFirst: "stroke" as const,
+          strokeUniform: true,
+          selectable: false,
+          hasControls: false,
+          hasBorders: false,
+          evented: false,
+          originX: "left" as const,
+          originY: "top" as const,
+          opacity: opacityRef.current,
+        };
+        switch (type) {
+          case "rect":     return new mods.Rect({ ...common, width: Math.max(w, 1), height: Math.max(h, 1) });
+          case "circle":   return new mods.Circle({ ...common, radius: Math.max(Math.min(w, h) / 2, 0.5) });
+          case "triangle": return new mods.Triangle({ ...common, width: Math.max(w, 1), height: Math.max(h, 1) });
+          case "star":     return new mods.Path(STAR_PATH, { ...common });
+          case "heart":    return new mods.Path(HEART_PATH, { ...common });
+        }
+      }
+
+      fc.on("mouse:move", (e) => {
+        if (toolRef.current !== "shape" || !isDrawingShape) return;
+        const pointer = fc.getScenePoint(e.e as MouseEvent);
+        const dx = pointer.x - shapeStart.x;
+        const dy = pointer.y - shapeStart.y;
+        const w = Math.abs(dx);
+        const h = Math.abs(dy);
+        const left = dx >= 0 ? shapeStart.x : pointer.x;
+        const top  = dy >= 0 ? shapeStart.y : pointer.y;
+        const st = shapeTypeRef.current;
+
+        if (!shapePreview) {
+          shapePreview = buildPreviewShape(st, left, top, w || 1, h || 1);
+          if (shapePreview) {
+            shapeNaturalW = shapePreview.width ?? 1;
+            shapeNaturalH = shapePreview.height ?? 1;
+            fc.add(shapePreview);
+          }
+        } else {
+          shapePreview.set({ left, top });
+          switch (st) {
+            case "rect":
+            case "triangle":
+              shapePreview.set({ width: Math.max(w, 1), height: Math.max(h, 1) });
+              break;
+            case "circle":
+              shapePreview.set({ radius: Math.max(Math.min(w, h) / 2, 0.5) });
+              break;
+            case "star":
+            case "heart":
+              shapePreview.set({
+                scaleX: Math.max(w, 1) / shapeNaturalW,
+                scaleY: Math.max(h, 1) / shapeNaturalH,
+              });
+              break;
+          }
+          shapePreview.setCoords();
+        }
+        fc.requestRenderAll();
+      });
+
       fc.on("mouse:up", () => {
+        if (toolRef.current === "shape" && isDrawingShape) {
+          isDrawingShape = false;
+          if (shapePreview) {
+            const st = shapeTypeRef.current;
+            const effW = st === "circle"
+              ? ((shapePreview.radius ?? 0) * 2 * (shapePreview.scaleX ?? 1))
+              : ((shapePreview.width  ?? 0) * (shapePreview.scaleX ?? 1));
+            const effH = st === "circle"
+              ? ((shapePreview.radius ?? 0) * 2 * (shapePreview.scaleY ?? 1))
+              : ((shapePreview.height ?? 0) * (shapePreview.scaleY ?? 1));
+            if (effW < 5 && effH < 5) {
+              fc.remove(shapePreview);
+            } else {
+              shapePreview.set({ selectable: true, hasControls: true, hasBorders: true, evented: true });
+              shapePreview.setCoords();
+              fc.setActiveObject(shapePreview);
+              saveObject(shapePreview as unknown as SaveableObj);
+            }
+            shapePreview = null;
+          }
+          fc.requestRenderAll();
+          setTool("select");
+          return;
+        }
         isEraserDownRef.current = false;
       });
 
       fc.on("mouse:down", (e) => {
+        if (toolRef.current === "shape") {
+          const pointer = fc.getScenePoint(e.e as MouseEvent);
+          isDrawingShape = true;
+          shapeStart = { x: pointer.x, y: pointer.y };
+          shapePreview = null;
+          return;
+        }
         if (toolRef.current === "eraser") {
           isEraserDownRef.current = true;
           eraseAtEvent(e);
@@ -862,7 +982,7 @@ export function useFabricCanvas({
       fabricRef.current = null;
       modsRef.current   = null;
     };
-  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, opacityRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setVpt, setHasSelection, setSelectedIsText, setSelectedIsGif, setSelectedIsPath, setShapeStrokeColor, setColor, setBrushSize, setOpacity, setTextProps, setIsSyncing, broadcast]);
+  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, opacityRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setVpt, setHasSelection, setSelectedIsText, setSelectedIsGif, setSelectedIsPath, setShapeStrokeColor, setColor, setBrushSize, setOpacity, setTextProps, setIsSyncing, broadcast, shapeTypeRef]);
 
   return { modsRef };
 }

@@ -81,7 +81,7 @@ export default function Toolbar({ color, opacity, strokeWeight, onOpacityChange,
 
   return (
     <div
-      className="absolute bottom-6 left-1/2 -translate-x-1/2 toolbar-enter flex items-end gap-1 px-3 pt-2.5 pb-2 rounded-2xl z-[200]"
+      className="fixed right-5 top-20 toolbar-enter flex flex-col items-center gap-1 px-2 py-3 rounded-2xl z-[200]"
       style={{
         background: "rgba(255,255,255,0.94)",
         backdropFilter: "blur(18px)",
@@ -120,8 +120,8 @@ export default function Toolbar({ color, opacity, strokeWeight, onOpacityChange,
         </ToolbarBtn>
       )}
 
-      {/* Thin vertical separator */}
-      <div className="w-px self-stretch my-1 bg-black/[0.09] mx-0.5 flex-shrink-0" />
+      {/* Thin horizontal separator */}
+      <div className="h-px w-full my-0.5 bg-black/[0.09] flex-shrink-0" />
 
       {/* Stroke weight button + popover */}
       <div className="relative">
@@ -136,7 +136,7 @@ export default function Toolbar({ color, opacity, strokeWeight, onOpacityChange,
 
         {weightOpen && (
           <div
-            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-4 pt-3.5 pb-4 rounded-2xl popover-enter"
+            className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-4 pt-3.5 pb-4 rounded-2xl popover-enter"
             style={{
               background: "rgba(255,255,255,0.98)",
               backdropFilter: "blur(18px)",
@@ -189,7 +189,7 @@ export default function Toolbar({ color, opacity, strokeWeight, onOpacityChange,
 
         {opacityOpen && (
           <div
-            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-4 pt-3.5 pb-4 rounded-2xl popover-enter"
+            className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-4 pt-3.5 pb-4 rounded-2xl popover-enter"
             style={{
               background: "rgba(255,255,255,0.98)",
               backdropFilter: "blur(18px)",

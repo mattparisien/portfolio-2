@@ -15,7 +15,7 @@ import { useGifLoop } from "./hooks/useGifLoop";
 import { useBoardSync } from "./hooks/useBoardSync";
 import { useFabricCanvas } from "./hooks/useFabricCanvas";
 import { useCanvasActions } from "./hooks/useCanvasActions";
-import type { Tool, TextProps } from "./types";
+import type { Tool, TextProps, ShapeType } from "./types";
 import { DEFAULT_TEXT_PROPS } from "./types";
 import { BG_COLOR, getOrCreateUser, CURSOR_COLORS } from "./constants";
 import {
@@ -96,15 +96,18 @@ function DrawingBoardInner() {
   const [shapeStrokeColor, setShapeStrokeColor] = useState("#000000");
   const [opacity, setOpacity]                   = useState(1);
   const [textProps, setTextProps]               = useState<TextProps>(DEFAULT_TEXT_PROPS);
+  const [shapeType, setShapeType]               = useState<ShapeType>("rect");
 
   // Whenever any component opens a popover, we increment the other two signals
   // so they close themselves — guaranteeing only one popover is ever visible.
   const [drawingToolsClose, setDrawingToolsClose] = useState(0);
   const [toolbarClose, setToolbarClose]           = useState(0);
   const [textToolbarClose, setTextToolbarClose]   = useState(0);
+  const [uploadSignal, setUploadSignal]           = useState(0);
 
   // Shared singleton color popover — lifted here so only one instance ever exists.
   const [localCursor, setLocalCursor] = useState<{ x: number; y: number } | null>(null);
+  const [isOverUI, setIsOverUI]       = useState(false);
 
   const [colorPopoverSlot, setColorPopoverSlot] = useState<ColorSlot | null>(null);
   const closeColorPopover = useCallback(() => setColorPopoverSlot(null), []);
@@ -130,10 +133,12 @@ function DrawingBoardInner() {
   const colorRef     = useRef("#000000");
   const brushSizeRef = useRef(5);
   const opacityRef   = useRef(1);
+  const shapeTypeRef = useRef<ShapeType>("rect");
   toolRef.current      = tool;
   colorRef.current     = color;
   brushSizeRef.current = brushSize;
   opacityRef.current   = opacity;
+  shapeTypeRef.current = shapeType;
 
   // ── Liveblocks ────────────────────────────────────────────────────────
   const broadcastEvent               = useBroadcastEvent();
@@ -178,9 +183,10 @@ function DrawingBoardInner() {
     setTextProps,
     setIsSyncing,
     broadcast: broadcastEvent,
+    shapeTypeRef,
   });
 
-  const { addText, addShape, addGif, addImage, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, applyTextProp } =
+  const { addText, addGif, addImage, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, applyTextProp } =
     useCanvasActions({
       fabricRef,
       modsRef,
@@ -199,6 +205,46 @@ function DrawingBoardInner() {
       setTextProps,
       broadcast: broadcastEvent,
     });
+
+  const activateShapeTool = useCallback((st: ShapeType) => {
+    setShapeType(st);
+    setTool("shape");
+  }, []);
+
+  // ── Global keyboard shortcuts for tool switching / actions ────────────
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
+      const isMod = e.metaKey || e.ctrlKey;
+      // Shift+P → pencil
+      if (e.shiftKey && !isMod && (e.key === "P" || e.key === "p")) {
+        e.preventDefault();
+        setTool("pencil");
+        return;
+      }
+      // O → circle
+      if (!e.shiftKey && !isMod && (e.key === "o" || e.key === "O")) {
+        e.preventDefault();
+        activateShapeTool("circle");
+        return;
+      }
+      // R → rectangle
+      if (!e.shiftKey && !isMod && (e.key === "r" || e.key === "R")) {
+        e.preventDefault();
+        activateShapeTool("rect");
+        return;
+      }
+      // Shift+Cmd/Ctrl+K → open upload dialog
+      if (e.shiftKey && isMod && (e.key === "k" || e.key === "K")) {
+        e.preventDefault();
+        setUploadSignal(n => n + 1);
+        return;
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [activateShapeTool, setTool]);
 
   // ── Apply remote canvas events from other users ───────────────────
   useEventListener(({ event }) => {
@@ -286,6 +332,11 @@ function DrawingBoardInner() {
     <div
       className="fixed inset-0 overflow-hidden board-no-cursor"
       style={{ overscrollBehavior: "none" }}
+      onPointerOver={(e) => {
+        // Show arrow cursor when over any UI overlay (not the canvas itself)
+        const target = e.target as HTMLElement;
+        setIsOverUI(!!(target.closest(".drawing-ui-overlay") || target.closest("button") || target.closest("[role=dialog]")));
+      }}
     >
       <canvas ref={canvasElRef} className="absolute inset-0 touch-none" />
 
@@ -298,12 +349,27 @@ function DrawingBoardInner() {
           className="pointer-events-none fixed z-[9999]"
           style={{ left: 0, top: 0, transform: `translate(${localCursor.x}px, ${localCursor.y}px)`, willChange: "transform" }}
         >
-          <svg width="13" height="15" viewBox="0 0 317 354" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M0.222591 12C-1.53354 3.60665 7.45159 -2.92141 14.8914 1.34245L311.358 171.251C318.902 175.574 317.649 186.816 309.339 189.372L165.447 233.635C163.219 234.321 161.303 235.767 160.033 237.723L88.0181 348.658C83.1885 356.097 71.7717 353.964 69.9552 345.282L0.222591 12Z"
-              fill="#1a1a1a"
-            />
-          </svg>
+          {(tool === "pencil" && !isOverUI) ? (
+            /* Pencil icon — tip aligns with mouse position */
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ transform: "translate(-2px, -18px)" }} xmlns="http://www.w3.org/2000/svg">
+              <path d="M15 1L19 5L6.5 17.5L1 19L2.5 13.5Z" fill="#1a1a1a" stroke="white" strokeWidth="1" strokeLinejoin="round"/>
+              <line x1="12.5" y1="3.5" x2="16.5" y2="7.5" stroke="white" strokeWidth="0.8"/>
+            </svg>
+          ) : (tool === "brush" && !isOverUI) ? (
+            /* Brush icon — tip aligns with mouse position */
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ transform: "translate(-2px, -18px)" }} xmlns="http://www.w3.org/2000/svg">
+              <path d="M15 1L19 5L7 17C5.5 17.5 2 18.5 1.5 18C1 17.5 2 14 2.5 12.5Z" fill="#1a1a1a" stroke="white" strokeWidth="1" strokeLinejoin="round"/>
+              <ellipse cx="2.2" cy="17.8" rx="1.8" ry="1.2" fill="#555"/>
+              <line x1="12.5" y1="3.5" x2="16.5" y2="7.5" stroke="white" strokeWidth="0.8"/>
+            </svg>
+          ) : (
+            <svg width="13" height="15" viewBox="0 0 317 354" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M0.222591 12C-1.53354 3.60665 7.45159 -2.92141 14.8914 1.34245L311.358 171.251C318.902 175.574 317.649 186.816 309.339 189.372L165.447 233.635C163.219 234.321 161.303 235.767 160.033 237.723L88.0181 348.658C83.1885 356.097 71.7717 353.964 69.9552 345.282L0.222591 12Z"
+                fill="#1a1a1a"
+              />
+            </svg>
+          )}
         </div>
       )}
 
@@ -343,18 +409,20 @@ function DrawingBoardInner() {
         tool={tool}
         color={color}
         onToolChange={setTool}
-        onAddShape={addShape}
+        onAddShape={activateShapeTool}
         onAddText={addText}
         onAddGif={addGif}
         onAddImage={addImage}
         closeSignal={drawingToolsClose}
+        uploadSignal={uploadSignal}
+        activeShapeType={shapeType}
         onPopoverOpened={onDrawingToolsPopoverOpened}
       />
       <ZoomNav zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} onUndo={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "z", ctrlKey: true, metaKey: true, bubbles: true }))} />
       <BoardHeader isSyncing={isSyncing} />
 
       {/* Top-right cluster: active users */}
-      <div className="absolute top-5 right-5 flex items-center gap-2 z-[200]">
+      <div className="absolute top-5 right-5 z-[200]">
         <ActiveUsers />
       </div>
       {/* Lock/unlock button floats above the selected object — self-positions via RAF */}
@@ -378,7 +446,7 @@ function DrawingBoardInner() {
           fabricRef={fabricRef}
           onColorChange={(c) => { setColor(c); if (hasSelection) recolorSelected(c); }}
           onClose={closeColorPopover}
-          anchorStyle={{ top: "auto", bottom: 100, left: "calc(50vw - 140px)" }}
+          anchorStyle={{ top: 80, right: 20, bottom: "auto", left: "auto" }}
         />
       )}
       {colorPopoverSlot === "toolbar-stroke" && (

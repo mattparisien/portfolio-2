@@ -42,7 +42,7 @@ interface TextToolbarProps {
 }
 
 function Divider() {
-  return <div className="w-px self-stretch my-1 bg-black/[0.09] flex-shrink-0" />;
+  return <div className="h-px w-full my-0.5 bg-black/[0.09] flex-shrink-0" />;
 }
 
 function ToggleBtn({
@@ -94,20 +94,15 @@ function StepBtn({
   );
 }
 
-/** Compute a fixed { bottom, left } position to place a 200-wide popover
- *  centered above the given button element. */
+/** Compute a fixed { right, top } position to place a 200-wide popover
+ *  to the left of and vertically centered on the given button element. */
 function getPopoverPos(btn: HTMLButtonElement | null): React.CSSProperties {
   if (!btn) return {};
   const rect = btn.getBoundingClientRect();
-  const popoverWidth = 200;
-  const left = Math.max(
-    8,
-    Math.min(
-      window.innerWidth - popoverWidth - 8,
-      rect.left + rect.width / 2 - popoverWidth / 2,
-    ),
-  );
-  return { bottom: window.innerHeight - rect.top + 12, left };
+  return {
+    right: window.innerWidth - rect.left + 12,
+    top: Math.max(8, Math.min(window.innerHeight - 180, rect.top + rect.height / 2 - 90)),
+  };
 }
 
 export default function TextToolbar({ textProps, color, onApply, closeSignal, onPopoverOpened, colorPopoverOpen, onOpenColorPopover, onCloseColorPopover }: TextToolbarProps) {
@@ -171,9 +166,9 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
   })();
 
   return (
-    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 toolbar-enter z-[200]" style={{ maxWidth: "calc(100vw - 32px)" }}>
+    <div className="fixed right-5 top-20 toolbar-enter z-[200]" style={{ maxHeight: "calc(100vh - 120px)" }}>
       <div
-        className="relative flex items-center gap-2 px-3 py-2 rounded-2xl overflow-x-auto"
+        className="relative flex flex-col items-stretch gap-1 px-2 py-3 rounded-2xl overflow-y-auto"
         style={{
           background: "rgba(255,255,255,0.94)",
           backdropFilter: "blur(18px)",
@@ -182,11 +177,6 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
           scrollbarWidth: "none",
         }}
       >
-        {/* Right-side scroll fade — hints at hidden controls */}
-        <div
-          className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 rounded-r-2xl"
-          style={{ background: "linear-gradient(to right, transparent, rgba(255,255,255,0.94))" }}
-        />
       {/* ── Color / gradient ── */}
       <div className="relative flex items-center flex-shrink-0">
         <button
