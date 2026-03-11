@@ -368,17 +368,19 @@ export function useCanvasActions({
     const obj = fc.getActiveObject();
     if (!obj) return;
     const currentWidth = (obj as unknown as { strokeWidth?: number }).strokeWidth ?? 0;
+    // When an object has no stroke width yet (e.g. FabricImage defaults to 0),
+    // use the current brush-size slider value as the initial width so the
+    // stroke is immediately visible rather than a hair-thin 0.5 px.
+    const width = currentWidth > 0 ? currentWidth : brushSizeRef.current;
     obj.set({
       stroke: c,
-      strokeWidth: currentWidth > 0 ? currentWidth : 1,
-      // Keep outside-stroke behaviour consistent even if this shape was
-      // created before the paintFirst flag was introduced.
+      strokeWidth: width,
       paintFirst: "stroke",
       strokeUniform: true,
     });
     fc.requestRenderAll();
     saveObject(obj);
-  }, [fabricRef, saveObject]);
+  }, [fabricRef, brushSizeRef, saveObject]);
 
   // ── Reweight selected path ────────────────────────────────────────────
   const reweightSelected = useCallback((size: number) => {
