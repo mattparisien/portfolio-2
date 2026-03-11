@@ -76,11 +76,13 @@ export function useCanvasActions({
     } else if (tool === "line") {
       fc.isDrawingMode = false;
       fc.selection = false;
+      fc.hoverCursor = "crosshair";
       fc.discardActiveObject();
       fc.getObjects().forEach((o) => { o.selectable = false; o.evented = false; });
     } else if (tool === "select") {
       fc.isDrawingMode = false;
       fc.selection = true;
+      fc.hoverCursor = "move";
       fc.getObjects().forEach((o) => { o.selectable = true; o.evented = true; });
     } else if (tool === "shape") {
       fc.isDrawingMode = false;

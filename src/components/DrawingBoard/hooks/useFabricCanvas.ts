@@ -824,7 +824,12 @@ export function useFabricCanvas({
       }
 
       fc.on("mouse:move", (e) => {
-        if (toolRef.current === "line" && isDrawingLine) {
+        if (toolRef.current === "line") {
+          // Enforce crosshair at the DOM level every frame so Fabric's own
+          // _setCursorFromEvent (which runs before this callback) can't override it.
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ((fc as any).upperCanvasEl as HTMLElement).style.cursor = "crosshair";
+          if (!isDrawingLine) return;
           const pointer = fc.getScenePoint(e.e as MouseEvent);
           if (!linePreview) {
             linePreview = new modsRef.current!.Line(
@@ -944,6 +949,7 @@ export function useFabricCanvas({
 
       fc.on("mouse:down", (e) => {
         if (toolRef.current === "line") {
+          fc.selection = false;
           const pointer = fc.getScenePoint(e.e as MouseEvent);
           isDrawingLine = true;
           lineStart = { x: pointer.x, y: pointer.y };
