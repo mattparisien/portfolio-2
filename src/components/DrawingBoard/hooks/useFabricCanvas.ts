@@ -538,7 +538,7 @@ export function useFabricCanvas({
     canvasEl.addEventListener("touchend",   onTouchEnd);
 
     // ── Fabric async init ─────────────────────────────────────────────────
-    import("fabric").then(({ Canvas, PencilBrush, IText, Textbox, Point, Rect, Circle, Triangle, Path, Line, FabricImage, ActiveSelection, util, Gradient, Shadow, Pattern, FabricObject }) => {
+    import("fabric").then(({ Canvas, PencilBrush, IText, Textbox, Point, Rect, Circle, Triangle, Path, Line, FabricImage, ActiveSelection, util, Gradient, Shadow, Pattern, FabricObject, Control }) => {
       modsRef.current = { Canvas, PencilBrush, IText, Textbox, Point, Rect, Circle, Triangle, Path, Line, FabricImage, ActiveSelection, util, Gradient, Shadow, Pattern };
 
       // Make selection borders and corner handles clearly visible
@@ -549,23 +549,44 @@ export function useFabricCanvas({
       FabricObject.ownDefaults.transparentCorners = false;
       FabricObject.ownDefaults.borderOpacityWhenMoving = 1;
 
-      // Custom rotate cursor (circular arrow SVG) for the rotation handle.
-      // %23 = '#' (encoded so the data URI doesn't break on the fragment separator).
-      const _rotateSvg = [
-        `<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'>`,
-        `<path d='M10 3A7 7 0 1 0 17 10' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round'/>`,
-        `<path d='M10 3A7 7 0 1 0 17 10' fill='none' stroke='%23111' stroke-width='1.5' stroke-linecap='round'/>`,
-        `<polygon points='14.5,9.5 19.5,9.5 17,14' fill='white'/>`,
-        `<polygon points='15,9.8 19,9.8 17,13.5' fill='%23111'/>`,
-        `</svg>`,
-      ].join('');
-      const ROTATE_CURSOR = `url("data:image/svg+xml,${_rotateSvg}") 10 10, default`;
-
+      // Replace the single mtr rotation handle with one rotate control per corner.
+      // Steal the actionHandler and cursorStyleHandler from the existing mtr control
+      // so we get identical rotation-with-snapping behaviour on all four corners.
       const _origCreateControls = FabricObject.createControls.bind(FabricObject);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (FabricObject as any).createControls = () => {
         const result = _origCreateControls();
-        if (result.controls?.mtr) result.controls.mtr.cursorStyle = ROTATE_CURSOR;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const mtr = result.controls.mtr as any;
+        const rotateAction      = mtr?.actionHandler;
+        const rotateCursorStyle = mtr?.cursorStyleHandler;
+        // Remove the top-centre rotation handle entirely
+        delete result.controls.mtr;
+
+        // Corner positions on the Fabric bounding box (-0.5 … 0.5)
+        const corners: Array<[string, number, number, number, number]> = [
+          ["_rot_tl", -0.5, -0.5, -14, -14],
+          ["_rot_tr",  0.5, -0.5,  14, -14],
+          ["_rot_bl", -0.5,  0.5, -14,  14],
+          ["_rot_br",  0.5,  0.5,  14,  14],
+        ];
+        for (const [key, x, y, ox, oy] of corners) {
+          result.controls[key] = new Control({
+            x, y,
+            offsetX: ox,
+            offsetY: oy,
+            // Always rotate around the object center, not the opposite corner
+            transformAnchorPoint: new Point(0.5, 0.5),
+            actionHandler: rotateAction,
+            cursorStyleHandler: rotateCursorStyle,
+            cursorStyle: "alias",
+            // Invisible hit area (8px) — cursor switches on hover
+            sizeX: 8,
+            sizeY: 8,
+            // Don't render any visible handle
+            render: () => { /* no-op */ },
+          });
+        }
         return result;
       };
 
@@ -590,7 +611,7 @@ export function useFabricCanvas({
         const upperEl = (fc as unknown as { upperCanvasEl: HTMLElement }).upperCanvasEl;
         fc.setCursor = (value: string) => {
           const isPencilOrBrush = toolRef.current === "pencil" || toolRef.current === "brush";
-          const show = value.includes("resize") || value.startsWith("url(") || value === "grabbing" || value === "not-allowed"
+          const show = value.includes("resize") || value.startsWith("url(") || value === "grabbing" || value === "not-allowed" || value === "alias"
             || (value === "crosshair" && !isPencilOrBrush)
             || value === "text";
           upperEl.style.setProperty("cursor", show ? value : "none", "important");
