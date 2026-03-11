@@ -3,7 +3,7 @@ import { BOARD_ID } from "../constants";
 import type { RoomEvent } from "@/liveblocks.config";
 
 export type SaveableObj = {
-  toObject: () => object;
+  toObject: (propertiesToInclude?: string[]) => object;
   boardObjectId?: string;
   giphyId?: string;
   _gifUrl?: string;
@@ -21,8 +21,9 @@ export function useBoardSync({ broadcast }: UseBoardSyncOptions = {}) {
       (obj as Record<string, unknown>).boardObjectId = crypto.randomUUID();
     }
     const objectId = obj.boardObjectId as string;
+    const LOCK_PROPS = ['lockMovementX', 'lockMovementY', 'lockRotation', 'lockScalingX', 'lockScalingY', 'hasControls'];
     const fabricJSON = JSON.stringify({
-      ...(obj.toObject()),
+      ...(obj.toObject(LOCK_PROPS)),
       boardObjectId: objectId,
       ...(obj.giphyId             ? { giphyId:          obj.giphyId         } : {}),
       ...(obj._gifUrl             ? { _gifUrl:           obj._gifUrl         } : {}),
