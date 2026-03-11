@@ -45,6 +45,21 @@ interface DrawingToolsProps {
   onPopoverOpened?: () => void;
 }
 
+// Chevron button appended to split buttons — defined outside to prevent remounting on every render
+const Chevron = ({ open, onClick }: { open: boolean; active: boolean; onClick: () => void }) => (
+  <button
+    onClick={onClick}
+    title="More options"
+    className={`w-6 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors ${
+      open ? "bg-black/[0.08] text-[#111]" : "text-[#aaa] hover:bg-black/[0.07] hover:text-[#111]"
+    }`}
+  >
+    <MdKeyboardArrowUp
+      className={`w-4 h-4 transition-transform duration-150 ${open ? "" : "rotate-180"}`}
+    />
+  </button>
+);
+
 export default function DrawingTools({
   tool, onToolChange, onAddShape, onAddText, onAddGif, onAddImage, closeSignal, uploadSignal, activeShapeType, onPopoverOpened,
 }: DrawingToolsProps) {
@@ -160,21 +175,6 @@ export default function DrawingTools({
       }`}
     >
       {icon}
-    </button>
-  );
-
-  // Chevron button appended to split buttons
-  const Chevron = ({ open, onClick }: { open: boolean; active: boolean; onClick: () => void }) => (
-    <button
-      onClick={onClick}
-      title="More options"
-      className={`w-6 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors ${
-        open ? "bg-black/[0.08] text-[#111]" : "text-[#aaa] hover:bg-black/[0.07] hover:text-[#111]"
-      }`}
-    >
-      <MdKeyboardArrowUp
-        className={`w-4 h-4 transition-transform duration-150 ${open ? "" : "rotate-180"}`}
-      />
     </button>
   );
 

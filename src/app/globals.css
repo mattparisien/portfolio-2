@@ -189,11 +189,31 @@ body {
   cursor: auto !important;
 }
 .board-no-cursor .drawing-ui-overlay button,
+.board-no-cursor .drawing-ui-overlay button *,
 .board-no-cursor .drawing-ui-overlay a,
+.board-no-cursor .drawing-ui-overlay a *,
 .board-no-cursor .drawing-ui-overlay input,
 .board-no-cursor .drawing-ui-overlay select,
-.board-no-cursor .drawing-ui-overlay [role="button"] {
+.board-no-cursor .drawing-ui-overlay [role="button"],
+.board-no-cursor .drawing-ui-overlay [role="button"] * {
   cursor: pointer !important;
+}
+
+/* Restore pointer for all interactive elements board-wide (covers overlays without drawing-ui-overlay) */
+.board-no-cursor button,
+.board-no-cursor button *,
+.board-no-cursor a,
+.board-no-cursor a *,
+.board-no-cursor [role="button"],
+.board-no-cursor [role="button"] *,
+.board-no-cursor label,
+.board-no-cursor label * {
+  cursor: pointer !important;
+}
+.board-no-cursor input,
+.board-no-cursor select,
+.board-no-cursor textarea {
+  cursor: auto !important;
 }
 
 .toolbar-slider {
