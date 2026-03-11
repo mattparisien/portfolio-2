@@ -118,28 +118,6 @@ function extractTextProps(txt: IText): TextProps {
     charSpacing: (txt.charSpacing as number) ?? DEFAULT_TEXT_PROPS.charSpacing,
     textAlign: (align === "center" || align === "right") ? align : "left",
     gradient,
-    effect: (() => {
-      const sh = txt.shadow as ({ color?: string; blur?: number; offsetX?: number; offsetY?: number } | null);
-      const sk = txt.stroke as string | undefined;
-      const sw = (txt.strokeWidth as number) ?? 0;
-      const hasShadow = !!sh && ((sh.blur ?? 0) + Math.abs(sh.offsetX ?? 0) + Math.abs(sh.offsetY ?? 0)) > 0;
-      const hasStroke = typeof sk === "string" && sk !== "" && sk !== "transparent" && sw > 0;
-      const isPattern = !!fill && typeof fill === "object" && "source" in fill;
-      if (!hasShadow && !hasStroke && !isPattern) return null;
-      const rec = txt as unknown as Record<string, unknown>;
-      return {
-        shadowColor: sh?.color ?? "rgba(0,0,0,0.5)",
-        shadowBlur: sh?.blur ?? 0,
-        shadowOffsetX: sh?.offsetX ?? 0,
-        shadowOffsetY: sh?.offsetY ?? 0,
-        strokeColor: hasStroke ? sk! : "#000000",
-        strokeWidth: hasStroke ? sw : 0,
-        patternType: isPattern ? ("glitter" as const) : null,
-        patternColor1: (rec._effectPatternC1 as string | undefined) ?? "#FFD700",
-        patternColor2: (rec._effectPatternC2 as string | undefined) ?? "#FF6EE7",
-        presetId: (rec._effectPresetId as string | undefined) ?? undefined,
-      } as import("../types").TextEffect;
-    })(),
   };
 }
 
@@ -606,9 +584,6 @@ export function useFabricCanvas({
             const src = parsed[i];
             if (src.boardObjectId) (obj as Record<string, unknown>).boardObjectId = src.boardObjectId;
             if (src.zIndex !== undefined) (obj as Record<string, unknown>).zIndex = src.zIndex;
-            if (src._effectPresetId) (obj as Record<string, unknown>)._effectPresetId = src._effectPresetId;
-            if (src._effectPatternC1) (obj as Record<string, unknown>)._effectPatternC1 = src._effectPatternC1;
-            if (src._effectPatternC2) (obj as Record<string, unknown>)._effectPatternC2 = src._effectPatternC2;
 
             if (src.giphyId && src._gifUrl) {
               // Stamp giphyId immediately so the loop guard recognises it
@@ -666,7 +641,11 @@ export function useFabricCanvas({
       // ── Canvas events ──────────────────────────────────────────────────
       fc.on("path:created", (e) => {
         if (isUndoingRef.current) return;
-        e.path.set({ opacity: opacityRef.current });
+        e.path.set({
+          opacity: opacityRef.current,
+          // expand bbox by half stroke width so the stroke edge is never clipped
+          padding: (e.path.strokeWidth ?? 0) / 2,
+        });
         // Auto-simplify with an aggressive 8 px tolerance (RDP, curve-preserving)
         const raw = (e.path as unknown as { path: PathCmd[] }).path;
         const simplified = autoSimplifyPath(raw, 8);

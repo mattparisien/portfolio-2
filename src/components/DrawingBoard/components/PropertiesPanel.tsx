@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import type { TextProps, Tool } from "../types";
-import TextEffectsPopover from "./TextEffectsPopover";
 import {
   MdRemove,
   MdAdd,
@@ -41,8 +40,6 @@ export interface PropertiesPanelProps {
   onOpacityChange: (v: number) => void;
   onStrokeWeightChange: (v: number) => void;
   onApplyText: (updates: Partial<TextProps>) => void;
-  closeSignal?: number;
-  onPopoverOpened?: () => void;
   /** Which color slot is open — managed by parent */
   fillColorOpen: boolean;
   strokeColorOpen: boolean;
@@ -230,8 +227,6 @@ export default function PropertiesPanel({
   onOpacityChange,
   onStrokeWeightChange,
   onApplyText,
-  closeSignal,
-  onPopoverOpened,
   fillColorOpen,
   strokeColorOpen,
   textColorOpen,
@@ -255,15 +250,7 @@ export default function PropertiesPanel({
     charSpacing,
     textAlign,
     gradient,
-    effect,
   } = textProps;
-
-  const [effectOpen, setEffectOpen] = useState(false);
-
-  useEffect(() => {
-    if (!closeSignal) return;
-    setEffectOpen(false);
-  }, [closeSignal]);
 
   return (
     <div
@@ -284,12 +271,10 @@ export default function PropertiesPanel({
           {/* ── Color ── */}
           <div className="px-4 pt-3 pb-3">
             <SectionLabel>Color</SectionLabel>
-
-            {/* Color / gradient swatch row */}
             <ColorRow
               color={gradient ? "#000000" : color}
               isOpen={textColorOpen}
-              onSwatchClick={() => { if (textColorOpen) onCloseColor(); else onOpenTextColor(); setEffectOpen(false); }}
+              onSwatchClick={() => { if (textColorOpen) onCloseColor(); else onOpenTextColor(); }}
               onColorChange={onTextColorChange}
             />
             {gradient && (
@@ -297,44 +282,14 @@ export default function PropertiesPanel({
                 <span className="text-[11px] font-mono font-medium text-black/40">Gradient</span>
               </div>
             )}
-
-            {/* Effects */}
-            <div className="relative mt-1.5">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setEffectOpen((v) => !v);
-                  onCloseColor();
-                  onPopoverOpened?.();
-                }}
-                className="w-full text-left px-3 py-2 rounded-xl text-[12px] font-medium cursor-pointer transition-colors"
-                style={{
-                  background: effectOpen ? "rgba(0,0,0,0.06)" : "transparent",
-                  color: effect ? "#111" : "#999",
-                  fontWeight: effect ? 600 : 400,
-                }}
-              >
-                {effect
-                  ? `✦ ${(effect.presetId ?? "").charAt(0).toUpperCase() + (effect.presetId ?? "").slice(1).replace(/-/g, " ")}`
-                  : "Add effect…"}
-              </button>
-              {effectOpen && (
-                <TextEffectsPopover
-                  effect={effect ?? null}
-                  onApply={(e) => onApplyText({ effect: e })}
-                  onClose={() => setEffectOpen(false)}
-                />
-              )}
-            </div>
           </div>
 
           <Rule />
 
-          {/* ── Typography ── */}
+          {/* ── Font ── */}
           <div className="px-4 pt-3 pb-3">
-            <SectionLabel>Typography</SectionLabel>
+            <SectionLabel>Font</SectionLabel>
 
-            {/* Font family */}
             <select
               value={fontFamily}
               onChange={(e) => onApplyText({ fontFamily: e.target.value })}
@@ -349,8 +304,8 @@ export default function PropertiesPanel({
               ))}
             </select>
 
-            {/* Font size + B I */}
-            <div className="flex items-center gap-1.5 mb-2">
+            {/* Font size stepper */}
+            <div className="flex items-center gap-1.5">
               <StepBtn
                 title="Decrease font size"
                 onClick={() => {
@@ -364,12 +319,10 @@ export default function PropertiesPanel({
                 value={fontSize}
                 onChange={(e) => onApplyText({ fontSize: Number(e.target.value) })}
                 title="Font size"
-                className="text-[12px] rounded-md px-1 py-1.5 bg-black/[0.04] cursor-pointer outline-none text-gray-700 font-semibold tabular-nums text-center border-0 w-12"
+                className="flex-1 text-[12px] rounded-md px-1 py-1.5 bg-black/[0.04] cursor-pointer outline-none text-gray-700 font-semibold tabular-nums text-center border-0"
               >
                 {FONT_SIZES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
+                  <option key={s} value={s}>{s}</option>
                 ))}
               </select>
               <StepBtn
@@ -382,74 +335,35 @@ export default function PropertiesPanel({
               >
                 <MdAdd size={11} />
               </StepBtn>
-              <div className="flex items-center gap-0.5 ml-auto">
-                <ToggleBtn
-                  active={bold}
-                  title="Bold"
-                  onClick={() => onApplyText({ bold: !bold })}
-                  style={{ fontWeight: 700 }}
-                >
-                  B
-                </ToggleBtn>
-                <ToggleBtn
-                  active={italic}
-                  title="Italic"
-                  onClick={() => onApplyText({ italic: !italic })}
-                  style={{ fontStyle: "italic" }}
-                >
-                  I
-                </ToggleBtn>
-              </div>
             </div>
+          </div>
 
-            {/* U S AA */}
-            <div className="flex items-center gap-0.5 mb-2.5">
-              <ToggleBtn
-                active={underline}
-                title="Underline"
-                onClick={() => onApplyText({ underline: !underline })}
-                style={{ textDecoration: "underline" }}
-              >
-                U
-              </ToggleBtn>
-              <ToggleBtn
-                active={linethrough}
-                title="Strikethrough"
-                onClick={() => onApplyText({ linethrough: !linethrough })}
-                style={{ textDecoration: "line-through" }}
-              >
-                S
-              </ToggleBtn>
-              <ToggleBtn
-                active={uppercase}
-                title="All caps"
-                onClick={() => onApplyText({ uppercase: !uppercase })}
-              >
+          <Rule />
+
+          {/* ── Style ── */}
+          <div className="px-4 pt-3 pb-3">
+            <SectionLabel>Style</SectionLabel>
+
+            {/* B I U S AA — all in one row */}
+            <div className="flex items-center gap-0.5 mb-2">
+              <ToggleBtn active={bold} title="Bold" onClick={() => onApplyText({ bold: !bold })} style={{ fontWeight: 700 }}>B</ToggleBtn>
+              <ToggleBtn active={italic} title="Italic" onClick={() => onApplyText({ italic: !italic })} style={{ fontStyle: "italic" }}>I</ToggleBtn>
+              <ToggleBtn active={underline} title="Underline" onClick={() => onApplyText({ underline: !underline })} style={{ textDecoration: "underline" }}>U</ToggleBtn>
+              <ToggleBtn active={linethrough} title="Strikethrough" onClick={() => onApplyText({ linethrough: !linethrough })} style={{ textDecoration: "line-through" }}>S</ToggleBtn>
+              <ToggleBtn active={uppercase} title="All caps" onClick={() => onApplyText({ uppercase: !uppercase })}>
                 <span className="text-[10px] font-bold tracking-wider">AA</span>
               </ToggleBtn>
             </div>
 
-            {/* Text alignment */}
+            {/* Alignment */}
             <div className="flex items-center gap-0.5">
-              <ToggleBtn
-                active={textAlign === "left"}
-                title="Align left"
-                onClick={() => onApplyText({ textAlign: "left" })}
-              >
+              <ToggleBtn active={textAlign === "left"} title="Align left" onClick={() => onApplyText({ textAlign: "left" })}>
                 <MdFormatAlignLeft size={14} />
               </ToggleBtn>
-              <ToggleBtn
-                active={textAlign === "center"}
-                title="Align center"
-                onClick={() => onApplyText({ textAlign: "center" })}
-              >
+              <ToggleBtn active={textAlign === "center"} title="Align center" onClick={() => onApplyText({ textAlign: "center" })}>
                 <MdFormatAlignCenter size={14} />
               </ToggleBtn>
-              <ToggleBtn
-                active={textAlign === "right"}
-                title="Align right"
-                onClick={() => onApplyText({ textAlign: "right" })}
-              >
+              <ToggleBtn active={textAlign === "right"} title="Align right" onClick={() => onApplyText({ textAlign: "right" })}>
                 <MdFormatAlignRight size={14} />
               </ToggleBtn>
             </div>

@@ -100,8 +100,6 @@ function DrawingBoardInner() {
   // Whenever any component opens a popover, we increment the other two signals
   // so they close themselves — guaranteeing only one popover is ever visible.
   const [drawingToolsClose, setDrawingToolsClose] = useState(0);
-  const [toolbarClose, setToolbarClose]           = useState(0);
-  const [textToolbarClose, setTextToolbarClose]   = useState(0);
   const [uploadSignal, setUploadSignal]           = useState(0);
 
   // Shared singleton color popover — lifted here so only one instance ever exists.
@@ -112,18 +110,10 @@ function DrawingBoardInner() {
   const closeColorPopover = useCallback(() => setColorPopoverSlot(null), []);
   const openColorPopover  = useCallback((slot: ColorSlot) => {
     setColorPopoverSlot(slot);
-    if (slot === "text") {
-      setDrawingToolsClose(n => n + 1);
-      setToolbarClose(n => n + 1);
-    } else {
-      setDrawingToolsClose(n => n + 1);
-      setTextToolbarClose(n => n + 1);
-    }
+    setDrawingToolsClose(n => n + 1);
   }, []);
 
-  const onDrawingToolsPopoverOpened = () => { setToolbarClose(n => n + 1); setTextToolbarClose(n => n + 1); setColorPopoverSlot(null); };
-  const onToolbarPopoverOpened      = () => { setDrawingToolsClose(n => n + 1); setTextToolbarClose(n => n + 1); setColorPopoverSlot(null); };
-  const onTextToolbarPopoverOpened  = () => { setDrawingToolsClose(n => n + 1); setToolbarClose(n => n + 1); setColorPopoverSlot(null); };
+  const onDrawingToolsPopoverOpened = () => { setColorPopoverSlot(null); };
 
   const selectedIsShape = hasSelection && !selectedIsText && !selectedIsGif && !selectedIsPath;
   const panelVisible    = selectedIsText || (!selectedIsGif && (tool === "pencil" || tool === "brush" || hasSelection));
@@ -322,9 +312,13 @@ function DrawingBoardInner() {
     const onLeave = () => { updateMyPresence({ cursor: null }); setLocalCursor(null); };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerleave", onLeave);
+    document.addEventListener("mouseleave", onLeave);
+    window.addEventListener("blur", onLeave);
     return () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerleave", onLeave);
+      document.removeEventListener("mouseleave", onLeave);
+      window.removeEventListener("blur", onLeave);
     };
   }, [updateMyPresence, fabricRef]);
 
@@ -347,7 +341,7 @@ function DrawingBoardInner() {
       {localCursor && !isOverUI && (
         <div
           className="pointer-events-none fixed z-[9999]"
-          style={{ left: 0, top: 0, transform: `translate(${localCursor.x}px, ${localCursor.y}px)`, willChange: "transform" }}
+          style={{ left: 0, top: 0, transform: `translate(${localCursor.x}px, ${localCursor.y}px)`, willChange: "transform", opacity: localCursor ? 1 : 0, transition: "opacity 0.15s ease" }}
         >
           {(tool === "pencil" && !isOverUI) ? (
             /* Pencil icon — tip aligns with mouse position */
@@ -400,8 +394,6 @@ function DrawingBoardInner() {
           onOpacityChange={(v) => { setOpacity(v); if (hasSelection) reOpacitySelected(v); }}
           onStrokeWeightChange={(v) => { setBrushSize(v); if (hasSelection) reweightSelected(v); }}
           onApplyText={applyTextProp}
-          closeSignal={selectedIsText ? textToolbarClose : toolbarClose}
-          onPopoverOpened={selectedIsText ? onTextToolbarPopoverOpened : onToolbarPopoverOpened}
           fillColorOpen={colorPopoverSlot === "toolbar-fill"}
           strokeColorOpen={colorPopoverSlot === "toolbar-stroke"}
           textColorOpen={colorPopoverSlot === "text"}

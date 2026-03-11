@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import type { TextProps } from "../types";
-import TextEffectsPopover from "./TextEffectsPopover";
 import {
   MdRemove,
   MdAdd,
@@ -106,9 +105,8 @@ function getPopoverPos(btn: HTMLButtonElement | null): React.CSSProperties {
 }
 
 export default function TextToolbar({ textProps, color, onApply, closeSignal, onPopoverOpened, colorPopoverOpen, onOpenColorPopover, onCloseColorPopover }: TextToolbarProps) {
-  const { fontFamily, fontSize, bold, italic, underline, linethrough, uppercase, lineHeight, charSpacing, textAlign, gradient, effect } = textProps;
+  const { fontFamily, fontSize, bold, italic, underline, linethrough, uppercase, lineHeight, charSpacing, textAlign, gradient } = textProps;
 
-  const [effectOpen, setEffectOpen] = useState(false);
   const [lineHeightOpen, setLineHeightOpen] = useState(false);
   const [letterSpacingOpen, setLetterSpacingOpen] = useState(false);
 
@@ -122,7 +120,6 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
   // Close all when a sibling component opens a popover
   useEffect(() => {
     if (!closeSignal) return;
-    setEffectOpen(false);
     setLineHeightOpen(false);
     setLetterSpacingOpen(false);
   }, [closeSignal]);
@@ -181,38 +178,13 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
       <div className="relative flex items-center flex-shrink-0">
         <button
           title="Text color"
-          onClick={(e) => { e.stopPropagation(); colorPopoverOpen ? onCloseColorPopover?.() : onOpenColorPopover?.(); setEffectOpen(false); setLineHeightOpen(false); setLetterSpacingOpen(false); }}
+          onClick={(e) => { e.stopPropagation(); colorPopoverOpen ? onCloseColorPopover?.() : onOpenColorPopover?.(); setLineHeightOpen(false); setLetterSpacingOpen(false); }}
           className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 hover:scale-105"
           style={{ background: colorPopoverOpen ? "rgba(0,0,0,0.09)" : "transparent" }}
         >
           <span style={swatchStyle} className="flex-shrink-0 block" />
         </button>
       </div>
-
-      {/* ── Effects ── */}
-      <div className="relative flex items-center flex-shrink-0">
-        <button
-          title="Text effects"
-          onClick={(e) => { e.stopPropagation(); setEffectOpen((v) => !v); onCloseColorPopover?.(); setLineHeightOpen(false); setLetterSpacingOpen(false); onPopoverOpened?.(); }}
-          className="px-2 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 hover:bg-black/[0.07] select-none text-[12px] font-medium"
-          style={{
-            background: effectOpen ? "rgba(0,0,0,0.09)" : "transparent",
-            color: effect ? "#111" : "#444",
-            fontWeight: effect ? 600 : undefined,
-          }}
-        >
-          Effects
-        </button>
-        {effectOpen && (
-          <TextEffectsPopover
-            effect={effect ?? null}
-            onApply={(e) => onApply({ effect: e })}
-            onClose={() => setEffectOpen(false)}
-          />
-        )}
-      </div>
-
-      <Divider />
 
       {/* ── Font family ── */}
       <div className="flex items-center flex-shrink-0">
@@ -294,7 +266,7 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
         <button
           ref={lineHeightBtnRef}
           title="Line height"
-          onClick={(e) => { e.stopPropagation(); setLineHeightOpen((v) => !v); setLetterSpacingOpen(false); onCloseColorPopover?.(); setEffectOpen(false); onPopoverOpened?.(); }}
+          onClick={(e) => { e.stopPropagation(); setLineHeightOpen((v) => !v); setLetterSpacingOpen(false); onCloseColorPopover?.(); onPopoverOpened?.(); }}
           className={`w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 select-none ${lineHeightOpen ? "bg-black/[0.09]" : "hover:bg-black/[0.07]"}`}
         >
           <MdFormatLineSpacing size={14} className="text-gray-600" />
@@ -339,7 +311,7 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
         <button
           ref={letterSpacingBtnRef}
           title="Letter spacing"
-          onClick={(e) => { e.stopPropagation(); setLetterSpacingOpen((v) => !v); setLineHeightOpen(false); onCloseColorPopover?.(); setEffectOpen(false); onPopoverOpened?.(); }}
+          onClick={(e) => { e.stopPropagation(); setLetterSpacingOpen((v) => !v); setLineHeightOpen(false); onCloseColorPopover?.(); onPopoverOpened?.(); }}
           className={`w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 select-none ${letterSpacingOpen ? "bg-black/[0.09]" : "hover:bg-black/[0.07]"}`}
         >
           <MdSpaceBar size={14} className="text-gray-600" />
