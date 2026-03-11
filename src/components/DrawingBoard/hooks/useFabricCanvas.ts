@@ -563,12 +563,14 @@ export function useFabricCanvas({
         // Remove the top-centre rotation handle entirely
         delete result.controls.mtr;
 
-        // Corner positions on the Fabric bounding box (-0.5 … 0.5)
+        // Corner positions on the Fabric bounding box (-0.5 … 0.5).
+        // Offset of 12 + half sizeX of 10 = inner edge at 2px from corner;
+        // resize handles (cornerSize 10) reach 5px → 3px overlap for seamless transition.
         const corners: Array<[string, number, number, number, number]> = [
-          ["_rot_tl", -0.5, -0.5, -14, -14],
-          ["_rot_tr",  0.5, -0.5,  14, -14],
-          ["_rot_bl", -0.5,  0.5, -14,  14],
-          ["_rot_br",  0.5,  0.5,  14,  14],
+          ["_rot_tl", -0.5, -0.5, -12, -12],
+          ["_rot_tr",  0.5, -0.5,  12, -12],
+          ["_rot_bl", -0.5,  0.5, -12,  12],
+          ["_rot_br",  0.5,  0.5,  12,  12],
         ];
         for (const [key, x, y, ox, oy] of corners) {
           result.controls[key] = new Control({
@@ -580,9 +582,9 @@ export function useFabricCanvas({
             actionHandler: rotateAction,
             cursorStyleHandler: rotateCursorStyle,
             cursorStyle: "alias",
-            // Invisible hit area (8px) — cursor switches on hover
-            sizeX: 8,
-            sizeY: 8,
+            // Larger invisible hit area for easier grabbing
+            sizeX: 20,
+            sizeY: 20,
             // Don't render any visible handle
             render: () => { /* no-op */ },
           });
