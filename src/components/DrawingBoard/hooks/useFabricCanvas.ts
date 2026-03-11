@@ -816,7 +816,7 @@ export function useFabricCanvas({
         };
         switch (type) {
           case "rect":     return new mods.Rect({ ...common, width: Math.max(w, 1), height: Math.max(h, 1) });
-          case "circle":   return new mods.Circle({ ...common, radius: Math.max(Math.min(w, h) / 2, 0.5) });
+          case "circle":   return new mods.Circle({ ...common, radius: Math.max(w / 2, 0.5) });
           case "triangle": return new mods.Triangle({ ...common, width: Math.max(w, 1), height: Math.max(h, 1) });
           case "star":     return new mods.Path(STAR_PATH, { ...common });
           case "heart":    return new mods.Path(HEART_PATH, { ...common });
@@ -857,16 +857,20 @@ export function useFabricCanvas({
         }
         if (toolRef.current !== "shape" || !isDrawingShape) return;
         const pointer = fc.getScenePoint(e.e as MouseEvent);
+        const shiftKey = (e.e as MouseEvent).shiftKey;
         const dx = pointer.x - shapeStart.x;
         const dy = pointer.y - shapeStart.y;
-        const w = Math.abs(dx);
-        const h = Math.abs(dy);
-        const left = dx >= 0 ? shapeStart.x : pointer.x;
-        const top  = dy >= 0 ? shapeStart.y : pointer.y;
+        const rawW = Math.abs(dx);
+        const rawH = Math.abs(dy);
+        // Shift → constrain to square/circle
+        const effW = shiftKey ? Math.min(rawW, rawH) : rawW;
+        const effH = shiftKey ? Math.min(rawW, rawH) : rawH;
+        const left = dx >= 0 ? shapeStart.x : shapeStart.x - effW;
+        const top  = dy >= 0 ? shapeStart.y : shapeStart.y - effH;
         const st = shapeTypeRef.current;
 
         if (!shapePreview) {
-          shapePreview = buildPreviewShape(st, left, top, w || 1, h || 1);
+          shapePreview = buildPreviewShape(st, left, top, effW || 1, effH || 1);
           if (shapePreview) {
             shapeNaturalW = shapePreview.width ?? 1;
             shapeNaturalH = shapePreview.height ?? 1;
@@ -877,16 +881,21 @@ export function useFabricCanvas({
           switch (st) {
             case "rect":
             case "triangle":
-              shapePreview.set({ width: Math.max(w, 1), height: Math.max(h, 1) });
+              shapePreview.set({ width: Math.max(effW, 1), height: Math.max(effH, 1) });
               break;
             case "circle":
-              shapePreview.set({ radius: Math.max(Math.min(w, h) / 2, 0.5) });
+              // Use radius + scaleY so the circle can become an ellipse freely
+              shapePreview.set({
+                radius: Math.max(effW / 2, 0.5),
+                scaleX: 1,
+                scaleY: Math.max(effH, 1) / Math.max(effW, 1),
+              });
               break;
             case "star":
             case "heart":
               shapePreview.set({
-                scaleX: Math.max(w, 1) / shapeNaturalW,
-                scaleY: Math.max(h, 1) / shapeNaturalH,
+                scaleX: Math.max(effW, 1) / shapeNaturalW,
+                scaleY: Math.max(effH, 1) / shapeNaturalH,
               });
               break;
           }
