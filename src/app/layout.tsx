@@ -6,7 +6,7 @@ import "./globals.css";
 import SmoothScroller from "@/components/SmoothScroller";
 
 export const metadata: Metadata = {
-  title: "Crumb | A queer collective infinite wall",
+  title: "Crumb",
   description: "Crumb — A queer collective infinite wall for collaborative creativity.",
   icons: [
     { rel: "icon", type: "image/svg+xml", url: "/favicon.svg", sizes: "16x16" }, // optional
