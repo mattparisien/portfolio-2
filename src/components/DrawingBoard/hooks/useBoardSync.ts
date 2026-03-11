@@ -3,7 +3,8 @@ import { BOARD_ID } from "../constants";
 import type { RoomEvent } from "@/liveblocks.config";
 
 export type SaveableObj = {
-  toObject: (propertiesToInclude?: string[]) => object;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  toObject: (propertiesToInclude?: any[]) => object;
   boardObjectId?: string;
   giphyId?: string;
   _gifUrl?: string;

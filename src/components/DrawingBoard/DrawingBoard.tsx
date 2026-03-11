@@ -106,6 +106,7 @@ function DrawingBoardInner() {
   // Shared singleton color popover — lifted here so only one instance ever exists.
   const [localCursor, setLocalCursor] = useState<{ x: number; y: number } | null>(null);
   const [isOverUI, setIsOverUI]       = useState(false);
+  const [isOverHandle, setIsOverHandle] = useState(false);
 
   const [colorPopoverSlot, setColorPopoverSlot] = useState<ColorSlot | null>(null);
   const closeColorPopover = useCallback(() => setColorPopoverSlot(null), []);
@@ -178,6 +179,7 @@ function DrawingBoardInner() {
     broadcast: broadcastEvent,
     shapeTypeRef,
     fillGradientRef,
+    setIsOverHandle,
   });
 
   const { addText, addGif, addImage, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, applyTextProp, applyFillGradient } =
@@ -343,7 +345,7 @@ function DrawingBoardInner() {
       <RemoteCursors vpt={vpt} />
 
       {/* Local cursor */}
-      {localCursor && !isOverUI && (
+      {localCursor && !isOverUI && !isOverHandle && (
         <div
           className="pointer-events-none fixed z-[9999]"
           style={{ left: 0, top: 0, transform: `translate(${localCursor.x}px, ${localCursor.y}px)`, willChange: "transform", opacity: localCursor ? 1 : 0, transition: "opacity 0.15s ease" }}
@@ -360,18 +362,6 @@ function DrawingBoardInner() {
               <path d="M15 1L19 5L7 17C5.5 17.5 2 18.5 1.5 18C1 17.5 2 14 2.5 12.5Z" fill="#1a1a1a" stroke="white" strokeWidth="1" strokeLinejoin="round"/>
               <ellipse cx="2.2" cy="17.8" rx="1.8" ry="1.2" fill="#555"/>
               <line x1="12.5" y1="3.5" x2="16.5" y2="7.5" stroke="white" strokeWidth="0.8"/>
-            </svg>
-          ) : (tool === "shape" && !isOverUI) ? (
-            /* Crosshair — center aligns with mouse position */
-            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" style={{ transform: "translate(-50%, -50%)" }} xmlns="http://www.w3.org/2000/svg">
-              <line x1="10" y1="1" x2="10" y2="8"  stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-              <line x1="10" y1="12" x2="10" y2="19" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-              <line x1="1"  y1="10" x2="8"  y2="10" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-              <line x1="12" y1="10" x2="19" y2="10" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-              <line x1="10" y1="1" x2="10" y2="8"  stroke="#1a1a1a" strokeWidth="1.2" strokeLinecap="round"/>
-              <line x1="10" y1="12" x2="10" y2="19" stroke="#1a1a1a" strokeWidth="1.2" strokeLinecap="round"/>
-              <line x1="1"  y1="10" x2="8"  y2="10" stroke="#1a1a1a" strokeWidth="1.2" strokeLinecap="round"/>
-              <line x1="12" y1="10" x2="19" y2="10" stroke="#1a1a1a" strokeWidth="1.2" strokeLinecap="round"/>
             </svg>
           ) : (
             <svg width="13" height="15" viewBox="0 0 317 354" fill="none" xmlns="http://www.w3.org/2000/svg">

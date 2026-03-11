@@ -152,6 +152,7 @@ interface UseFabricCanvasOptions {
   broadcast?: (event: RoomEvent) => void;
   shapeTypeRef: React.MutableRefObject<ShapeType>;
   fillGradientRef: React.MutableRefObject<TextGradient | null>;
+  setIsOverHandle?: (v: boolean) => void;
 }
 
 /** Initialises the Fabric canvas, registers all event listeners, loads
@@ -184,6 +185,7 @@ export function useFabricCanvas({
   broadcast,
   shapeTypeRef,
   fillGradientRef,
+  setIsOverHandle,
 }: UseFabricCanvasOptions) {
   const modsRef = useRef<FabricMods | null>(null);
   type GifMeta = {
@@ -547,6 +549,26 @@ export function useFabricCanvas({
       FabricObject.ownDefaults.transparentCorners = false;
       FabricObject.ownDefaults.borderOpacityWhenMoving = 1;
 
+      // Custom rotate cursor (circular arrow SVG) for the rotation handle.
+      // %23 = '#' (encoded so the data URI doesn't break on the fragment separator).
+      const _rotateSvg = [
+        `<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'>`,
+        `<path d='M10 3A7 7 0 1 0 17 10' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round'/>`,
+        `<path d='M10 3A7 7 0 1 0 17 10' fill='none' stroke='%23111' stroke-width='1.5' stroke-linecap='round'/>`,
+        `<polygon points='14.5,9.5 19.5,9.5 17,14' fill='white'/>`,
+        `<polygon points='15,9.8 19,9.8 17,13.5' fill='%23111'/>`,
+        `</svg>`,
+      ].join('');
+      const ROTATE_CURSOR = `url("data:image/svg+xml,${_rotateSvg}") 10 10, default`;
+
+      const _origCreateControls = FabricObject.createControls.bind(FabricObject);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (FabricObject as any).createControls = () => {
+        const result = _origCreateControls();
+        if (result.controls?.mtr) result.controls.mtr.cursorStyle = ROTATE_CURSOR;
+        return result;
+      };
+
       const fc = new Canvas(canvasEl, {
         width: window.innerWidth,
         height: window.innerHeight,
@@ -559,6 +581,22 @@ export function useFabricCanvas({
       });
       fabricRef.current = fc;
       fc.renderAll();
+
+      // Patch setCursor so native resize/grab cursors override the
+      // CSS `cursor: none !important` set by .board-no-cursor.
+      // Control-handle cursors (resize variants, grab) use setProperty
+      // with 'important'; all other cursors stay hidden (custom SVG cursor takes over).
+      {
+        const upperEl = (fc as unknown as { upperCanvasEl: HTMLElement }).upperCanvasEl;
+        fc.setCursor = (value: string) => {
+          const isPencilOrBrush = toolRef.current === "pencil" || toolRef.current === "brush";
+          const show = value.includes("resize") || value.startsWith("url(") || value === "grabbing" || value === "not-allowed"
+            || (value === "crosshair" && !isPencilOrBrush)
+            || value === "text";
+          upperEl.style.setProperty("cursor", show ? value : "none", "important");
+          setIsOverHandle?.(show);
+        };
+      }
 
       const brush = new PencilBrush(fc);
       brush.color = colorRef.current;
@@ -849,8 +887,7 @@ export function useFabricCanvas({
         if (toolRef.current === "line") {
           // Enforce crosshair at the DOM level every frame so Fabric's own
           // _setCursorFromEvent (which runs before this callback) can't override it.
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ((fc as any).upperCanvasEl as HTMLElement).style.cursor = "crosshair";
+          fc.setCursor("crosshair");
           if (!isDrawingLine) return;
           const pointer = fc.getScenePoint(e.e as MouseEvent);
           if (!linePreview) {
@@ -1071,7 +1108,7 @@ export function useFabricCanvas({
       fabricRef.current = null;
       modsRef.current   = null;
     };
-  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, opacityRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setVpt, setHasSelection, setSelectedIsText, setSelectedIsGif, setSelectedIsPath, setShapeStrokeColor, setColor, setBrushSize, setOpacity, setTextProps, setIsSyncing, broadcast, shapeTypeRef]);
+  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, opacityRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setVpt, setHasSelection, setSelectedIsText, setSelectedIsGif, setSelectedIsPath, setSelectedIsLocked, setShapeStrokeColor, setColor, setBrushSize, setOpacity, setTextProps, setIsSyncing, broadcast, shapeTypeRef, fillGradientRef, setIsOverHandle]);
 
   return { modsRef };
 }
