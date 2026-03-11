@@ -823,8 +823,8 @@ export function useFabricCanvas({
         const common = {
           left, top,
           fill: colorRef.current,
-          stroke: "transparent",
-          strokeWidth: 1,
+          stroke: "#000000",
+          strokeWidth: 2,
           paintFirst: "stroke" as const,
           strokeUniform: true,
           selectable: false,

@@ -392,6 +392,7 @@ function DrawingBoardInner() {
           selectedIsText={selectedIsText}
           selectedIsShape={selectedIsShape}
           color={color}
+          fillGradient={fillGradient}
           strokeColor={selectedIsShape ? shapeStrokeColor : undefined}
           opacity={opacity}
           strokeWeight={brushSize}

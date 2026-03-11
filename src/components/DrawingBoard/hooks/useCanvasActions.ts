@@ -168,11 +168,10 @@ export function useCanvasActions({
     const cy = (window.innerHeight / 2 - vpt[5]) / vpt[3];
     const common = {
       fill: colorRef.current,
-      stroke: "transparent",
-      strokeWidth: 1,
-      // paintFirst:'stroke' means fill renders on top of the stroke, so the
-      // inner half of the stroke is hidden by the fill — stroke appears fully
-      // outside the shape boundary.
+      stroke: "#000000",
+      strokeWidth: 2,
+      // paintFirst:'stroke' paints the stroke first then fill on top,
+      // so the inner half is hidden → stroke appears fully outside the shape.
       paintFirst: "stroke" as const,
       strokeUniform: true,
       selectable: true,

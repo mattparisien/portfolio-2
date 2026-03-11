@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { TextProps, Tool } from "../types";
+import type { TextProps, Tool, TextGradient } from "../types";
 import {
   MdRemove,
   MdAdd,
@@ -32,6 +32,8 @@ export interface PropertiesPanelProps {
   selectedIsShape: boolean;
   /** Fill / drawing color */
   color: string;
+  /** Active gradient for the fill swatch (non-text objects) */
+  fillGradient?: TextGradient | null;
   /** Shape stroke color — only passed when a shape is selected */
   strokeColor?: string;
   opacity: number;
@@ -76,11 +78,13 @@ function ColorRow({
   isOpen,
   onSwatchClick,
   onColorChange,
+  gradientCss,
 }: {
   color: string;
   isOpen: boolean;
   onSwatchClick: () => void;
   onColorChange: (hex: string) => void;
+  gradientCss?: string;
 }) {
   const [hex, setHex] = useState(color);
 
@@ -97,7 +101,7 @@ function ColorRow({
         style={{
           width: 22,
           height: 22,
-          background: color,
+          background: gradientCss ?? color,
           boxShadow: isOpen
             ? `0 0 0 2px #fff, 0 0 0 4px #000`
             : SWATCH_SHADOW,
@@ -220,6 +224,7 @@ export default function PropertiesPanel({
   selectedIsText,
   selectedIsShape,
   color,
+  fillGradient,
   strokeColor,
   opacity,
   strokeWeight,
@@ -251,6 +256,14 @@ export default function PropertiesPanel({
     textAlign,
     gradient,
   } = textProps;
+
+  // Compute a CSS gradient string for the fill swatch when a gradient is active
+  const fillGradientCss = fillGradient
+    ? `linear-gradient(${fillGradient.angle}deg, ${[...fillGradient.stops]
+        .sort((a, b) => a.offset - b.offset)
+        .map(s => `${s.color} ${Math.round(s.offset * 100)}%`)
+        .join(", ")})`
+    : undefined;
 
   return (
     <div
@@ -404,6 +417,7 @@ export default function PropertiesPanel({
             <SectionLabel>Fill</SectionLabel>
             <ColorRow
               color={color}
+              gradientCss={fillGradientCss}
               isOpen={fillColorOpen}
               onSwatchClick={() => (fillColorOpen ? onCloseColor() : onOpenFillColor())}
               onColorChange={onFillColorChange}
