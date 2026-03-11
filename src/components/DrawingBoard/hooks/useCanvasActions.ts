@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { Canvas, IText } from "fabric";
-import type { Tool, ShapeType, FabricMods, TextProps } from "../types";
+import type { Tool, ShapeType, FabricMods, TextProps, TextGradient } from "../types";
 import type { SaveableObj } from "./useBoardSync";
 import type { RoomEvent } from "@/liveblocks.config";
 import { BOARD_ID, BG_COLOR } from "../constants";
@@ -10,6 +10,20 @@ import { decodeGif } from "../gifDecoder";
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 3;
 const ZOOM_STEP = 0.1;
+
+// ── Shared gradient builder ────────────────────────────────────────────────
+function buildFabricGradient(gradient: TextGradient, mods: FabricMods) {
+  const { stops, angle } = gradient;
+  const rad = (angle * Math.PI) / 180;
+  const dx = Math.sin(rad);
+  const dy = -Math.cos(rad);
+  return new mods.Gradient({
+    type: "linear",
+    gradientUnits: "percentage",
+    coords: { x1: 0.5 - dx * 0.5, y1: 0.5 - dy * 0.5, x2: 0.5 + dx * 0.5, y2: 0.5 + dy * 0.5 },
+    colorStops: stops.map(s => ({ offset: s.offset, color: s.color })),
+  });
+}
 
 interface UseCanvasActionsOptions {
   fabricRef: React.MutableRefObject<Canvas | null>;
@@ -29,6 +43,7 @@ interface UseCanvasActionsOptions {
   setVpt: (vpt: number[]) => void;
   setTextProps: Dispatch<SetStateAction<TextProps>>;
   broadcast?: (event: RoomEvent) => void;
+  fillGradientRef: React.MutableRefObject<TextGradient | null>;
 }
 
 export function useCanvasActions({
@@ -49,6 +64,7 @@ export function useCanvasActions({
   setVpt,
   setTextProps,
   broadcast,
+  fillGradientRef,
 }: UseCanvasActionsOptions) {
 
   // ── Sync tool / color / brush → fabric ────────────────────────────────
@@ -60,7 +76,10 @@ export function useCanvasActions({
       fc.isDrawingMode = true;
       fc.selection = false;
       const b = new mods.PencilBrush(fc);
-      b.color = color;
+      // If a gradient is active, preview with the first stop color while drawing
+      // (the full gradient is applied on path:created in useFabricCanvas)
+      const g = fillGradientRef.current;
+      b.color = g ? [...g.stops].sort((a, b) => a.offset - b.offset)[0].color : color;
       // Apply simplification (Ramer-Douglas-Peucker tolerance in px).
       // Fabric's PencilBrush runs this after the stroke is completed.
       (b as unknown as Record<string, unknown>).decimate = simplify;
@@ -187,12 +206,16 @@ export function useCanvasActions({
       }
     }
     if (!obj) return;
+    // Apply gradient fill if one is active
+    if (fillGradientRef.current) {
+      obj.set({ fill: buildFabricGradient(fillGradientRef.current, mods) });
+    }
     fc.add(obj);
     fc.setActiveObject(obj);
     fc.requestRenderAll();
     saveObject(obj);
     setTool("shape");
-  }, [fabricRef, modsRef, colorRef, saveObject, setTool]);
+  }, [fabricRef, modsRef, colorRef, fillGradientRef, saveObject, setTool]);
 
   // ── Add Image from URL ────────────────────────────────────────────────
   const addImage = useCallback(async (url: string) => {
@@ -295,14 +318,15 @@ export function useCanvasActions({
       .catch((e) => console.error("[GIF] failed to load:", e));
   }, [fabricRef, modsRef, saveObject, startGifLoop, gifCountRef, setTool]);
 
-  // ── Recolor selected object ────────────────────────────────────────────
+  // ── Recolor selected object (solid color) ────────────────────────────────
   const recolorSelected = useCallback((c: string) => {
     const fc = fabricRef.current;
     if (!fc) return;
     const obj = fc.getActiveObject();
     if (!obj) return;
-    // Pencil/brush paths store color on `stroke`; shapes store it on `fill`
-    if ((obj as { type?: string }).type === "path") {
+    // Pencil/brush paths and lines store color on `stroke`; shapes/text on `fill`
+    const type = (obj as { type?: string }).type;
+    if (type === "path" || type === "line") {
       obj.set({ stroke: c });
     } else {
       obj.set({ fill: c });
@@ -310,6 +334,33 @@ export function useCanvasActions({
     fc.requestRenderAll();
     saveObject(obj);
   }, [fabricRef, saveObject]);
+
+  // ── Apply gradient fill to selected object ──────────────────────────────
+  const applyFillGradient = useCallback((g: TextGradient | null) => {
+    const fc = fabricRef.current;
+    const mods = modsRef.current;
+    if (!fc || !mods) return;
+    const obj = fc.getActiveObject();
+    if (!obj) return;
+    const type = (obj as { type?: string }).type;
+    if (!g) {
+      // Clear gradient → revert to solid color
+      if (type === "path" || type === "line") {
+        obj.set({ stroke: colorRef.current });
+      } else {
+        obj.set({ fill: colorRef.current });
+      }
+    } else {
+      const grad = buildFabricGradient(g, mods);
+      if (type === "path" || type === "line") {
+        obj.set({ stroke: grad });
+      } else {
+        obj.set({ fill: grad });
+      }
+    }
+    fc.requestRenderAll();
+    saveObject(obj);
+  }, [fabricRef, modsRef, colorRef, saveObject]);
 
   // ── Restroke selected shape ────────────────────────────────────────────
   const restrokeSelected = useCallback((c: string) => {
@@ -471,5 +522,5 @@ export function useCanvasActions({
     fc.requestRenderAll();
   }, [fabricRef, saveObject]);
 
-  return { addText, addShape, addGif, addImage, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, clearCanvas, applyTextProp };
+  return { addText, addShape, addGif, addImage, recolorSelected, applyFillGradient, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, clearCanvas, applyTextProp };
 }

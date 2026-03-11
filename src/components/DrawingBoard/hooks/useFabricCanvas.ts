@@ -1,7 +1,7 @@
 import { useRef, useEffect } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { Canvas, IText } from "fabric";
-import type { Tool, FabricMods, TextProps, ShapeType } from "../types";
+import type { Tool, FabricMods, TextProps, ShapeType, TextGradient } from "../types";
 import { DEFAULT_TEXT_PROPS } from "../types";
 import type { SaveableObj } from "./useBoardSync";
 import { BOARD_ID, BG_COLOR } from "../constants";
@@ -151,6 +151,7 @@ interface UseFabricCanvasOptions {
   setIsSyncing: (v: boolean) => void;
   broadcast?: (event: RoomEvent) => void;
   shapeTypeRef: React.MutableRefObject<ShapeType>;
+  fillGradientRef: React.MutableRefObject<TextGradient | null>;
 }
 
 /** Initialises the Fabric canvas, registers all event listeners, loads
@@ -182,6 +183,7 @@ export function useFabricCanvas({
   setIsSyncing,
   broadcast,
   shapeTypeRef,
+  fillGradientRef,
 }: UseFabricCanvasOptions) {
   const modsRef = useRef<FabricMods | null>(null);
   type GifMeta = {
@@ -646,6 +648,10 @@ export function useFabricCanvas({
           // expand bbox by half stroke width so the stroke edge is never clipped
           padding: (e.path.strokeWidth ?? 0) / 2,
         });
+        // Apply gradient stroke if one is active
+        if (fillGradientRef.current) {
+          e.path.set({ stroke: buildFabricGradient(fillGradientRef.current) });
+        }
         // Auto-simplify with an aggressive 8 px tolerance (RDP, curve-preserving)
         const raw = (e.path as unknown as { path: PathCmd[] }).path;
         const simplified = autoSimplifyPath(raw, 8);
@@ -796,6 +802,21 @@ export function useFabricCanvas({
       const STAR_PATH  = "M 50 5 L 61 35 L 95 35 L 68 57 L 79 91 L 50 70 L 21 91 L 32 57 L 5 35 L 39 35 Z";
       const HEART_PATH = "M 50 85 C 10 60 -10 35 10 18 C 25 5 42 10 50 22 C 58 10 75 5 90 18 C 110 35 90 60 50 85 Z";
 
+      // ── Build a Fabric Gradient from a TextGradient spec ─────────────────
+      function buildFabricGradient(gradient: import("../types").TextGradient) {
+        const mods = modsRef.current!;
+        const { stops, angle } = gradient;
+        const rad = (angle * Math.PI) / 180;
+        const dx = Math.sin(rad);
+        const dy = -Math.cos(rad);
+        return new mods.Gradient({
+          type: "linear",
+          gradientUnits: "percentage",
+          coords: { x1: 0.5 - dx * 0.5, y1: 0.5 - dy * 0.5, x2: 0.5 + dx * 0.5, y2: 0.5 + dy * 0.5 },
+          colorStops: stops.map(s => ({ offset: s.offset, color: s.color })),
+        });
+      }
+
       function buildPreviewShape(type: ShapeType, left: number, top: number, w: number, h: number) {
         const mods = modsRef.current;
         if (!mods) return null;
@@ -914,6 +935,10 @@ export function useFabricCanvas({
               fc.remove(linePreview);
             } else {
               linePreview.set({ selectable: true, hasControls: true, hasBorders: true, evented: true });
+              // Apply gradient stroke if active
+              if (fillGradientRef.current) {
+                linePreview.set({ stroke: buildFabricGradient(fillGradientRef.current) });
+              }
               linePreview.setCoords();
               fc.setActiveObject(linePreview);
               saveObject(linePreview as unknown as SaveableObj);
@@ -943,6 +968,10 @@ export function useFabricCanvas({
               fc.remove(shapePreview);
             } else {
               shapePreview.set({ selectable: true, hasControls: true, hasBorders: true, evented: true });
+              // Apply gradient fill if active
+              if (fillGradientRef.current) {
+                shapePreview.set({ fill: buildFabricGradient(fillGradientRef.current) });
+              }
               shapePreview.setCoords();
               fc.setActiveObject(shapePreview);
               saveObject(shapePreview as unknown as SaveableObj);

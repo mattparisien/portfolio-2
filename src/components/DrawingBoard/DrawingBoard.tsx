@@ -14,7 +14,7 @@ import { useGifLoop } from "./hooks/useGifLoop";
 import { useBoardSync } from "./hooks/useBoardSync";
 import { useFabricCanvas } from "./hooks/useFabricCanvas";
 import { useCanvasActions } from "./hooks/useCanvasActions";
-import type { Tool, TextProps, ShapeType } from "./types";
+import type { Tool, TextProps, ShapeType, TextGradient } from "./types";
 import { DEFAULT_TEXT_PROPS } from "./types";
 import { BG_COLOR, getOrCreateUser, CURSOR_COLORS } from "./constants";
 import {
@@ -96,6 +96,7 @@ function DrawingBoardInner() {
   const [opacity, setOpacity]                   = useState(1);
   const [textProps, setTextProps]               = useState<TextProps>(DEFAULT_TEXT_PROPS);
   const [shapeType, setShapeType]               = useState<ShapeType>("rect");
+  const [fillGradient, setFillGradient]         = useState<TextGradient | null>(null);
 
   // Whenever any component opens a popover, we increment the other two signals
   // so they close themselves — guaranteeing only one popover is ever visible.
@@ -119,16 +120,18 @@ function DrawingBoardInner() {
   const panelVisible    = selectedIsText || (!selectedIsGif && (tool === "pencil" || tool === "brush" || hasSelection));
 
   // Keep refs in sync so async canvas callbacks always read the latest values
-  const toolRef      = useRef<Tool>("select");
-  const colorRef     = useRef("#000000");
-  const brushSizeRef = useRef(5);
-  const opacityRef   = useRef(1);
-  const shapeTypeRef = useRef<ShapeType>("rect");
-  toolRef.current      = tool;
-  colorRef.current     = color;
-  brushSizeRef.current = brushSize;
-  opacityRef.current   = opacity;
-  shapeTypeRef.current = shapeType;
+  const toolRef          = useRef<Tool>("select");
+  const colorRef         = useRef("#000000");
+  const brushSizeRef     = useRef(5);
+  const opacityRef       = useRef(1);
+  const shapeTypeRef     = useRef<ShapeType>("rect");
+  const fillGradientRef  = useRef<TextGradient | null>(null);
+  toolRef.current          = tool;
+  colorRef.current         = color;
+  brushSizeRef.current     = brushSize;
+  opacityRef.current       = opacity;
+  shapeTypeRef.current     = shapeType;
+  fillGradientRef.current  = fillGradient;
 
   // ── Liveblocks ────────────────────────────────────────────────────────
   const broadcastEvent               = useBroadcastEvent();
@@ -174,9 +177,10 @@ function DrawingBoardInner() {
     setIsSyncing,
     broadcast: broadcastEvent,
     shapeTypeRef,
+    fillGradientRef,
   });
 
-  const { addText, addGif, addImage, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, applyTextProp } =
+  const { addText, addGif, addImage, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, applyTextProp, applyFillGradient } =
     useCanvasActions({
       fabricRef,
       modsRef,
@@ -194,6 +198,7 @@ function DrawingBoardInner() {
       setVpt,
       setTextProps,
       broadcast: broadcastEvent,
+      fillGradientRef,
     });
 
   const activateShapeTool = useCallback((st: ShapeType) => {
@@ -401,7 +406,7 @@ function DrawingBoardInner() {
           onOpenStrokeColor={() => openColorPopover("toolbar-stroke")}
           onOpenTextColor={() => openColorPopover("text")}
           onCloseColor={closeColorPopover}
-          onFillColorChange={(c) => { setColor(c); if (hasSelection) recolorSelected(c); }}
+          onFillColorChange={(c) => { setFillGradient(null); setColor(c); if (hasSelection) recolorSelected(c); }}
           onStrokeColorChange={(c) => { setShapeStrokeColor(c); restrokeSelected(c); }}
           onTextColorChange={(c) => { setColor(c); recolorSelected(c); }}
         />
@@ -446,8 +451,10 @@ function DrawingBoardInner() {
       {colorPopoverSlot === "toolbar-fill" && (
         <ColorPopover
           color={color}
+          gradient={fillGradient}
           fabricRef={fabricRef}
-          onColorChange={(c) => { setColor(c); if (hasSelection) recolorSelected(c); }}
+          onColorChange={(c) => { setFillGradient(null); setColor(c); if (hasSelection) recolorSelected(c); }}
+          onGradientChange={(g) => { setFillGradient(g); if (hasSelection) applyFillGradient(g); }}
           onClose={closeColorPopover}
           anchorStyle={{ top: 120, right: 228, bottom: "auto", left: "auto" }}
         />
