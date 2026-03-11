@@ -122,7 +122,7 @@ function extractTextProps(txt: IText): TextProps {
 }
 
 const MIN_ZOOM = 0.25;
-const MAX_ZOOM = 4;
+const MAX_ZOOM = 3;
 
 interface UseFabricCanvasOptions {
   canvasElRef: React.RefObject<HTMLCanvasElement | null>;
@@ -533,8 +533,8 @@ export function useFabricCanvas({
     canvasEl.addEventListener("touchend",   onTouchEnd);
 
     // ── Fabric async init ─────────────────────────────────────────────────
-    import("fabric").then(({ Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, ActiveSelection, util, Gradient, Shadow, Pattern, FabricObject }) => {
-      modsRef.current = { Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, FabricImage, ActiveSelection, util, Gradient, Shadow, Pattern };
+    import("fabric").then(({ Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, Line, FabricImage, ActiveSelection, util, Gradient, Shadow, Pattern, FabricObject }) => {
+      modsRef.current = { Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, Line, FabricImage, ActiveSelection, util, Gradient, Shadow, Pattern };
 
       // Make selection borders and corner handles clearly visible
       FabricObject.ownDefaults.borderColor = "#4597f8";
@@ -787,6 +787,12 @@ export function useFabricCanvas({
       let shapeNaturalW = 1;
       let shapeNaturalH = 1;
 
+      // ── Line drag-to-draw ────────────────────────────────────────────────
+      let isDrawingLine = false;
+      let lineStart = { x: 0, y: 0 };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let linePreview: any = null;
+
       const STAR_PATH  = "M 50 5 L 61 35 L 95 35 L 68 57 L 79 91 L 50 70 L 21 91 L 32 57 L 5 35 L 39 35 Z";
       const HEART_PATH = "M 50 85 C 10 60 -10 35 10 18 C 25 5 42 10 50 22 C 58 10 75 5 90 18 C 110 35 90 60 50 85 Z";
 
@@ -818,6 +824,32 @@ export function useFabricCanvas({
       }
 
       fc.on("mouse:move", (e) => {
+        if (toolRef.current === "line" && isDrawingLine) {
+          const pointer = fc.getScenePoint(e.e as MouseEvent);
+          if (!linePreview) {
+            linePreview = new modsRef.current!.Line(
+              [lineStart.x, lineStart.y, pointer.x, pointer.y],
+              {
+                stroke: colorRef.current,
+                strokeWidth: brushSizeRef.current,
+                strokeLineCap: "round",
+                fill: "",
+                selectable: false,
+                hasControls: false,
+                hasBorders: false,
+                evented: false,
+                opacity: opacityRef.current,
+                padding: brushSizeRef.current / 2,
+              },
+            );
+            fc.add(linePreview);
+          } else {
+            linePreview.set({ x2: pointer.x, y2: pointer.y });
+            linePreview.setCoords();
+          }
+          fc.requestRenderAll();
+          return;
+        }
         if (toolRef.current !== "shape" || !isDrawingShape) return;
         const pointer = fc.getScenePoint(e.e as MouseEvent);
         const dx = pointer.x - shapeStart.x;
@@ -859,6 +891,30 @@ export function useFabricCanvas({
       });
 
       fc.on("mouse:up", () => {
+        if (toolRef.current === "line" && isDrawingLine) {
+          isDrawingLine = false;
+          if (linePreview) {
+            const dx = (linePreview.x2 ?? 0) - (linePreview.x1 ?? 0);
+            const dy = (linePreview.y2 ?? 0) - (linePreview.y1 ?? 0);
+            if (Math.sqrt(dx * dx + dy * dy) < 5) {
+              fc.remove(linePreview);
+            } else {
+              linePreview.set({ selectable: true, hasControls: true, hasBorders: true, evented: true });
+              linePreview.setCoords();
+              fc.setActiveObject(linePreview);
+              saveObject(linePreview as unknown as SaveableObj);
+              setTimeout(() => {
+                const oid = (linePreview as unknown as { boardObjectId?: string }).boardObjectId;
+                if (oid) pushUndo({ type: "add", objectId: oid, serialized: (linePreview as unknown as { toObject(): object }).toObject() });
+                linePreview = null;
+              }, 0);
+            }
+            if (linePreview) { linePreview = null; }
+          }
+          fc.requestRenderAll();
+          setTool("select");
+          return;
+        }
         if (toolRef.current === "shape" && isDrawingShape) {
           isDrawingShape = false;
           if (shapePreview) {
@@ -887,6 +943,13 @@ export function useFabricCanvas({
       });
 
       fc.on("mouse:down", (e) => {
+        if (toolRef.current === "line") {
+          const pointer = fc.getScenePoint(e.e as MouseEvent);
+          isDrawingLine = true;
+          lineStart = { x: pointer.x, y: pointer.y };
+          linePreview = null;
+          return;
+        }
         if (toolRef.current === "shape") {
           const pointer = fc.getScenePoint(e.e as MouseEvent);
           isDrawingShape = true;

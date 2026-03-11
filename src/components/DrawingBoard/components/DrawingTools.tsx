@@ -8,6 +8,7 @@ import {
   MdCircle,
   MdCreate,
   MdFavorite,
+  MdHorizontalRule,
   MdKeyboardArrowUp,
   MdNearMe,
   MdRectangle,
@@ -184,11 +185,13 @@ export default function DrawingTools({
     border: "1px solid rgba(0,0,0,0.08)",
   };
 
-  const isDrawActive = tool === "pencil" || tool === "brush" || tool === "eraser";
+  const isDrawActive = tool === "pencil" || tool === "brush" || tool === "line" || tool === "eraser";
   const drawIcon = tool === "brush" && isDrawActive
     ? <MdBrush className="w-5 h-5" />
     : tool === "eraser" && isDrawActive
     ? <MdAutoFixOff className="w-5 h-5" />
+    : tool === "line" && isDrawActive
+    ? <MdHorizontalRule className="w-5 h-5" />
     : <MdCreate className="w-5 h-5" />;
 
   const lastShapeIcon = SHAPES.find(s => s.type === lastShape)?.icon ?? <IoTriangleSharp className="w-5 h-5" />;
@@ -227,7 +230,7 @@ export default function DrawingTools({
       {/* Draw: primary = activate current draw tool (default pencil), chevron = brush / eraser picker */}
       <div ref={drawWrapRef} className="relative flex items-center">
         <button
-          title={tool === "brush" ? "Brush" : tool === "eraser" ? "Eraser" : "Pencil"}
+          title={tool === "brush" ? "Brush" : tool === "eraser" ? "Eraser" : tool === "line" ? "Line" : "Pencil"}
           onClick={() => {
             if (!isDrawActive) onToolChange("pencil");
             setDrawOpen(false);
@@ -256,9 +259,10 @@ export default function DrawingTools({
           >
             {(
               [
-                { t: "pencil" as Tool, icon: <MdCreate className="w-5 h-5" />,     label: "Pencil" },
-                { t: "brush"  as Tool, icon: <MdBrush className="w-5 h-5" />,      label: "Brush"  },
-                { t: "eraser" as Tool, icon: <MdAutoFixOff className="w-5 h-5" />, label: "Eraser" },
+                { t: "pencil" as Tool, icon: <MdCreate className="w-5 h-5" />,       label: "Pencil" },
+                { t: "line"   as Tool, icon: <MdHorizontalRule className="w-5 h-5" />, label: "Line"   },
+                { t: "brush"  as Tool, icon: <MdBrush className="w-5 h-5" />,         label: "Brush"  },
+                { t: "eraser" as Tool, icon: <MdAutoFixOff className="w-5 h-5" />,    label: "Eraser" },
               ] as const
             ).map(({ t, icon, label }) => (
               <button

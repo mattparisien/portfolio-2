@@ -1,6 +1,6 @@
-import type { Canvas, PencilBrush, IText, Point as FabricPoint, Rect, Circle, Triangle, Path, FabricImage, ActiveSelection, Gradient, Shadow, Pattern } from "fabric";
+import type { Canvas, PencilBrush, IText, Point as FabricPoint, Rect, Circle, Triangle, Path, Line, FabricImage, ActiveSelection, Gradient, Shadow, Pattern } from "fabric";
 
-export type Tool = "pencil" | "brush" | "text" | "shape" | "select" | "eraser";
+export type Tool = "pencil" | "brush" | "line" | "text" | "shape" | "select" | "eraser";
 
 export type FabricMods = {
   Canvas: typeof Canvas;
@@ -11,6 +11,7 @@ export type FabricMods = {
   Circle: typeof Circle;
   Triangle: typeof Triangle;
   Path: typeof Path;
+  Line: typeof Line;
   FabricImage: typeof FabricImage;
   ActiveSelection: typeof ActiveSelection;
   util: (typeof import("fabric"))["util"];

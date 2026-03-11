@@ -8,7 +8,7 @@ import { BOARD_ID, BG_COLOR } from "../constants";
 import { decodeGif } from "../gifDecoder";
 
 const MIN_ZOOM = 0.25;
-const MAX_ZOOM = 4;
+const MAX_ZOOM = 3;
 const ZOOM_STEP = 0.1;
 
 interface UseCanvasActionsOptions {
@@ -73,6 +73,11 @@ export function useCanvasActions({
         b.width = brushSize;
       }
       fc.freeDrawingBrush = b;
+    } else if (tool === "line") {
+      fc.isDrawingMode = false;
+      fc.selection = false;
+      fc.discardActiveObject();
+      fc.getObjects().forEach((o) => { o.selectable = false; o.evented = false; });
     } else if (tool === "select") {
       fc.isDrawingMode = false;
       fc.selection = true;
@@ -94,10 +99,11 @@ export function useCanvasActions({
       fc.discardActiveObject();
     }
     fc.defaultCursor =
-      tool === "text"                       ? "text"      :
-      tool === "pencil" || tool === "brush" ? "crosshair" :
-      tool === "eraser"                     ? "cell"      :
-      tool === "shape"                      ? "crosshair" :
+      tool === "text"                                    ? "text"      :
+      tool === "pencil" || tool === "brush"              ? "crosshair" :
+      tool === "line"                                    ? "crosshair" :
+      tool === "eraser"                                  ? "cell"      :
+      tool === "shape"                                   ? "crosshair" :
       "default";
     fc.requestRenderAll();
   }, [tool, color, brushSize, simplify, fabricRef, modsRef]);
