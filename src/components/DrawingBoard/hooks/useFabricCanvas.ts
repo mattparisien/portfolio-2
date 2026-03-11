@@ -1,6 +1,6 @@
 import { useRef, useEffect } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import type { Canvas, IText } from "fabric";
+import type { Canvas, IText, Textbox } from "fabric";
 import type { Tool, FabricMods, TextProps, ShapeType, TextGradient } from "../types";
 import { DEFAULT_TEXT_PROPS } from "../types";
 import type { SaveableObj } from "./useBoardSync";
@@ -198,7 +198,7 @@ export function useFabricCanvas({
     const canvasEl = canvasElRef.current;
     if (!canvasEl) return;
 
-    const pendingTextRef = { current: null as IText | null };
+    const pendingTextRef = { current: null as IText | Textbox | null };
     let pendingMultiSave: SaveableObj[] | null = null;
 
     // ── Undo stack ─────────────────────────────────────────────────────────
@@ -424,11 +424,12 @@ export function useFabricCanvas({
         const vpt = fc.viewportTransform as number[];
         const cx = (lastMouse.x - vpt[4]) / vpt[0];
         const cy = (lastMouse.y - vpt[5]) / vpt[3];
-        const txt = new mods.IText("Type something", {
+        const txt = new mods.Textbox("Type something", {
           left: cx,
           top: cy,
           originX: "center",
           originY: "center",
+          width: 300,
           fontSize: Math.max(brushSizeRef.current * 2, 24),
           fill: colorRef.current,
           fontFamily: "sans-serif",
@@ -535,8 +536,8 @@ export function useFabricCanvas({
     canvasEl.addEventListener("touchend",   onTouchEnd);
 
     // ── Fabric async init ─────────────────────────────────────────────────
-    import("fabric").then(({ Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, Line, FabricImage, ActiveSelection, util, Gradient, Shadow, Pattern, FabricObject }) => {
-      modsRef.current = { Canvas, PencilBrush, IText, Point, Rect, Circle, Triangle, Path, Line, FabricImage, ActiveSelection, util, Gradient, Shadow, Pattern };
+    import("fabric").then(({ Canvas, PencilBrush, IText, Textbox, Point, Rect, Circle, Triangle, Path, Line, FabricImage, ActiveSelection, util, Gradient, Shadow, Pattern, FabricObject }) => {
+      modsRef.current = { Canvas, PencilBrush, IText, Textbox, Point, Rect, Circle, Triangle, Path, Line, FabricImage, ActiveSelection, util, Gradient, Shadow, Pattern };
 
       // Make selection borders and corner handles clearly visible
       FabricObject.ownDefaults.borderColor = "#4597f8";
@@ -576,7 +577,7 @@ export function useFabricCanvas({
           const parsed = objects.map((o) => JSON.parse(o.fabricJSON)) as Record<string, unknown>[];
           // Sort by persisted zIndex so layer order is restored correctly
           parsed.sort((a, b) => ((a.zIndex as number) ?? 0) - ((b.zIndex as number) ?? 0));
-          parsed.forEach((o) => { if (o.type === "IText" || o.type === "i-text") o.editable = false; });
+          parsed.forEach((o) => { if (o.type === "IText" || o.type === "i-text" || o.type === "Textbox" || o.type === "textbox") o.editable = false; });
           const enlivened = await util.enlivenObjects(parsed);
 
           // Separate GIF objects so we can re-decode them asynchronously
@@ -693,7 +694,7 @@ export function useFabricCanvas({
       const handleSelectionChange = () => {
         setHasSelection(true);
         const obj = fc.getActiveObject();
-        const isText = !!obj && (obj as { type?: string }).type === "i-text";
+        const isText = !!obj && ((obj as { type?: string }).type === "i-text" || (obj as { type?: string }).type === "textbox");
         const isGif  = !!obj && !!(obj as { giphyId?: string }).giphyId;
         const isPath  = !!obj && (obj as { type?: string }).type === "path" && !(obj as { giphyId?: string }).giphyId;
         // Any non-text, non-gif, non-path object is a shape (rect, circle, etc.)
@@ -1012,9 +1013,10 @@ export function useFabricCanvas({
           if (pendingTextRef.current !== null) return;
 
           const pointer = fc.getScenePoint(e.e);
-          const txt = new IText("", {
+          const txt = new modsRef.current!.Textbox("", {
             left: pointer.x,
             top: pointer.y,
+            width: 300,
             fontSize: Math.max(brushSizeRef.current * 2, 48),
             fill: colorRef.current,
             fontFamily: "sans-serif",
@@ -1029,7 +1031,8 @@ export function useFabricCanvas({
 
       fc.on("mouse:dblclick", (e) => {
         const target = e.target;
-        if (!target || (target as { type?: string }).type !== "i-text") return;
+        const targetType = (target as { type?: string }).type;
+        if (!target || (targetType !== "i-text" && targetType !== "textbox")) return;
         const txt = target as unknown as IText;
         txt.set({ editable: true });
         fc.setActiveObject(txt);
