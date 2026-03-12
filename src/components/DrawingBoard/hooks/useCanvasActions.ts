@@ -156,7 +156,7 @@ export function useCanvasActions({
       txt.selectAll();
       fc.requestRenderAll();
     });
-    setTool("text");
+    setTool("select");
   }, [fabricRef, modsRef, colorRef, brushSizeRef, setTool]);
 
   // ── Add shape ──────────────────────────────────────────────────────────
