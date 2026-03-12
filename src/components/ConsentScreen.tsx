@@ -42,12 +42,12 @@ const ConsentScreen = ({ onEnter }: { onEnter: () => void }) => {
                                     Crumb is an infinite digital canvas for the queer community •ᴗ• a space for
                                     expression, creativity, and connection. You’re free to contribute anything,
                                     as long as it is respectful, non-harmful, and helps keep Crumb safe and welcoming
-                                    for everyone .✦ ݁˖
+                                    for everyone. Otherwise, bye .✦ ݁˖
                                 </span>
                                 <span className="self-end">
-                                    <button className="rounded-full border px-[1vw] uppercase cursor-pointer hover:bg-pink-200" onClick={handleEnter} style={{
+                                    <button className="underline underline-offset-2 decoration-2 px-[1vw] uppercase cursor-pointer" onClick={handleEnter} style={{
                                         fontFamily: "ABC Diatype Rounded"
-                                    }}>Okay Cool</button>
+                                    }}>I Agree</button>
                                 </span>
                             </div>
                         </div>
