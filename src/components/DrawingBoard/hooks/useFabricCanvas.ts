@@ -872,7 +872,12 @@ export function useFabricCanvas({
       fc.on("selection:updated", handleSelectionChange);
       // When a text object enters editing mode Fabric fires selection:cleared,
       // which would hide the lock button.  Re-assert selection state here.
-      fc.on("text:editing:entered", handleSelectionChange);
+      // NOTE: Do NOT read lockMovementX here — Fabric temporarily sets it to true
+      // during editing to prevent accidental drag, which would wrongly show as locked.
+      fc.on("text:editing:entered", () => {
+        setHasSelection(true);
+        setSelectedIsText(true);
+      });
       fc.on("selection:cleared", () => {
         setHasSelection(false);
         setSelectedIsText(false);
