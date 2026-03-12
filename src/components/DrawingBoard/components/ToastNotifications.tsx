@@ -33,14 +33,17 @@ export default function ToastNotifications() {
     if (type === "leave") addToast({ name, color, kind: "leave" });
   });
 
-  if (toasts.length === 0) return null;
-
   return (
-    <div className="fixed bottom-36 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-[300] pointer-events-none">
+    <div
+      role="status"
+      aria-live="polite"
+      aria-atomic="false"
+      className="fixed top-20 right-6 flex flex-col items-end gap-2 z-[300] pointer-events-none"
+    >
       {toasts.map((t) => (
         <div
           key={t.id}
-          className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl shadow-xl text-sm font-medium select-none"
+          className="flex items-center gap-2.5 pl-4 pr-2 py-2.5 rounded-2xl shadow-xl text-sm font-medium select-none pointer-events-auto"
           style={{
             background: "rgba(255,255,255,0.95)",
             backdropFilter: "blur(14px)",
@@ -54,9 +57,16 @@ export default function ToastNotifications() {
             style={{ background: t.color }}
           />
           <span className="text-gray-800">
-            <span className="font-semibold" style={{ color: t.color }}>{t.name}</span>
+            <span className="font-semibold text-gray-800">{t.name}</span>
             {" "}{t.kind === "join" ? "joined the board" : "left the board"}
           </span>
+          <button
+            onClick={() => dismiss(t.id)}
+            aria-label="Dismiss"
+            className="ml-1 w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-black/[0.06] transition-colors cursor-pointer flex-shrink-0"
+          >
+            ✕
+          </button>
         </div>
       ))}
 

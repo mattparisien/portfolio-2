@@ -221,6 +221,7 @@ function StepBtn({
 // ── Main component ─────────────────────────────────────────────────────────
 
 export default function PropertiesPanel({
+  tool,
   selectedIsText,
   selectedIsShape,
   color,
@@ -278,7 +279,7 @@ export default function PropertiesPanel({
         scrollbarWidth: "none",
       }}
     >
-      {selectedIsText ? (
+      {(selectedIsText || tool === "text") ? (
         /* ═══════════════════ TEXT VIEW ═══════════════════ */
         <>
           {/* ── Color ── */}

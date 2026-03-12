@@ -28,17 +28,23 @@ function ToolbarBtn({
   label,
   onClick,
   children,
+  ariaLabel,
+  ariaExpanded,
 }: {
   active: boolean;
   title: string;
   label: string;
   onClick: React.MouseEventHandler<HTMLButtonElement>;
   children: React.ReactNode;
+  ariaLabel?: string;
+  ariaExpanded?: boolean;
 }) {
   return (
     <div className="flex flex-col items-center gap-[3px]">
       <button
         title={title}
+        aria-label={ariaLabel ?? title}
+        aria-expanded={ariaExpanded}
         onClick={onClick}
         className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 hover:scale-105"
         style={{
@@ -95,6 +101,8 @@ export default function Toolbar({ color, opacity, strokeWeight, onOpacityChange,
           <ToolbarBtn
             active={colorPopoverOpenFor === "fill"}
             title="Fill colour"
+            ariaLabel="Fill color"
+            ariaExpanded={colorPopoverOpenFor === "fill"}
             label="Fill"
             onClick={(e) => { e.stopPropagation(); openFill(); }}
           >
@@ -103,6 +111,8 @@ export default function Toolbar({ color, opacity, strokeWeight, onOpacityChange,
           <ToolbarBtn
             active={colorPopoverOpenFor === "stroke"}
             title="Stroke colour"
+            ariaLabel="Stroke color"
+            ariaExpanded={colorPopoverOpenFor === "stroke"}
             label="Stroke"
             onClick={(e) => { e.stopPropagation(); openStroke(); }}
           >
@@ -113,6 +123,8 @@ export default function Toolbar({ color, opacity, strokeWeight, onOpacityChange,
         <ToolbarBtn
           active={colorPopoverOpenFor === "fill"}
           title="Colour"
+          ariaLabel="Fill color"
+          ariaExpanded={colorPopoverOpenFor === "fill"}
           label="Color"
           onClick={(e) => { e.stopPropagation(); openFill(); }}
         >
@@ -128,6 +140,8 @@ export default function Toolbar({ color, opacity, strokeWeight, onOpacityChange,
         <ToolbarBtn
           active={weightOpen}
           title="Stroke weight"
+          ariaLabel="Stroke weight"
+          ariaExpanded={weightOpen}
           label={`${strokeWeight}px`}
           onClick={() => { setOpenPanel((v) => { const next = v === "weight" ? null : "weight"; if (next) onPopoverOpened?.(); return next; }); }}
         >
@@ -181,6 +195,8 @@ export default function Toolbar({ color, opacity, strokeWeight, onOpacityChange,
         <ToolbarBtn
           active={opacityOpen}
           title="Transparency"
+          ariaLabel="Opacity"
+          ariaExpanded={opacityOpen}
           label={`${Math.round(opacity * 100)}%`}
           onClick={() => { setOpenPanel((v) => { const next = v === "opacity" ? null : "opacity"; if (next) onPopoverOpened?.(); return next; }); }}
         >

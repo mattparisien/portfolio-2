@@ -7,13 +7,16 @@ import {
   MdBrush,
   MdCircle,
   MdCreate,
+  MdDeleteSweep,
   MdFavorite,
   MdHorizontalRule,
   MdKeyboardArrowUp,
   MdNearMe,
   MdRectangle,
+  MdRedo,
   MdStar,
   MdTextFields,
+  MdUndo,
   MdUpload,
 } from "react-icons/md";
 import type { ShapeType, Tool } from "../types";
@@ -44,13 +47,18 @@ interface DrawingToolsProps {
   uploadSignal?: number;
   /** Called when this component opens any of its own popovers */
   onPopoverOpened?: () => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  onClearRequest?: () => void;
 }
 
 // Chevron button appended to split buttons — defined outside to prevent remounting on every render
-const Chevron = ({ open, onClick }: { open: boolean; active: boolean; onClick: () => void }) => (
+const Chevron = ({ open, onClick, ariaLabel, ariaExpanded }: { open: boolean; active: boolean; onClick: () => void; ariaLabel?: string; ariaExpanded?: boolean }) => (
   <button
     onClick={onClick}
     title="More options"
+    aria-label={ariaLabel}
+    aria-expanded={ariaExpanded}
     className={`w-6 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors ${
       open ? "bg-black/[0.08] text-[#111]" : "text-[#aaa] hover:bg-black/[0.07] hover:text-[#111]"
     }`}
@@ -62,14 +70,16 @@ const Chevron = ({ open, onClick }: { open: boolean; active: boolean; onClick: (
 );
 
 export default function DrawingTools({
-  tool, onToolChange, onAddShape, onAddText, onAddGif, onAddImage, closeSignal, uploadSignal, activeShapeType, onPopoverOpened,
+  tool, onToolChange, onAddShape, onAddText, onAddGif, onAddImage, closeSignal, uploadSignal, activeShapeType, onPopoverOpened, onUndo, onRedo, onClearRequest,
 }: DrawingToolsProps) {
   const [lastShape, setLastShape]   = useState<ShapeType>("rect");
   const [drawOpen, setDrawOpen]     = useState(false);
   const [shapeOpen, setShapeOpen]   = useState(false);
   const [gifOpen, setGifOpen]       = useState(false);
   const [uploading, setUploading]   = useState(false);
-  const uploadFileRef = useRef<HTMLInputElement>(null);
+  const [gifPopoverStyle, setGifPopoverStyle] = useState<React.CSSProperties>({});
+  const uploadFileRef  = useRef<HTMLInputElement>(null);
+  const gifButtonRef   = useRef<HTMLButtonElement>(null);
 
   // Close all when a sibling component opens a popover
   useEffect(() => {
@@ -170,6 +180,7 @@ export default function DrawingTools({
   const toolBtn = (active: boolean, onClick: () => void, title: string, icon: React.ReactNode) => (
     <button
       title={title}
+      aria-label={title}
       onClick={onClick}
       className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
         active ? "bg-accent text-white" : "text-[#111] hover:bg-black/[0.07]"
@@ -231,6 +242,7 @@ export default function DrawingTools({
       <div ref={drawWrapRef} className="relative flex items-center">
         <button
           title={tool === "brush" ? "Brush" : tool === "eraser" ? "Eraser" : tool === "line" ? "Line" : "Pencil"}
+          aria-label={tool === "brush" ? "Brush" : tool === "eraser" ? "Eraser" : tool === "line" ? "Line" : "Pencil"}
           onClick={() => {
             if (!isDrawActive) onToolChange("pencil");
             setDrawOpen(false);
@@ -244,6 +256,8 @@ export default function DrawingTools({
         <Chevron
           open={drawOpen}
           active={isDrawActive}
+          ariaLabel="Drawing tools"
+          ariaExpanded={drawOpen}
           onClick={() => {
             const next = !drawOpen;
             setDrawOpen(next);
@@ -268,6 +282,7 @@ export default function DrawingTools({
               <button
                 key={t}
                 title={label}
+                aria-label={label}
                 onClick={() => { onToolChange(t); setDrawOpen(false); }}
                 className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px] cursor-pointer ${
                   tool === t ? "bg-accent text-white" : "text-[#111] hover:bg-black/[0.07]"
@@ -287,6 +302,7 @@ export default function DrawingTools({
       <div ref={shapeWrapRef} className="relative flex items-center">
         <button
           title={`Draw ${lastShape}`}
+          aria-label={`Draw ${lastShape}`}
           onClick={() => onAddShape(lastShape)}
           className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
             tool === "shape" ? "bg-accent text-white" : "text-[#111] hover:bg-black/[0.07]"
@@ -297,6 +313,8 @@ export default function DrawingTools({
         <Chevron
           open={shapeOpen}
           active={tool === "shape"}
+          ariaLabel="Shape options"
+          ariaExpanded={shapeOpen}
           onClick={() => {
             const next = !shapeOpen;
             setShapeOpen(next);
@@ -314,6 +332,7 @@ export default function DrawingTools({
               <button
                 key={s.type}
                 title={s.label}
+                aria-label={s.label}
                 onClick={() => {
                   setLastShape(s.type);
                   onAddShape(s.type);
@@ -334,11 +353,27 @@ export default function DrawingTools({
       {/* GIF / Sticker picker */}
       <div ref={gifWrapRef} className="relative">
         <button
+          ref={gifButtonRef}
           title="Add GIF or Sticker"
+          aria-label="Insert GIF"
+          aria-expanded={gifOpen}
           onClick={() => {
             const next = !gifOpen;
             setGifOpen(next);
-            if (next) { setDrawOpen(false); setShapeOpen(false); onPopoverOpened?.(); }
+            if (next) {
+              setDrawOpen(false);
+              setShapeOpen(false);
+              onPopoverOpened?.();
+              // Compute viewport-safe position for the popover
+              if (gifButtonRef.current) {
+                const rect = gifButtonRef.current.getBoundingClientRect();
+                const POPOVER_W = Math.min(420, window.innerWidth - 16);
+                let leftPx = rect.left + rect.width / 2 - POPOVER_W / 2;
+                leftPx = Math.max(8, Math.min(leftPx, window.innerWidth - POPOVER_W - 8));
+                const bottomPx = window.innerHeight - rect.top + 8;
+                setGifPopoverStyle({ position: "fixed", left: leftPx, bottom: bottomPx, width: POPOVER_W });
+              }
+            }
           }}
           className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
             gifOpen ? "bg-black/[0.07] text-[#111]" : "text-[#111] hover:bg-black/[0.07]"
@@ -350,8 +385,8 @@ export default function DrawingTools({
         {gifOpen && (
           <div
             ref={gifPopoverRef}
-            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-3 rounded-2xl z-[300] popover-enter-up"
-            style={{ ...popoverStyle, width: "min(420px, calc(100vw - 100px))" }}
+            className="p-3 rounded-2xl z-[300] popover-enter-up"
+            style={{ ...popoverStyle, ...gifPopoverStyle }}
           >
             <GifPicker
               onSelect={(id, url) => {
@@ -368,6 +403,7 @@ export default function DrawingTools({
       {/* Upload image — opens file dialog directly */}
       <button
         title="Upload image"
+        aria-label="Upload image"
         disabled={uploading}
         onClick={() => uploadFileRef.current?.click()}
         className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-[#111] hover:bg-black/[0.07]"
@@ -388,6 +424,40 @@ export default function DrawingTools({
         className="hidden"
         onChange={handleUploadFileChange}
       />
+
+      {sep}
+
+      {/* Undo */}
+      <button
+        title="Undo (⌘Z)"
+        aria-label="Undo"
+        onClick={onUndo}
+        className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer text-[#111] hover:bg-black/[0.07]"
+      >
+        <MdUndo className="w-5 h-5" />
+      </button>
+
+      {/* Redo */}
+      <button
+        title="Redo (⌘⇧Z)"
+        aria-label="Redo"
+        onClick={onRedo}
+        className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer text-[#111] hover:bg-black/[0.07]"
+      >
+        <MdRedo className="w-5 h-5" />
+      </button>
+
+      {sep}
+
+      {/* Clear canvas */}
+      <button
+        title="Clear canvas"
+        aria-label="Clear canvas"
+        onClick={onClearRequest}
+        className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer text-[#111] hover:bg-red-50 hover:text-red-500"
+      >
+        <MdDeleteSweep className="w-5 h-5" />
+      </button>
     </div>
   );
 }

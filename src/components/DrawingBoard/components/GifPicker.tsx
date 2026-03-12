@@ -41,24 +41,35 @@ export default function GifPicker({ onSelect }: GifPickerProps) {
   const [query, setQuery] = useState("");
   const [gifs, setGifs] = useState<GiphyGif[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const debouncedQuery = useDebounce(query, 400);
   const abortRef = useRef<AbortController | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    searchInputRef.current?.focus();
+  }, []);
 
   const fetchGifs = useCallback(async (q: string, t: Tab) => {
     abortRef.current?.abort();
     const ctrl = new AbortController();
     abortRef.current = ctrl;
     setLoading(true);
+    setError(false);
     try {
       const type = t === "stickers" ? "stickers" : "gifs";
       const endpoint = q.trim()
         ? `https://api.giphy.com/v1/${type}/search?api_key=${API_KEY}&q=${encodeURIComponent(q)}&limit=${LIMIT}&rating=g`
         : `https://api.giphy.com/v1/${type}/trending?api_key=${API_KEY}&limit=${LIMIT}&rating=g`;
       const res = await fetch(endpoint, { signal: ctrl.signal });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       setGifs(json.data ?? []);
     } catch (e) {
-      if ((e as Error).name !== "AbortError") console.error(e);
+      if ((e as Error).name !== "AbortError") {
+        console.error(e);
+        setError(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -74,7 +85,6 @@ export default function GifPicker({ onSelect }: GifPickerProps) {
     setQuery("");
   };
 
-  const emptyLabel = tab === "stickers" ? "No stickers found" : "No GIFs found";
   const placeholder = tab === "stickers" ? "Search Stickers…" : "Search GIFs…";
 
   return (
@@ -100,11 +110,11 @@ export default function GifPicker({ onSelect }: GifPickerProps) {
       {/* Search bar */}
       <div className="relative">
         <input
+          ref={searchInputRef}
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={placeholder}
-          autoFocus
           className="w-full px-3 py-2 pr-8 text-sm rounded-xl border border-gray-200 bg-white outline-none focus:border-gray-400 transition-colors"
         />
         {query && (
@@ -129,8 +139,22 @@ export default function GifPicker({ onSelect }: GifPickerProps) {
               />
             ))}
           </div>
+        ) : error ? (
+          <div className="flex flex-col items-center gap-3 py-8 text-center">
+            <p className="text-sm text-gray-500">Couldn&apos;t load GIFs. Check your connection.</p>
+            <button
+              onClick={() => fetchGifs(debouncedQuery, tab)}
+              className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors cursor-pointer"
+            >
+              Retry
+            </button>
+          </div>
         ) : gifs.length === 0 ? (
-          <p className="text-center text-xs text-gray-400 py-6">{emptyLabel}</p>
+          <p className="text-center text-sm text-gray-500 py-8">
+            {debouncedQuery.trim()
+              ? `No GIFs found for \u201c${debouncedQuery}\u201d. Try a different search.`
+              : tab === "stickers" ? "No trending stickers available." : "No trending GIFs available."}
+          </p>
         ) : (
           <div style={{ columns: 3, columnGap: 8 }}>
             {gifs.map((gif) => {
@@ -160,7 +184,7 @@ export default function GifPicker({ onSelect }: GifPickerProps) {
       </div>
 
       {/* Brand */}
-      <p className="text-center text-xs text-gray-300 mt-1 select-none">Powered by GIPHY</p>
+      <p className="text-center text-sm text-gray-500 mt-1 select-none">Powered by GIPHY</p>
     </div>
   );
 }

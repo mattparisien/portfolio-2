@@ -23,15 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link
-          rel="preload"
-          href="/assets/fonts/Fontspring-DEMO-freigeist-conlight.otf"
-          as="font"
-          type="font/otf"
-          crossOrigin="anonymous"
-        />
         <meta name="robots" content="noindex, nofollow"></meta>
-
       </head>
       <body className="antialiased" suppressHydrationWarning>
         <SmoothScroller>

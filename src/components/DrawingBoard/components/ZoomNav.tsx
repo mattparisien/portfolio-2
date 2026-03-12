@@ -1,16 +1,15 @@
 "use client";
 
-import { MdUndo, MdRemove, MdAdd } from "react-icons/md";
+import { MdRemove, MdAdd } from "react-icons/md";
 
 interface ZoomNavProps {
   zoom: number;
   onZoomIn: () => void;
   onZoomOut: () => void;
   onZoomReset?: () => void;
-  onUndo?: () => void;
 }
 
-export default function ZoomNav({ zoom, onZoomIn, onZoomOut, onZoomReset, onUndo }: ZoomNavProps) {
+export default function ZoomNav({ zoom, onZoomIn, onZoomOut, onZoomReset }: ZoomNavProps) {
   return (
     <div
       className="absolute bottom-6 right-6 flex items-center gap-0.5 px-1.5 py-1.5 rounded-xl z-[200]"
@@ -20,21 +19,6 @@ export default function ZoomNav({ zoom, onZoomIn, onZoomOut, onZoomReset, onUndo
         border: "1px solid rgba(0,0,0,0.08)",
       }}
     >
-      {/* Undo */}
-      {onUndo && (
-        <>
-          <button
-            onClick={onUndo}
-            title="Undo (⌘Z)"
-            aria-label="Undo"
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:text-black hover:bg-black/[0.06] transition-all cursor-pointer select-none"
-          >
-            <MdUndo size={15} />
-          </button>
-          <div className="w-px h-4 bg-black/[0.08] mx-0.5 flex-shrink-0" />
-        </>
-      )}
-
       <button
         onClick={onZoomOut}
         title="Zoom out"

@@ -153,6 +153,7 @@ interface UseFabricCanvasOptions {
   shapeTypeRef: React.MutableRefObject<ShapeType>;
   fillGradientRef: React.MutableRefObject<TextGradient | null>;
   setIsOverHandle?: (v: boolean) => void;
+  setCanvasEmpty?: (v: boolean) => void;
 }
 
 /** Initialises the Fabric canvas, registers all event listeners, loads
@@ -186,8 +187,11 @@ export function useFabricCanvas({
   shapeTypeRef,
   fillGradientRef,
   setIsOverHandle,
+  setCanvasEmpty,
 }: UseFabricCanvasOptions) {
-  const modsRef = useRef<FabricMods | null>(null);
+  const modsRef    = useRef<FabricMods | null>(null);
+  const undoFnRef  = useRef<() => void>(() => {});
+  const redoFnRef  = useRef<() => void>(() => {});
   type GifMeta = {
     giphyId: string; _gifUrl: string; _gifSpritesheet: HTMLCanvasElement;
     _gifFrameWidth: number; _gifFrameHeight: number;
@@ -210,9 +214,17 @@ export function useFabricCanvas({
       | { type: "modify"; objectId: string; before: object };
     const undoStack: UndoEntry[] = [];
     const MAX_UNDO = 50;
+
+    type RedoEntry =
+      | { type: "add";    serialized: object; wasGif: boolean }
+      | { type: "delete"; objectId: string;   wasGif: boolean }
+      | { type: "modify"; objectId: string;   after: object };
+    const redoStack: RedoEntry[] = [];
+
     const pushUndo = (entry: UndoEntry) => {
       undoStack.push(entry);
       if (undoStack.length > MAX_UNDO) undoStack.shift();
+      redoStack.length = 0; // any new action clears redo history
     };
     // Capture state before a user-initiated transform (move / resize / rotate)
     const beforeTransformRef = { current: null as object | null };
@@ -366,10 +378,12 @@ export function useFabricCanvas({
         if (!entry) return;
         isUndoingRef.current = true;
         if (entry.type === "add") {
-          // Remove the added object
           const obj = fc.getObjects().find(
             (o) => (o as unknown as { boardObjectId?: string }).boardObjectId === entry.objectId
           );
+          const snap = obj ? (obj as unknown as { toObject(): object }).toObject() : entry.serialized;
+          const isGif = !!(obj as { giphyId?: string } | null)?.giphyId;
+          redoStack.push({ type: "add", serialized: snap, wasGif: isGif });
           if (obj) {
             fc.remove(obj);
             fc.discardActiveObject();
@@ -383,7 +397,8 @@ export function useFabricCanvas({
               .catch(console.error);
           }
         } else if (entry.type === "delete") {
-          // Re-add the deleted object
+          const oid = (entry.serialized as Record<string, unknown>).boardObjectId as string | undefined;
+          redoStack.push({ type: "delete", objectId: oid ?? "", wasGif: entry.wasGif });
           mods.util.enlivenObjects([entry.serialized]).then((objs: unknown[]) => {
             const obj = objs[0] as unknown as SaveableObj;
             if (!obj) return;
@@ -396,12 +411,70 @@ export function useFabricCanvas({
             }
           }).catch(console.error);
         } else if (entry.type === "modify") {
-          // Restore pre-transform state
           const obj = fc.getObjects().find(
             (o) => (o as unknown as { boardObjectId?: string }).boardObjectId === entry.objectId
           );
           if (obj) {
+            const afterState = (obj as unknown as { toObject(): object }).toObject();
+            redoStack.push({ type: "modify", objectId: entry.objectId, after: afterState });
             obj.set(entry.before as Parameters<typeof obj.set>[0]);
+            obj.setCoords();
+            fc.requestRenderAll();
+            saveObject(obj as unknown as SaveableObj);
+          }
+        }
+        isUndoingRef.current = false;
+        return;
+      }
+
+      // ── Redo (Cmd/Ctrl+Shift+Z) ───────────────────────────────────────
+      if (isMod && e.shiftKey && (e.key === "z" || e.key === "Z")) {
+        if (isEditingText || !mods) return;
+        e.preventDefault();
+        const entry = redoStack.pop();
+        if (!entry) return;
+        isUndoingRef.current = true;
+        if (entry.type === "add") {
+          mods.util.enlivenObjects([entry.serialized]).then((objs: unknown[]) => {
+            const obj = objs[0] as unknown as SaveableObj;
+            if (!obj) return;
+            fc.add(obj as Parameters<typeof fc.add>[0]);
+            fc.requestRenderAll();
+            saveObject(obj);
+            if (entry.wasGif) { gifCountRef.current += 1; startGifLoop(); }
+            setTimeout(() => {
+              const newOid = obj.boardObjectId;
+              if (newOid) undoStack.push({ type: "add", objectId: newOid, serialized: (obj as unknown as { toObject(): object }).toObject() });
+            }, 0);
+          }).catch(console.error);
+        } else if (entry.type === "delete") {
+          const obj = fc.getObjects().find(
+            (o) => (o as unknown as { boardObjectId?: string }).boardObjectId === entry.objectId
+          );
+          if (obj) {
+            const isGif = !!(obj as { giphyId?: string }).giphyId;
+            undoStack.push({ type: "delete", serialized: (obj as unknown as { toObject(): object }).toObject(), wasGif: isGif });
+            fc.remove(obj);
+            fc.discardActiveObject();
+            fc.requestRenderAll();
+            if (entry.objectId) {
+              fetch(`/api/board-objects?boardId=${BOARD_ID}&objectId=${encodeURIComponent(entry.objectId)}`, { method: "DELETE" })
+                .then(() => broadcast?.({ type: "OBJECT_DELETED", objectId: entry.objectId }))
+                .catch(console.error);
+            }
+            if (isGif) {
+              gifCountRef.current = Math.max(0, gifCountRef.current - 1);
+              if (gifCountRef.current === 0) stopGifLoop();
+            }
+          }
+        } else if (entry.type === "modify") {
+          const obj = fc.getObjects().find(
+            (o) => (o as unknown as { boardObjectId?: string }).boardObjectId === entry.objectId
+          );
+          if (obj) {
+            const beforeState = (obj as unknown as { toObject(): object }).toObject();
+            undoStack.push({ type: "modify", objectId: entry.objectId, before: beforeState });
+            obj.set(entry.after as Parameters<typeof obj.set>[0]);
             obj.setCoords();
             fc.requestRenderAll();
             saveObject(obj as unknown as SaveableObj);
@@ -605,6 +678,15 @@ export function useFabricCanvas({
       fabricRef.current = fc;
       fc.renderAll();
 
+      // Stable callbacks: dispatch synthetic keyboard events so the existing
+      // handleKeyDown closure handles the actual undo/redo logic.
+      undoFnRef.current = () => window.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "z", ctrlKey: true, metaKey: true, bubbles: true })
+      );
+      redoFnRef.current = () => window.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Z", shiftKey: true, ctrlKey: true, metaKey: true, bubbles: true })
+      );
+
       // Patch setCursor so native resize/grab cursors override the
       // CSS `cursor: none !important` set by .board-no-cursor.
       // Control-handle cursors (resize variants, grab) use setProperty
@@ -615,7 +697,8 @@ export function useFabricCanvas({
           const isPencilOrBrush = toolRef.current === "pencil" || toolRef.current === "brush";
           const show = value.includes("resize") || value.startsWith("url(") || value === "grabbing" || value === "not-allowed" || value === "alias"
             || (value === "crosshair" && !isPencilOrBrush)
-            || value === "text";
+            || value === "text"
+            || value === "cell";
           upperEl.style.setProperty("cursor", show ? value : "none", "important");
           setIsOverHandle?.(show);
         };
@@ -797,6 +880,11 @@ export function useFabricCanvas({
         pendingMultiSave = null;
         objs.forEach((obj) => saveObject(obj));
       });
+
+      // ── Track canvas empty state ─────────────────────────────────────────
+      const updateCanvasEmpty = () => setCanvasEmpty?.(fc.getObjects().length === 0);
+      fc.on("object:added",   updateCanvasEmpty);
+      fc.on("object:removed", updateCanvasEmpty);
 
       fc.on("object:rotating", (e) => {
         if (!e.e.shiftKey || !e.target) return;
@@ -1133,5 +1221,5 @@ export function useFabricCanvas({
     };
   }, [canvasElRef, fabricRef, colorRef, brushSizeRef, opacityRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setVpt, setHasSelection, setSelectedIsText, setSelectedIsGif, setSelectedIsPath, setSelectedIsLocked, setShapeStrokeColor, setColor, setBrushSize, setOpacity, setTextProps, setIsSyncing, broadcast, shapeTypeRef, fillGradientRef, setIsOverHandle]);
 
-  return { modsRef };
+  return { modsRef, undoFnRef, redoFnRef };
 }

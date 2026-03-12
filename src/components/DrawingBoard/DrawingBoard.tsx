@@ -17,6 +17,7 @@ import { useCanvasActions } from "./hooks/useCanvasActions";
 import type { Tool, TextProps, ShapeType, TextGradient } from "./types";
 import { DEFAULT_TEXT_PROPS } from "./types";
 import { BG_COLOR, getOrCreateUser, CURSOR_COLORS } from "./constants";
+import { useWindowWidth } from "@/app/hooks/useWindowWidth";
 import {
   RoomProvider as LiveblocksRoomProvider,
   useBroadcastEvent,
@@ -98,6 +99,16 @@ function DrawingBoardInner() {
   const [shapeType, setShapeType]               = useState<ShapeType>("rect");
   const [fillGradient, setFillGradient]         = useState<TextGradient | null>(null);
 
+  // Clear confirm dialog
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
+  // Blank-canvas guidance
+  const [canvasEmpty, setCanvasEmpty]           = useState(true);
+  // Mobile warning banner
+  const [mobileWarnDismissed, setMobileWarnDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("crumb-mobile-warn-dismissed") === "1";
+  });
+
   // Whenever any component opens a popover, we increment the other two signals
   // so they close themselves — guaranteeing only one popover is ever visible.
   const [drawingToolsClose, setDrawingToolsClose] = useState(0);
@@ -119,6 +130,11 @@ function DrawingBoardInner() {
 
   const selectedIsShape = hasSelection && !selectedIsText && !selectedIsGif && !selectedIsPath;
   const panelVisible    = selectedIsText || (!selectedIsGif && (tool === "pencil" || tool === "brush" || hasSelection));
+
+  // Mobile detection
+  const windowWidth   = useWindowWidth();
+  const isMobile      = windowWidth > 0 && windowWidth < 768;
+  const showMobileWarn = isMobile && !mobileWarnDismissed;
 
   // Keep refs in sync so async canvas callbacks always read the latest values
   const toolRef          = useRef<Tool>("select");
@@ -151,7 +167,7 @@ function DrawingBoardInner() {
 
   const { saveObject } = useBoardSync({ broadcast: broadcastEvent });
 
-  const { modsRef } = useFabricCanvas({
+  const { modsRef, undoFnRef, redoFnRef } = useFabricCanvas({
     canvasElRef,
     fabricRef,
     colorRef,
@@ -180,9 +196,10 @@ function DrawingBoardInner() {
     shapeTypeRef,
     fillGradientRef,
     setIsOverHandle,
+    setCanvasEmpty,
   });
 
-  const { addText, addGif, addImage, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, applyTextProp, applyFillGradient } =
+  const { addText, addGif, addImage, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, applyTextProp, applyFillGradient, clearCanvas } =
     useCanvasActions({
       fabricRef,
       modsRef,
@@ -331,8 +348,14 @@ function DrawingBoardInner() {
 
   return (
     <div
-      className="fixed inset-0 overflow-hidden board-no-cursor"
-      style={{ overscrollBehavior: "none" }}
+      className={`fixed inset-0 overflow-hidden ${tool === "pencil" || tool === "brush" ? "board-no-cursor" : ""}`}
+      style={{
+        overscrollBehavior: "none",
+        cursor: tool === "eraser" ? "cell"
+          : tool === "text" ? "text"
+          : tool === "line" || tool === "shape" ? "crosshair"
+          : undefined,
+      }}
       onPointerOver={(e) => {
         // Show arrow cursor when over any UI overlay (not the canvas itself)
         const target = e.target as HTMLElement;
@@ -344,33 +367,51 @@ function DrawingBoardInner() {
       {/* Other users' cursors */}
       <RemoteCursors vpt={vpt} />
 
-      {/* Local cursor */}
-      {localCursor && !isOverUI && !isOverHandle && (
+      {/* Local cursor — only show custom SVG for pencil/brush */}
+      {localCursor && !isOverUI && !isOverHandle && (tool === "pencil" || tool === "brush") && (
         <div
           className="pointer-events-none fixed z-[9999]"
           style={{ left: 0, top: 0, transform: `translate(${localCursor.x}px, ${localCursor.y}px)`, willChange: "transform", opacity: localCursor ? 1 : 0, transition: "opacity 0.15s ease" }}
         >
-          {(tool === "pencil" && !isOverUI) ? (
-            /* Pencil icon — tip aligns with mouse position */
+          {tool === "pencil" ? (
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ transform: "translate(-2px, -18px)" }} xmlns="http://www.w3.org/2000/svg">
               <path d="M15 1L19 5L6.5 17.5L1 19L2.5 13.5Z" fill="#1a1a1a" stroke="white" strokeWidth="1" strokeLinejoin="round"/>
               <line x1="12.5" y1="3.5" x2="16.5" y2="7.5" stroke="white" strokeWidth="0.8"/>
             </svg>
-          ) : (tool === "brush" && !isOverUI) ? (
-            /* Brush icon — tip aligns with mouse position */
+          ) : (
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ transform: "translate(-2px, -18px)" }} xmlns="http://www.w3.org/2000/svg">
               <path d="M15 1L19 5L7 17C5.5 17.5 2 18.5 1.5 18C1 17.5 2 14 2.5 12.5Z" fill="#1a1a1a" stroke="white" strokeWidth="1" strokeLinejoin="round"/>
               <ellipse cx="2.2" cy="17.8" rx="1.8" ry="1.2" fill="#555"/>
               <line x1="12.5" y1="3.5" x2="16.5" y2="7.5" stroke="white" strokeWidth="0.8"/>
             </svg>
-          ) : (
-            <svg width="13" height="15" viewBox="0 0 317 354" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M0.222591 12C-1.53354 3.60665 7.45159 -2.92141 14.8914 1.34245L311.358 171.251C318.902 175.574 317.649 186.816 309.339 189.372L165.447 233.635C163.219 234.321 161.303 235.767 160.033 237.723L88.0181 348.658C83.1885 356.097 71.7717 353.964 69.9552 345.282L0.222591 12Z"
-                fill="#1a1a1a"
-              />
-            </svg>
           )}
+        </div>
+      )}
+
+      {/* Default arrow cursor for select / unhandled tools */}
+      {localCursor && !isOverUI && !isOverHandle && tool === "select" && (
+        <div
+          className="pointer-events-none fixed z-[9999]"
+          style={{ left: 0, top: 0, transform: `translate(${localCursor.x}px, ${localCursor.y}px)`, willChange: "transform" }}
+        >
+          <svg width="13" height="15" viewBox="0 0 317 354" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M0.222591 12C-1.53354 3.60665 7.45159 -2.92141 14.8914 1.34245L311.358 171.251C318.902 175.574 317.649 186.816 309.339 189.372L165.447 233.635C163.219 234.321 161.303 235.767 160.033 237.723L88.0181 348.658C83.1885 356.097 71.7717 353.964 69.9552 345.282L0.222591 12Z"
+              fill="#1a1a1a"
+            />
+          </svg>
+        </div>
+      )}
+
+      {/* ── Blank canvas guidance ─────────────────────────────────────────── */}
+      {canvasEmpty && (
+        <div
+          className="pointer-events-none fixed inset-0 flex items-center justify-center z-[50]"
+          style={{ opacity: 0.12 }}
+        >
+          <p className="text-3xl font-medium text-gray-900 select-none text-center px-8">
+            Start drawing — pick a tool below
+          </p>
         </div>
       )}
 
@@ -414,8 +455,11 @@ function DrawingBoardInner() {
         uploadSignal={uploadSignal}
         activeShapeType={shapeType}
         onPopoverOpened={onDrawingToolsPopoverOpened}
+        onUndo={() => undoFnRef.current()}
+        onRedo={() => redoFnRef.current()}
+        onClearRequest={() => setClearConfirmOpen(true)}
       />
-      {!panelVisible && <ZoomNav zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} onUndo={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "z", ctrlKey: true, metaKey: true, bubbles: true }))} />}
+      {!panelVisible && <ZoomNav zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} />}
       <BoardHeader isSyncing={isSyncing} />
 
       {/* Top-right cluster: active users */}
@@ -469,6 +513,73 @@ function DrawingBoardInner() {
           onClose={closeColorPopover}
           anchorStyle={{ top: 120, right: 228, bottom: "auto", left: "auto" }}
         />
+      )}
+
+      {/* ── Clear canvas confirmation ──────────────────────────────────────── */}
+      {clearConfirmOpen && (
+        <div
+          className="fixed inset-0 z-[9990] flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.2)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" }}
+          onClick={() => setClearConfirmOpen(false)}
+        >
+          <div
+            className="rounded-2xl shadow-2xl px-8 py-7 max-w-sm w-full mx-4 flex flex-col gap-4"
+            style={{
+              background: "rgba(255,255,255,0.97)",
+              backdropFilter: "blur(16px)",
+              WebkitBackdropFilter: "blur(16px)",
+              border: "1px solid rgba(0,0,0,0.08)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-base font-semibold text-gray-900 leading-snug">Clear the board?</h2>
+            <p className="text-sm text-gray-500 leading-relaxed">
+              This removes all content for everyone in the room and cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end mt-1">
+              <button
+                onClick={() => setClearConfirmOpen(false)}
+                className="px-4 py-2 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { clearCanvas(); setClearConfirmOpen(false); }}
+                className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 active:scale-95 transition-all cursor-pointer"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Mobile warning banner ─────────────────────────────────────────── */}
+      {showMobileWarn && (
+        <div
+          className="drawing-ui-overlay fixed top-20 left-1/2 -translate-x-1/2 z-[9980] flex items-start gap-3 px-5 py-3 rounded-2xl w-full max-w-sm mx-4"
+          style={{
+            background: "rgba(255,255,255,0.97)",
+            backdropFilter: "blur(16px)",
+            WebkitBackdropFilter: "blur(16px)",
+            border: "1px solid rgba(0,0,0,0.08)",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+          }}
+        >
+          <p className="text-sm text-gray-700 flex-1 leading-relaxed">
+            Crumb is best experienced on desktop. Some features may not work on mobile.
+          </p>
+          <button
+            onClick={() => {
+              setMobileWarnDismissed(true);
+              localStorage.setItem("crumb-mobile-warn-dismissed", "1");
+            }}
+            className="text-gray-400 hover:text-gray-700 text-lg cursor-pointer flex-shrink-0 leading-none"
+            aria-label="Dismiss"
+          >
+            ✕
+          </button>
+        </div>
       )}
     </div>
   );

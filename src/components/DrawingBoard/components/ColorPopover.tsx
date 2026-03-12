@@ -103,13 +103,14 @@ export default function ColorPopover({ color, gradient = null, fabricRef, onColo
   const popoverRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
 
-  // Click-outside to close
+  // Click-outside to close (pointerdown so right-clicks don't accidentally close)
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
+    const handler = (e: PointerEvent) => {
+      if (e.button !== 0) return;
       if (!popoverRef.current?.contains(e.target as Node)) onClose();
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener("pointerdown", handler);
+    return () => document.removeEventListener("pointerdown", handler);
   }, [onClose]);
 
   // ── Gradient helpers ─────────────────────────────────────────────────────

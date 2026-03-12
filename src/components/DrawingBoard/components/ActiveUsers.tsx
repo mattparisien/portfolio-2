@@ -97,9 +97,15 @@ export default function ActiveUsers() {
       </div>
 
       {/* Count badge */}
-      <span className="text-xs font-semibold text-gray-500 tabular-nums select-none leading-none">
-        {total === 1 ? "Just you" : `${total} online`}
-      </span>
+      {total === 1 ? (
+        <span className="text-xs font-normal text-gray-400 select-none leading-none">
+          Just you
+        </span>
+      ) : (
+        <span className="text-xs font-semibold text-gray-500 tabular-nums select-none leading-none">
+          {total} online
+        </span>
+      )}
     </div>
   );
 }

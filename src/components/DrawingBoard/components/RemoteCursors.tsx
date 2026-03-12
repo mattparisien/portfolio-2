@@ -22,7 +22,7 @@ interface CachedCursor {
 function Cursor({ x, y, name, color }: { x: number; y: number; name: string; color: string }) {
   return (
     <div
-      className="pointer-events-none fixed z-[100]"
+      className="pointer-events-none fixed z-[100] transition-transform duration-75 ease-linear"
       style={{
         left: 0,
         top: 0,
@@ -47,7 +47,7 @@ function Cursor({ x, y, name, color }: { x: number; y: number; name: string; col
 
       {/* Name label */}
       <div
-        className="absolute text-white font-semibold select-none"
+        className="absolute text-white font-semibold select-none max-w-[120px] overflow-hidden text-ellipsis whitespace-nowrap"
         style={{
           top: 18,
           left: 12,
@@ -57,10 +57,6 @@ function Cursor({ x, y, name, color }: { x: number; y: number; name: string; col
           fontSize: 13,
           lineHeight: "18px",
           letterSpacing: "0.01em",
-          maxWidth: 140,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
         }}
       >
         {name}

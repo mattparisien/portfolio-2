@@ -38,18 +38,20 @@ export default function ObjectLockButton({ fabricRef, locked, onToggle }: Object
       const sx  = (r.left + r.width / 2) * vpt[0] + vpt[4];
       // Place just above the top edge of the selection bounding box
       const sy = r.top * vpt[3] + vpt[5] - 12;
+      // Clamp to stay below the BoardHeader (~60px tall) plus a small margin
+      const clampedTop = Math.max(sy, 72);
 
       // Hide the button when the object's anchor point is outside the visible viewport
       const W = window.innerWidth;
       const H = window.innerHeight;
-      if (sx < 0 || sx > W || sy < 0 || sy > H) {
+      if (sx < 0 || sx > W || sy > H) {
         btn.style.visibility = "hidden";
         return;
       }
 
       btn.style.visibility = "visible";
       btn.style.left      = `${sx}px`;
-      btn.style.top       = `${sy}px`;
+      btn.style.top       = `${clampedTop}px`;
       btn.style.transform = "translate(-50%, -100%)";
     };
 
@@ -76,6 +78,7 @@ export default function ObjectLockButton({ fabricRef, locked, onToggle }: Object
       }}
       onClick={onToggle}
       title={locked ? "Unlock object" : "Lock object"}
+      aria-label={locked ? "Unlock object" : "Lock object"}
     >
       <LockIcon open={!locked} />
     </button>

@@ -69,6 +69,7 @@ export function useSplitText<T extends HTMLElement = HTMLElement>(
     (instance.chars as HTMLElement[]).forEach((el, i) => el.style.setProperty("--char-index", String(i)));
     (instance.words as HTMLElement[]).forEach((el, i) => el.style.setProperty("--word-index", String(i)));
     (instance.lines as HTMLElement[]).forEach((el, i) => el.style.setProperty("--line-index", String(i)));
+    (instance.lines as HTMLElement[]).forEach((el, i) => el.style.setProperty("--line-direction", i % 2 === 0 ? String(1) : String(-1)));
 
     setResult({
       chars: instance.chars as Element[],

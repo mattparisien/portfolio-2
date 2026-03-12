@@ -18,6 +18,8 @@
   box-shadow: none;
 } */
 
+/* ── Active fonts (used in rendered UI) ─────────────────────────────────── */
+
 @font-face {
   font-family: "Waldeck";
   src: url("/assets/fonts/Waldeck-trial-Black.otf") format("opentype");
@@ -27,61 +29,21 @@
 }
 
 @font-face {
-  font-family: 'Freigeist';
-  src: url('/assets/fonts/ItemsTextTrial-Light.otf') format('opentype');
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Freigeist';
-  src: url('/assets/fonts/ItemsTextTrial-Medium.otf') format('opentype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Founders Grotesk';
-  src: url('/assets/fonts/test-founders-grotesk-condensed-bold.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Salsa';
-  src: url('/assets/fonts/Salsa-BT-Regular-4-3-2-1.woff') format('woff');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Freigeist';
-  src: url('/assets/fonts/ItemsTextTrial-Book.otf') format('opentype');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Adieu';
-  src: url('/assets/fonts/Adieu.woff2') format('woff2');
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-
-
-@font-face {
   font-family: 'Maax Mono';
   src: url('/assets/fonts/MaaxMono.woff2') format('woff2');
   font-weight: 300;
   font-style: normal;
   font-display: swap;
 }
+
+@font-face {
+  font-family: 'Politip';
+  src: url('/assets/fonts/politip.ttf') format('truetype');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
 
 :root {
   --background: #ffffff;
@@ -162,6 +124,20 @@ body {
   animation: panel-slide-in 0.22s cubic-bezier(0.34, 1.2, 0.64, 1) both;
 }
 
+/* Focus visible ring for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid #0a99ff;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Inside board-no-cursor context, ensure buttons still show focus ring */
+.board-no-cursor *:focus-visible {
+  outline: 2px solid #0a99ff;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .popover-enter,
   .popover-enter-right,
@@ -172,6 +148,12 @@ body {
   }
   .animate-spin {
     animation: none;
+  }
+  /* Keep focus ring visible; no animation needed */
+  *:focus-visible {
+    outline: 2px solid #0a99ff;
+    outline-offset: 2px;
+    border-radius: 4px;
   }
 }
 
