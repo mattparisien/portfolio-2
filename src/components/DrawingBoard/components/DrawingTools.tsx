@@ -13,10 +13,8 @@ import {
   MdKeyboardArrowUp,
   MdNearMe,
   MdRectangle,
-  MdRedo,
   MdStar,
   MdTextFields,
-  MdUndo,
   MdUpload,
 } from "react-icons/md";
 import type { ShapeType, Tool } from "../types";
@@ -47,8 +45,6 @@ interface DrawingToolsProps {
   uploadSignal?: number;
   /** Called when this component opens any of its own popovers */
   onPopoverOpened?: () => void;
-  onUndo?: () => void;
-  onRedo?: () => void;
   onClearRequest?: () => void;
 }
 
@@ -70,7 +66,7 @@ const Chevron = ({ open, onClick, ariaLabel, ariaExpanded }: { open: boolean; ac
 );
 
 export default function DrawingTools({
-  tool, onToolChange, onAddShape, onAddText, onAddGif, onAddImage, closeSignal, uploadSignal, activeShapeType, onPopoverOpened, onUndo, onRedo, onClearRequest,
+  tool, onToolChange, onAddShape, onAddText, onAddGif, onAddImage, closeSignal, uploadSignal, activeShapeType, onPopoverOpened, onClearRequest,
 }: DrawingToolsProps) {
   const [lastShape, setLastShape]   = useState<ShapeType>("rect");
   const [drawOpen, setDrawOpen]     = useState(false);
@@ -424,28 +420,6 @@ export default function DrawingTools({
         className="hidden"
         onChange={handleUploadFileChange}
       />
-
-      {sep}
-
-      {/* Undo */}
-      <button
-        title="Undo (⌘Z)"
-        aria-label="Undo"
-        onClick={onUndo}
-        className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer text-[#111] hover:bg-black/[0.07]"
-      >
-        <MdUndo className="w-5 h-5" />
-      </button>
-
-      {/* Redo */}
-      <button
-        title="Redo (⌘⇧Z)"
-        aria-label="Redo"
-        onClick={onRedo}
-        className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer text-[#111] hover:bg-black/[0.07]"
-      >
-        <MdRedo className="w-5 h-5" />
-      </button>
 
       {sep}
 
