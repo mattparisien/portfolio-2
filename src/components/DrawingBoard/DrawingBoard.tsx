@@ -348,7 +348,7 @@ function DrawingBoardInner() {
 
   return (
     <div
-      className={`fixed inset-0 overflow-hidden ${tool === "pencil" || tool === "brush" ? "board-no-cursor" : ""}`}
+      className={`fixed inset-0 overflow-hidden ${tool === "pencil" || tool === "brush" || tool === "select" ? "board-no-cursor" : ""}`}
       style={{
         overscrollBehavior: "none",
         cursor: tool === "eraser" ? "cell"
