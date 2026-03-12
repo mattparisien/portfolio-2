@@ -154,6 +154,7 @@ interface UseFabricCanvasOptions {
   fillGradientRef: React.MutableRefObject<TextGradient | null>;
   setIsOverHandle?: (v: boolean) => void;
   setCanvasEmpty?: (v: boolean) => void;
+  initialObjects: { fabricJSON: string }[];
 }
 
 /** Initialises the Fabric canvas, registers all event listeners, loads
@@ -188,6 +189,7 @@ export function useFabricCanvas({
   fillGradientRef,
   setIsOverHandle,
   setCanvasEmpty,
+  initialObjects,
 }: UseFabricCanvasOptions) {
   const modsRef      = useRef<FabricMods | null>(null);
   const undoFnRef    = useRef<() => void>(() => {});
@@ -713,36 +715,46 @@ export function useFabricCanvas({
       brush.width = brushSizeRef.current;
       fc.freeDrawingBrush = brush;
 
-      // Load persisted objects
-      setIsSyncing(true);
-      fetch(`/api/board-objects?boardId=${BOARD_ID}`)
-        .then((r) => {
-          if (!r.ok) throw new Error(`HTTP ${r.status}`);
-          return r.json();
-        })
-        .then(async ({ objects }: { objects: { fabricJSON: string }[] }) => {
-          if (!Array.isArray(objects) || objects.length === 0) return;
+      // Load persisted objects — add in batches so items appear progressively
+      void (async () => {
+        const objects = initialObjects;
+        if (!Array.isArray(objects) || objects.length === 0) return;
           const parsed = objects.map((o) => JSON.parse(o.fabricJSON)) as Record<string, unknown>[];
           // Sort by persisted zIndex so layer order is restored correctly
           parsed.sort((a, b) => ((a.zIndex as number) ?? 0) - ((b.zIndex as number) ?? 0));
           parsed.forEach((o) => { if (o.type === "IText" || o.type === "i-text" || o.type === "Textbox" || o.type === "textbox") o.editable = false; });
-          const enlivened = await util.enlivenObjects(parsed);
 
-          // Separate GIF objects so we can re-decode them asynchronously
+          // Separate GIFs (require async re-decode) from regular objects
+          const regularParsed = parsed.filter(o => !(o.giphyId && o._gifUrl));
+          const gifParsed     = parsed.filter(o =>   o.giphyId && o._gifUrl);
+
+          // Enliven and add regular objects in batches of 10 for progressive rendering
+          const BATCH = 10;
+          setIsSyncing(false); // hide syncing indicator immediately — objects appear as they load
+          for (let i = 0; i < regularParsed.length; i += BATCH) {
+            const batch = regularParsed.slice(i, i + BATCH);
+            const enlivened = await util.enlivenObjects(batch);
+            (enlivened as unknown[]).forEach((obj, j) => {
+              const src = batch[j];
+              if (src.boardObjectId) (obj as Record<string, unknown>).boardObjectId = src.boardObjectId;
+              if (src.zIndex !== undefined) (obj as Record<string, unknown>).zIndex = src.zIndex;
+              fc.add(obj as Parameters<typeof fc.add>[0]);
+            });
+            fc.requestRenderAll();
+          }
+
+          // GIF objects — re-fetch and re-decode each one
           const gifRestorePromises: Promise<void>[] = [];
-
-          (enlivened as unknown[]).forEach((obj, i) => {
-            const src = parsed[i];
-            if (src.boardObjectId) (obj as Record<string, unknown>).boardObjectId = src.boardObjectId;
-            if (src.zIndex !== undefined) (obj as Record<string, unknown>).zIndex = src.zIndex;
-
-            if (src.giphyId && src._gifUrl) {
-              // Stamp giphyId immediately so the loop guard recognises it
+          if (gifParsed.length > 0) {
+            const enlivenedGifs = await util.enlivenObjects(gifParsed);
+            (enlivenedGifs as unknown[]).forEach((obj, i) => {
+              const src = gifParsed[i];
+              if (src.boardObjectId) (obj as Record<string, unknown>).boardObjectId = src.boardObjectId;
+              if (src.zIndex !== undefined) (obj as Record<string, unknown>).zIndex = src.zIndex;
               (obj as Record<string, unknown>).giphyId = src.giphyId;
               fc.add(obj as Parameters<typeof fc.add>[0]);
               gifCountRef.current += 1;
 
-              // Re-fetch + re-decode the GIF to restore the spritesheet & metadata
               const gifUrl = src._gifUrl as string;
               const promise = fetch(gifUrl)
                 .then((r) => r.arrayBuffer())
@@ -774,20 +786,12 @@ export function useFabricCanvas({
                   fc.requestRenderAll();
                 })
                 .catch((e) => console.error("[GIF] reload failed:", e));
-
               gifRestorePromises.push(promise);
-            } else {
-              fc.add(obj as Parameters<typeof fc.add>[0]);
-            }
-          });
-
-          // Start the RAF loop once all GIFs have their metadata restored
-          if (gifCountRef.current > 0) {
+            });
             Promise.allSettled(gifRestorePromises).then(() => startGifLoop());
           }
-        })
-        .catch((e) => console.error("Failed to load board objects", e))
-        .finally(() => { setIsSyncing(false); fc.renderAll(); });
+      })().catch((e) => console.error("Failed to load board objects", e))
+        .finally(() => { fc.renderAll(); });
 
       // ── Canvas events ──────────────────────────────────────────────────
       fc.on("path:created", (e) => {

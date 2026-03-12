@@ -4,11 +4,10 @@ interface BoardHeaderProps {
   isSyncing?: boolean;
 }
 
-export default function BoardHeader({ isSyncing }: BoardHeaderProps) {
+export default function BoardHeader({ isSyncing: _ }: BoardHeaderProps) {
   return (
     <div
       className="absolute top-5 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full text-sm font-mono tracking-widest uppercase flex items-center gap-2 z-[400] select-none"
-
     >
       <svg className="w-50" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1899.17 401.79">
         <path d="M262.71,154.53h-72.12c-27.82,0-46.36,18.54-46.36,46.36s18.54,46.36,46.36,46.36h72.12v144.23h-72.12C76.24,391.49,0,315.25,0,200.89S76.24,10.3,190.59,10.3h72.12v144.23Z" />
@@ -17,12 +16,6 @@ export default function BoardHeader({ isSyncing }: BoardHeaderProps) {
         <path d="M1597.47,391.49h-175.14v-164.84h-20.61v92.72c0,49.45-32.97,82.42-82.42,82.42s-82.42-32.97-82.42-82.42v-92.72h-20.61v164.84h-175.14V133.93c0-80.36,53.57-133.93,133.93-133.93s133.93,53.57,133.93,133.93v41.21h20.61v-41.21c0-80.36,53.57-133.93,133.93-133.93s133.93,53.57,133.93,133.93v257.56Z" />
         <path d="M1899.17,301.34c0,54.09-36.06,90.15-90.15,90.15h-203.47V10.3h203.47c54.09,0,90.15,36.06,90.15,90.15s-36.06,90.14-90.15,90.14v20.61c54.09,0,90.15,36.06,90.15,90.14ZM1809.03,56.66c-26.27,0-43.79,17.51-43.79,43.79s17.51,43.78,43.79,43.78,43.79-17.51,43.79-43.78-17.51-43.79-43.79-43.79ZM1809.03,257.56c-26.27,0-43.79,17.51-43.79,43.78s17.51,43.79,43.79,43.79,43.79-17.51,43.79-43.79-17.51-43.78-43.79-43.78Z" />
       </svg>
-      {isSyncing && (
-        <span
-          title="Syncing board…"
-          className="w-3.5 h-3.5 rounded-full border-2 border-pink-400 border-t-transparent animate-spin inline-block flex-shrink-0"
-        />
-      )}
     </div>
   );
 }

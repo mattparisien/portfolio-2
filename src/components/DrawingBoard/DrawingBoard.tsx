@@ -78,7 +78,7 @@ function CapacityWall() {
 type ColorSlot = "toolbar-fill" | "toolbar-stroke" | "text";
 
 // ── Inner board — uses Liveblocks hooks (must be inside RoomProvider) ─────
-function DrawingBoardInner() {
+function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: string }[] }) {
   const canvasElRef = useRef<HTMLCanvasElement>(null);
   const fabricRef   = useRef<Canvas | null>(null);
 
@@ -197,6 +197,7 @@ function DrawingBoardInner() {
     fillGradientRef,
     setIsOverHandle,
     setCanvasEmpty,
+    initialObjects,
   });
 
   const { addText, addGif, addImage, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, applyTextProp, applyFillGradient, clearCanvas } =
@@ -585,14 +586,14 @@ function DrawingBoardInner() {
 }
 
 // ── Outer wrapper — provides the Liveblocks room ──────────────────────────
-export default function DrawingBoard() {
+export default function DrawingBoard({ initialObjects }: { initialObjects: { fabricJSON: string }[] }) {
   const [user] = useState(getOrCreateUser);
   return (
     <RoomProvider
       id="main-board"
       initialPresence={{ cursor: null, name: user.name, color: CURSOR_COLORS[0] }}
     >
-      <DrawingBoardInner />
+      <DrawingBoardInner initialObjects={initialObjects} />
     </RoomProvider>
   );
 }

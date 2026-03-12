@@ -82,7 +82,6 @@ export default function ObjectLockButton({ fabricRef, locked, onToggle, onDelete
           color: locked ? "#fff" : "#444",
           padding: "2px 6px",
           borderRadius: 999,
-          borderRight: !locked && onDelete ? "1px solid rgba(0,0,0,0.08)" : "none",
         }}
         onClick={onToggle}
         title={locked ? "Unlock object" : "Lock object"}
@@ -91,18 +90,21 @@ export default function ObjectLockButton({ fabricRef, locked, onToggle, onDelete
         <LockIcon open={!locked} />
       </button>
       {onDelete && !locked && (
-        <button
-          className="flex items-center justify-center cursor-pointer hover:opacity-70 active:scale-95 transition-opacity"
-          style={{
-            color: "#444",
-            padding: "2px 6px",
-          }}
-          onClick={onDelete}
-          title="Delete object"
-          aria-label="Delete object"
-        >
-          <MdDeleteOutline size={16} />
-        </button>
+        <>
+          <div style={{ width: 1, height: 16, background: "rgba(0,0,0,0.08)", flexShrink: 0 }} />
+          <button
+            className="flex items-center justify-center cursor-pointer hover:opacity-70 active:scale-95 transition-opacity"
+            style={{
+              color: "#444",
+              padding: "2px 6px",
+            }}
+            onClick={onDelete}
+            title="Delete object"
+            aria-label="Delete object"
+          >
+            <MdDeleteOutline size={16} />
+          </button>
+        </>
       )}
     </div>
   );
