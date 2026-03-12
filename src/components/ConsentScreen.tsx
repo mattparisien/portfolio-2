@@ -8,6 +8,7 @@ const ConsentScreen = ({ onEnter }: { onEnter: () => void }) => {
     const wrapperRef = useRef<HTMLDivElement>(null);
 
     const handleEnter = () => {
+        document.cookie = "crumb_consented=true; max-age=31536000; path=/; SameSite=Lax";
         gsap.to(wrapperRef.current, {
             opacity: 0,
             duration: 0.6,

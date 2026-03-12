@@ -189,9 +189,10 @@ export function useFabricCanvas({
   setIsOverHandle,
   setCanvasEmpty,
 }: UseFabricCanvasOptions) {
-  const modsRef    = useRef<FabricMods | null>(null);
-  const undoFnRef  = useRef<() => void>(() => {});
-  const redoFnRef  = useRef<() => void>(() => {});
+  const modsRef      = useRef<FabricMods | null>(null);
+  const undoFnRef    = useRef<() => void>(() => {});
+  const redoFnRef    = useRef<() => void>(() => {});
+  const deleteFnRef  = useRef<() => void>(() => {});
   type GifMeta = {
     giphyId: string; _gifUrl: string; _gifSpritesheet: HTMLCanvasElement;
     _gifFrameWidth: number; _gifFrameHeight: number;
@@ -685,6 +686,9 @@ export function useFabricCanvas({
       );
       redoFnRef.current = () => window.dispatchEvent(
         new KeyboardEvent("keydown", { key: "Z", shiftKey: true, ctrlKey: true, metaKey: true, bubbles: true })
+      );
+      deleteFnRef.current = () => window.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Delete", bubbles: true })
       );
 
       // Patch setCursor so native resize/grab cursors override the
@@ -1221,5 +1225,5 @@ export function useFabricCanvas({
     };
   }, [canvasElRef, fabricRef, colorRef, brushSizeRef, opacityRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setVpt, setHasSelection, setSelectedIsText, setSelectedIsGif, setSelectedIsPath, setSelectedIsLocked, setShapeStrokeColor, setColor, setBrushSize, setOpacity, setTextProps, setIsSyncing, broadcast, shapeTypeRef, fillGradientRef, setIsOverHandle]);
 
-  return { modsRef, undoFnRef, redoFnRef };
+  return { modsRef, undoFnRef, redoFnRef, deleteFnRef };
 }

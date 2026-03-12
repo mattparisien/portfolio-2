@@ -1,12 +1,9 @@
-"use client";
-import { useState } from "react";
-import ConsentScreen from "@/components/ConsentScreen";
-import DrawingBoard from "@/components/DrawingBoard/DrawingBoard";
+import { cookies } from "next/headers";
+import HomeClient from "@/components/HomeClient";
 
-export default function Home() {
-  const [entered, setEntered] = useState(false);
-  return <>
-    {!entered && <ConsentScreen onEnter={() => setEntered(true)} />}
-    <DrawingBoard />
-  </>;
+export default async function Home() {
+  const cookieStore = await cookies();
+  const initialEntered = cookieStore.get("crumb_consented")?.value === "true";
+
+  return <HomeClient initialEntered={initialEntered} />;
 }

@@ -7,7 +7,6 @@ import {
   MdBrush,
   MdCircle,
   MdCreate,
-  MdDeleteSweep,
   MdFavorite,
   MdHorizontalRule,
   MdKeyboardArrowUp,
@@ -360,14 +359,17 @@ export default function DrawingTools({
               setDrawOpen(false);
               setShapeOpen(false);
               onPopoverOpened?.();
-              // Compute viewport-safe position for the popover
-              if (gifButtonRef.current) {
-                const rect = gifButtonRef.current.getBoundingClientRect();
+              // Compute position in wrapper-local coords to avoid the
+              // fixed-inside-transformed-ancestor bug (the toolbar has
+              // transform: translateX(-50%) which creates a new containing block).
+              if (gifButtonRef.current && gifWrapRef.current) {
+                const btnRect  = gifButtonRef.current.getBoundingClientRect();
+                const wrapRect = gifWrapRef.current.getBoundingClientRect();
                 const POPOVER_W = Math.min(420, window.innerWidth - 16);
-                let leftPx = rect.left + rect.width / 2 - POPOVER_W / 2;
-                leftPx = Math.max(8, Math.min(leftPx, window.innerWidth - POPOVER_W - 8));
-                const bottomPx = window.innerHeight - rect.top + 8;
-                setGifPopoverStyle({ position: "fixed", left: leftPx, bottom: bottomPx, width: POPOVER_W });
+                let leftRel = btnRect.left + btnRect.width / 2 - wrapRect.left - POPOVER_W / 2;
+                // Clamp so popover stays within viewport
+                leftRel = Math.max(8 - wrapRect.left, Math.min(leftRel, window.innerWidth - POPOVER_W - 8 - wrapRect.left));
+                setGifPopoverStyle({ position: "absolute", left: leftRel, bottom: "calc(100% + 8px)", width: POPOVER_W });
               }
             }
           }}
@@ -420,18 +422,6 @@ export default function DrawingTools({
         className="hidden"
         onChange={handleUploadFileChange}
       />
-
-      {sep}
-
-      {/* Clear canvas */}
-      <button
-        title="Clear canvas"
-        aria-label="Clear canvas"
-        onClick={onClearRequest}
-        className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer text-[#111] hover:bg-red-50 hover:text-red-500"
-      >
-        <MdDeleteSweep className="w-5 h-5" />
-      </button>
     </div>
   );
 }

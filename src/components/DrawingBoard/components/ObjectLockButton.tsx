@@ -2,24 +2,25 @@
 
 import { useRef, useEffect } from "react";
 import type { Canvas } from "fabric";
-import { MdLock, MdLockOpen } from "react-icons/md";
+import { MdLock, MdLockOpen, MdDeleteOutline } from "react-icons/md";
 
 interface ObjectLockButtonProps {
   fabricRef: React.MutableRefObject<Canvas | null>;
   locked: boolean;
   onToggle: () => void;
+  onDelete?: () => void;
 }
 
 function LockIcon({ open }: { open: boolean }) {
   return open ? (
-    <MdLockOpen size={13} />
+    <MdLockOpen size={16} />
   ) : (
-    <MdLock size={13} />
+    <MdLock size={16} />
   );
 }
 
-export default function ObjectLockButton({ fabricRef, locked, onToggle }: ObjectLockButtonProps) {
-  const btnRef = useRef<HTMLButtonElement>(null);
+export default function ObjectLockButton({ fabricRef, locked, onToggle, onDelete }: ObjectLockButtonProps) {
+  const btnRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
 
   useEffect(() => {
@@ -60,27 +61,49 @@ export default function ObjectLockButton({ fabricRef, locked, onToggle }: Object
   }, [fabricRef]);
 
   return (
-    <button
+    <div
       ref={btnRef}
-      className="fixed z-[300] flex items-center gap-1.5 px-2.5 py-1 rounded-full cursor-pointer hover:scale-105 active:scale-95 select-none"
+      className="fixed z-[300] flex items-center select-none"
       style={{
-        background: locked ? "#111" : "rgba(255,255,255,0.96)",
-        border: locked ? "none" : "1px solid rgba(0,0,0,0.1)",
-        backdropFilter: "blur(12px)",
-        color: locked ? "#fff" : "#444",
-        fontSize: 11,
-        fontWeight: 600,
-        letterSpacing: "0.02em",
-        whiteSpace: "nowrap",
-        // Initial off-screen position until first RAF tick
         left: "-9999px",
         top: "-9999px",
+        background: "rgba(255,255,255,0.96)",
+        border: "1px solid rgba(0,0,0,0.1)",
+        backdropFilter: "blur(12px)",
+        borderRadius: 999,
+        padding: "5px 10px",
+        gap: 0,
       }}
-      onClick={onToggle}
-      title={locked ? "Unlock object" : "Lock object"}
-      aria-label={locked ? "Unlock object" : "Lock object"}
     >
-      <LockIcon open={!locked} />
-    </button>
+      <button
+        className="flex items-center justify-center cursor-pointer hover:opacity-70 active:scale-95 transition-opacity"
+        style={{
+          background: locked ? "#111" : "transparent",
+          color: locked ? "#fff" : "#444",
+          padding: "2px 6px",
+          borderRadius: 999,
+          borderRight: !locked && onDelete ? "1px solid rgba(0,0,0,0.08)" : "none",
+        }}
+        onClick={onToggle}
+        title={locked ? "Unlock object" : "Lock object"}
+        aria-label={locked ? "Unlock object" : "Lock object"}
+      >
+        <LockIcon open={!locked} />
+      </button>
+      {onDelete && !locked && (
+        <button
+          className="flex items-center justify-center cursor-pointer hover:opacity-70 active:scale-95 transition-opacity"
+          style={{
+            color: "#444",
+            padding: "2px 6px",
+          }}
+          onClick={onDelete}
+          title="Delete object"
+          aria-label="Delete object"
+        >
+          <MdDeleteOutline size={16} />
+        </button>
+      )}
+    </div>
   );
 }

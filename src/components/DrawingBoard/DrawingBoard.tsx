@@ -167,7 +167,7 @@ function DrawingBoardInner() {
 
   const { saveObject } = useBoardSync({ broadcast: broadcastEvent });
 
-  const { modsRef, undoFnRef, redoFnRef } = useFabricCanvas({
+  const { modsRef, undoFnRef, redoFnRef, deleteFnRef } = useFabricCanvas({
     canvasElRef,
     fabricRef,
     colorRef,
@@ -455,8 +455,6 @@ function DrawingBoardInner() {
         uploadSignal={uploadSignal}
         activeShapeType={shapeType}
         onPopoverOpened={onDrawingToolsPopoverOpened}
-        onUndo={() => undoFnRef.current()}
-        onRedo={() => redoFnRef.current()}
         onClearRequest={() => setClearConfirmOpen(true)}
       />
       {!panelVisible && <ZoomNav zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} />}
@@ -478,6 +476,7 @@ function DrawingBoardInner() {
             setSelectedIsLocked(next);
             lockSelected(next);
           }}
+          onDelete={() => deleteFnRef.current?.()}
         />
       )}
       <CapacityWall />
