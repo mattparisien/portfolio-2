@@ -7,10 +7,10 @@ import {
   MdAutoFixOff,
   MdBrush
 } from "react-icons/md";
-import { PiGifFill } from "react-icons/pi";
 import type { ShapeType, Tool } from "../types";
 import GifPicker from "./GifPicker";
 import {
+  CheckmarkIcon,
   ChevronUpIcon,
   CircleIcon,
   EraserIcon,
@@ -23,9 +23,8 @@ import {
   StarIcon,
   TextIcon,
   TriangleIcon,
-  UploadIcon,
   TVIcon,
-  CheckmarkIcon
+  UploadIcon
 } from "./Icons";
 
 const ICON_SIZE = 17;
@@ -77,7 +76,7 @@ function ToolPopover({
   return (
     <div
       ref={popoverRef}
-      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 flex flex-col gap-2 p-3 rounded-lg popover-enter-up z-[300] bg-fg shadow-lg"
+      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 flex flex-col gap-0 p-2 rounded-lg popover-enter-up z-[300] bg-fg shadow-lg"
       style={{ ...style }}
     >
       {items.map(({ key, icon, label, active, onClick }) => (
@@ -86,13 +85,13 @@ function ToolPopover({
           title={label}
           aria-label={label}
           onClick={onClick}
-          className={`flex items-center justify-between gap-1 p-2 rounded-md transition-colors flex-1 min-w-[52px] cursor-pointer ${
-            active ? "bg-accent text-white" : "text-[#111] hover:bg-black/[0.07]"
-          }`}
+          className="flex items-center justify-between gap-1 p-2 rounded-md transition-colors flex-1 min-w-[52px] cursor-pointer text-bg hover:bg-accent"
         >
-          <div><CheckmarkIcon strokeWidth={1} width={10} height={10} stroke="white"/></div>
+          <div className="w-[10px] shrink-0">{active && <CheckmarkIcon strokeWidth={1} width={10} height={10} stroke="white" />}</div>
+          <div className="flex flex-1 gap-2 items-center">
           {icon}
-          <span className={`text-xs leading-none ${active ? "text-white/70" : "text-gray-400"}`}>{label}</span>
+          <span className="text-xs leading-none text-bg">{label}</span>
+          </div>
         </button>
       ))}
     </div>
@@ -359,7 +358,7 @@ export default function DrawingTools({
               key: t,
               label,
               active: tool === t,
-              icon: makeIcons(tool === t ? ICON_COLOR_ACTIVE : ICON_COLOR).find(i => i.type === t)?.icon,
+              icon: makeIcons(ICON_COLOR_ACTIVE).find(i => i.type === t)?.icon,
               onClick: () => { onToolChange(t); setDrawOpen(false); },
             }))}
           />
@@ -389,8 +388,8 @@ export default function DrawingTools({
         {shapeOpen && (
           <ToolPopover
             popoverRef={shapePopoverRef}
-            style={{ minWidth: 220 }}
-            items={makeIcons(ICON_COLOR).filter(i => SHAPES_TYPES.includes(i.type)).map(s => ({
+            style={{ minWidth: 100 }}
+            items={makeIcons(ICON_COLOR_ACTIVE).filter(i => SHAPES_TYPES.includes(i.type)).map(s => ({
               key: s.type,
               label: s.label,
               icon: s.icon,
@@ -428,7 +427,7 @@ export default function DrawingTools({
             }
           },
           "Add GIF or Sticker",
-           makeIcons(tool === "tv" ? ICON_COLOR_ACTIVE : ICON_COLOR).find(x => x.type === "tv")?.icon,
+          makeIcons(tool === "tv" ? ICON_COLOR_ACTIVE : ICON_COLOR).find(x => x.type === "tv")?.icon,
           { btnRef: gifButtonRef, ariaExpanded: gifOpen, activeClass: "bg-black/[0.07] text-[#111]" },
         )}
 
