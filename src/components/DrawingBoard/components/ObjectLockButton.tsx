@@ -1,9 +1,8 @@
 "use client";
 
-import { useRef, useEffect } from "react";
 import type { Canvas } from "fabric";
-import { MdLock, MdLockOpen, MdDeleteOutline } from "react-icons/md";
-import { LockOpenIcon, LockClosedIcon } from "./Icons";
+import { useEffect, useRef } from "react";
+import { LockClosedIcon, LockOpenIcon, TrashIcon } from "./Icons";
 
 interface ObjectLockButtonProps {
   fabricRef: React.MutableRefObject<Canvas | null>;
@@ -12,12 +11,11 @@ interface ObjectLockButtonProps {
   onDelete?: () => void;
 }
 
-function LockIcon({ open }: { open: boolean }) {
-  
+function LockIcon({ open, stroke }: { open: boolean; stroke?: string }) {
   return open ? (
-    <LockOpenIcon width={16} height={16} />
+    <LockOpenIcon width={16} height={16} stroke={stroke} strokeWidth={1} />
   ) : (
-    <LockClosedIcon width={16} height={16} />
+    <LockClosedIcon width={16} height={16} stroke={stroke} strokeWidth={1} />
   );
 }
 
@@ -36,9 +34,9 @@ export default function ObjectLockButton({ fabricRef, locked, onToggle, onDelete
       if (!fc || !obj) return;
 
       const vpt = fc.viewportTransform as number[];
-      const r   = obj.getBoundingRect();
+      const r = obj.getBoundingRect();
       // Convert world-space bounding box to screen pixels
-      const sx  = (r.left + r.width / 2) * vpt[0] + vpt[4];
+      const sx = (r.left + r.width / 2) * vpt[0] + vpt[4];
       // Place just above the top edge of the selection bounding box
       const sy = r.top * vpt[3] + vpt[5] - 12;
       // Clamp to stay below the BoardHeader (~60px tall) plus a small margin
@@ -53,8 +51,8 @@ export default function ObjectLockButton({ fabricRef, locked, onToggle, onDelete
       }
 
       btn.style.visibility = "visible";
-      btn.style.left      = `${sx}px`;
-      btn.style.top       = `${clampedTop}px`;
+      btn.style.left = `${sx}px`;
+      btn.style.top = `${clampedTop}px`;
       btn.style.transform = "translate(-50%, -100%)";
     };
 
@@ -89,7 +87,7 @@ export default function ObjectLockButton({ fabricRef, locked, onToggle, onDelete
         title={locked ? "Unlock object" : "Lock object"}
         aria-label={locked ? "Unlock object" : "Lock object"}
       >
-        <LockIcon open={!locked} />
+        <LockIcon open={!locked} stroke={locked ? "#fff" : "#444"} />
       </button>
       {onDelete && !locked && (
         <>
@@ -104,7 +102,7 @@ export default function ObjectLockButton({ fabricRef, locked, onToggle, onDelete
             title="Delete object"
             aria-label="Delete object"
           >
-            <MdDeleteOutline size={16} />
+            <TrashIcon width={16} height={16} strokeWidth={1}/>
           </button>
         </>
       )}

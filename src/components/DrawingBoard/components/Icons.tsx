@@ -122,19 +122,19 @@ export const ChevronUpIcon = ({ width = 22, height = 22, strokeWidth = 2, stroke
     )
 }
 
-export const LockOpenIcon = ({ width = 22, height = 22, strokeWidth = 2 }: IconProps) => {
+export const LockOpenIcon = ({ width = 22, height = 22, strokeWidth = 2, stroke = "black" }: IconProps) => {
     return (
         <svg width={width} height={height} viewBox="0 0 17 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M2.575 6.48571C2.575 3.4468 4.98357 1 7.975 1C9.83842 1 11.4757 1.94943 12.4455 3.4M2.8 7.4C1.81 7.4 1 8.22286 1 9.22857V18.3714C1 19.3771 1.81 20.2 2.8 20.2H13.6C14.59 20.2 15.4 19.3771 15.4 18.3714V9.22857C15.4 8.22286 14.59 7.4 13.6 7.4H2.8Z" stroke="black" stroke-width={strokeWidth} stroke-linecap="round" />
+            <path d="M2.575 6.48571C2.575 3.4468 4.98357 1 7.975 1C9.83842 1 11.4757 1.94943 12.4455 3.4M2.8 7.4C1.81 7.4 1 8.22286 1 9.22857V18.3714C1 19.3771 1.81 20.2 2.8 20.2H13.6C14.59 20.2 15.4 19.3771 15.4 18.3714V9.22857C15.4 8.22286 14.59 7.4 13.6 7.4H2.8Z" stroke={stroke} stroke-width={strokeWidth} stroke-linecap="round" />
         </svg>
 
     )
 }
 
-export const LockClosedIcon = ({ width = 22, height = 22, strokeWidth = 2 }: IconProps) => {
+export const LockClosedIcon = ({ width = 22, height = 22, strokeWidth = 2, stroke = "black" }: IconProps) => {
     return (
         <svg width={width} height={height} viewBox="0 0 17 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M2.8 7.4V6.48571C2.8 3.4468 5.20857 1 8.2 1C11.1914 1 13.6 3.4468 13.6 6.48571V7.4M2.8 7.4C1.81 7.4 1 8.22286 1 9.22857V18.3714C1 19.3771 1.81 20.2 2.8 20.2H13.6C14.59 20.2 15.4 19.3771 15.4 18.3714V9.22857C15.4 8.22286 14.59 7.4 13.6 7.4M2.8 7.4H13.6" stroke="black" stroke-width={strokeWidth} stroke-linecap="round" />
+            <path d="M2.8 7.4V6.48571C2.8 3.4468 5.20857 1 8.2 1C11.1914 1 13.6 3.4468 13.6 6.48571V7.4M2.8 7.4C1.81 7.4 1 8.22286 1 9.22857V18.3714C1 19.3771 1.81 20.2 2.8 20.2H13.6C14.59 20.2 15.4 19.3771 15.4 18.3714V9.22857C15.4 8.22286 14.59 7.4 13.6 7.4M2.8 7.4H13.6" stroke={stroke} stroke-width={strokeWidth} stroke-linecap="round" />
         </svg>
 
     )
@@ -144,6 +144,23 @@ export const TrashIcon = ({ width = 22, height = 22, strokeWidth = 2 }: IconProp
     return (
         <svg width={width} height={height} viewBox="0 0 18 20" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M1 4.17647H17M6 1H12M12.5 19H5.5C4.39543 19 3.5 18.0519 3.5 16.8824L3.0434 5.27937C3.01973 4.67783 3.47392 4.17647 4.04253 4.17647H13.9575C14.5261 4.17647 14.9803 4.67783 14.9566 5.27937L14.5 16.8824C14.5 18.0519 13.6046 19 12.5 19Z" stroke="black" stroke-width={strokeWidth} stroke-linecap="round" />
+        </svg>
+    )
+}
+
+export const TVIcon = ({ width = 22, height = 22, strokeWidth = 2, stroke = "black" }: IconProps) => {
+    return (
+        <svg width={width} height={height} viewBox="0 0 20 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6.625 17L10 13.5714L13.375 17M3.25 13.5714H16.75C17.9926 13.5714 19 12.5481 19 11.2857V3.28571C19 2.02335 17.9926 1 16.75 1H3.25C2.00736 1 1 2.02335 1 3.28571V11.2857C1 12.5481 2.00736 13.5714 3.25 13.5714Z" stroke={stroke} stroke-width={strokeWidth} stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+
+    )
+}
+
+export const CheckmarkIcon = ({ width = 22, height = 22, strokeWidth = 2, stroke = "black" }: IconProps) => {
+    return (
+        <svg width={width} height={height} viewBox="0 0 12 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10.6 1L3.44048 8.2L1 5.74572" stroke={stroke} stroke-width={strokeWidth} stroke-linecap="round" stroke-linejoin="round" />
         </svg>
     )
 }

@@ -23,7 +23,9 @@ import {
   StarIcon,
   TextIcon,
   TriangleIcon,
-  UploadIcon
+  UploadIcon,
+  TVIcon,
+  CheckmarkIcon
 } from "./Icons";
 
 const ICON_SIZE = 17;
@@ -44,9 +46,58 @@ const makeIcons = (color: string): { type: ShapeType; label: string; icon: React
   { type: "line", label: "Line", icon: <LineIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
   { type: "eraser", label: "Eraser", icon: <EraserIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
   { type: "upload", label: "Upload", icon: <UploadIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
+  { type: "tv", label: "GIFS", icon: <TVIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
 ];
 
 const SHAPES_TYPES = ["rect", "circle", "triangle", "star", "heart"];
+
+const POPOVER_STYLE: React.CSSProperties = {
+  background: "rgba(255,255,255,0.97)",
+  backdropFilter: "blur(12px)",
+  border: "1px solid rgba(0,0,0,0.08)",
+};
+
+interface ToolPopoverItem {
+  key: string;
+  icon: React.ReactNode;
+  label: string;
+  active?: boolean;
+  onClick: () => void;
+}
+
+function ToolPopover({
+  popoverRef,
+  items,
+  style,
+}: {
+  popoverRef?: React.RefObject<HTMLDivElement | null>;
+  items: ToolPopoverItem[];
+  style?: React.CSSProperties;
+}) {
+  return (
+    <div
+      ref={popoverRef}
+      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 flex flex-col gap-2 p-3 rounded-lg popover-enter-up z-[300] bg-fg shadow-lg"
+      style={{ ...style }}
+    >
+      {items.map(({ key, icon, label, active, onClick }) => (
+        <button
+          key={key}
+          title={label}
+          aria-label={label}
+          onClick={onClick}
+          className={`flex items-center justify-between gap-1 p-2 rounded-md transition-colors flex-1 min-w-[52px] cursor-pointer ${
+            active ? "bg-accent text-white" : "text-[#111] hover:bg-black/[0.07]"
+          }`}
+        >
+          <div><CheckmarkIcon strokeWidth={1} width={10} height={10} stroke="white"/></div>
+          {icon}
+          <span className={`text-xs leading-none ${active ? "text-white/70" : "text-gray-400"}`}>{label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
 
 interface DrawingToolsProps {
   tool: Tool;
@@ -233,12 +284,6 @@ export default function DrawingTools({
     </button>
   );
 
-  const popoverStyle: React.CSSProperties = {
-    background: "rgba(255,255,255,0.97)",
-    backdropFilter: "blur(12px)",
-    border: "1px solid rgba(0,0,0,0.08)",
-  };
-
   const isDrawActive = tool === "pencil" || tool === "brush" || tool === "line" || tool === "eraser";
   const drawIconColor = isDrawActive ? ICON_COLOR_ACTIVE : ICON_COLOR;
   const drawIcon = tool === "brush" && isDrawActive
@@ -301,35 +346,23 @@ export default function DrawingTools({
         )}
 
         {drawOpen && (
-          <div
-            ref={drawPopoverRef}
-            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 flex gap-2 p-3 rounded-2xl popover-enter-up z-[300]"
-            style={popoverStyle}
-          >
-            {(
+          <ToolPopover
+            popoverRef={drawPopoverRef}
+            items={(
               [
                 { t: "pencil" as Tool, label: "Pencil" },
                 { t: "line" as Tool, label: "Line" },
                 { t: "brush" as Tool, label: "Brush" },
                 { t: "eraser" as Tool, label: "Eraser" },
               ] as const
-            ).map(({ t, label }) => {
-              const icon = makeIcons(tool === t ? ICON_COLOR_ACTIVE : ICON_COLOR).find(i => i.type === t)?.icon;
-              return (
-                <button
-                  key={t}
-                  title={label}
-                  aria-label={label}
-                  onClick={() => { onToolChange(t); setDrawOpen(false); }}
-                  className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px] cursor-pointer ${tool === t ? "bg-accent text-white" : "text-[#111] hover:bg-black/[0.07]"
-                    }`}
-                >
-                  {icon}
-                  <span className={`text-xs leading-none ${tool === t ? "text-white/70" : "text-gray-400"}`}>{label}</span>
-                </button>
-              );
-            })}
-          </div>
+            ).map(({ t, label }) => ({
+              key: t,
+              label,
+              active: tool === t,
+              icon: makeIcons(tool === t ? ICON_COLOR_ACTIVE : ICON_COLOR).find(i => i.type === t)?.icon,
+              onClick: () => { onToolChange(t); setDrawOpen(false); },
+            }))}
+          />
         )}
       </div>
 
@@ -354,28 +387,16 @@ export default function DrawingTools({
         )}
 
         {shapeOpen && (
-          <div
-            ref={shapePopoverRef}
-            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 flex gap-2 p-3 rounded-2xl popover-enter-up z-[300]"
-            style={{ ...popoverStyle, minWidth: 220 }}
-          >
-            {makeIcons(ICON_COLOR).filter(i => SHAPES_TYPES.includes(i.type)).map((s) => (
-              <button
-                key={s.type}
-                title={s.label}
-                aria-label={s.label}
-                onClick={() => {
-                  setLastShape(s.type);
-                  onAddShape(s.type);
-                  setShapeOpen(false);
-                }}
-                className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-black/[0.07] transition-colors flex-1 cursor-pointer text-[#1a1a1a]"
-              >
-                {s.icon}
-                <span className="text-xs text-gray-400 leading-none">{s.label}</span>
-              </button>
-            ))}
-          </div>
+          <ToolPopover
+            popoverRef={shapePopoverRef}
+            style={{ minWidth: 220 }}
+            items={makeIcons(ICON_COLOR).filter(i => SHAPES_TYPES.includes(i.type)).map(s => ({
+              key: s.type,
+              label: s.label,
+              icon: s.icon,
+              onClick: () => { setLastShape(s.type); onAddShape(s.type); setShapeOpen(false); },
+            }))}
+          />
         )}
       </div>
 
@@ -407,7 +428,7 @@ export default function DrawingTools({
             }
           },
           "Add GIF or Sticker",
-          <PiGifFill className="w-5 h-5" />,
+           makeIcons(tool === "tv" ? ICON_COLOR_ACTIVE : ICON_COLOR).find(x => x.type === "tv")?.icon,
           { btnRef: gifButtonRef, ariaExpanded: gifOpen, activeClass: "bg-black/[0.07] text-[#111]" },
         )}
 
@@ -415,7 +436,7 @@ export default function DrawingTools({
           <div
             ref={gifPopoverRef}
             className="p-3 rounded-2xl z-[300] popover-enter-up"
-            style={{ ...popoverStyle, ...gifPopoverStyle }}
+            style={{ ...POPOVER_STYLE, ...gifPopoverStyle }}
           >
             <GifPicker
               onSelect={(id, url) => {

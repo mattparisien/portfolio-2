@@ -21,7 +21,7 @@ export type FabricMods = {
   Pattern: typeof Pattern;
 };
 
-export type ShapeType = "select" | "text" | "rect" | "circle" | "triangle" | "star" | "heart" | "arrow" | "line" | 'pen' | 'pencil' | 'brush' | 'eraser' | 'upload';
+export type ShapeType = "select" | "text" | "rect" | "circle" | "triangle" | "star" | "heart" | "arrow" | "line" | 'pen' | 'pencil' | 'brush' | 'eraser' | 'upload' | "tv";
 
 export interface Point {
   x: number;
