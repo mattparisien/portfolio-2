@@ -1,32 +1,52 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import classNames from "classnames";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { IoTriangleSharp } from "react-icons/io5";
 import {
   MdAutoFixOff,
-  MdBrush,
-  MdCircle,
-  MdCreate,
-  MdFavorite,
-  MdHorizontalRule,
-  MdKeyboardArrowUp,
-  MdNearMe,
-  MdRectangle,
-  MdStar,
-  MdTextFields,
-  MdUpload,
+  MdBrush
 } from "react-icons/md";
+import { PiGifFill } from "react-icons/pi";
 import type { ShapeType, Tool } from "../types";
 import GifPicker from "./GifPicker";
-import { PiGifFill } from "react-icons/pi";
+import {
+  ChevronUpIcon,
+  CircleIcon,
+  EraserIcon,
+  HeartIcon,
+  LineIcon,
+  PencilIcon,
+  PenIcon,
+  SelectIcon,
+  SquareIcon,
+  StarIcon,
+  TextIcon,
+  TriangleIcon,
+  UploadIcon
+} from "./Icons";
 
-const SHAPES: { type: ShapeType; label: string; icon: React.ReactNode }[] = [
-  { type: "rect",     label: "Rectangle", icon: <MdRectangle className="w-5 h-5" /> },
-  { type: "circle",   label: "Circle",    icon: <MdCircle className="w-5 h-5" /> },
-  { type: "triangle", label: "Triangle",  icon: <IoTriangleSharp className="w-5 h-5" /> },
-  { type: "star",     label: "Star",      icon: <MdStar className="w-5 h-5" /> },
-  { type: "heart",    label: "Heart",     icon: <MdFavorite className="w-5 h-5" /> },
+const ICON_SIZE = 17;
+const ICON_STROKE_WIDTH = 1;
+const ICON_COLOR = "black";
+const ICON_COLOR_ACTIVE = "white";
+
+const makeIcons = (color: string): { type: ShapeType; label: string; icon: React.ReactNode }[] => [
+  { type: "select", label: "Select", icon: <SelectIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
+  { type: "text", label: "Text", icon: <TextIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
+  { type: "rect", label: "Rectangle", icon: <SquareIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
+  { type: "circle", label: "Circle", icon: <CircleIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
+  { type: "triangle", label: "Triangle", icon: <TriangleIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
+  { type: "star", label: "Star", icon: <StarIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
+  { type: "heart", label: "Heart", icon: <HeartIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
+  { type: "pencil", label: "Pencil", icon: <PencilIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
+  { type: "brush", label: "Brush", icon: <PenIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
+  { type: "line", label: "Line", icon: <LineIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
+  { type: "eraser", label: "Eraser", icon: <EraserIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
+  { type: "upload", label: "Upload", icon: <UploadIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
 ];
+
+const SHAPES_TYPES = ["rect", "circle", "triangle", "star", "heart"];
 
 interface DrawingToolsProps {
   tool: Tool;
@@ -47,34 +67,19 @@ interface DrawingToolsProps {
   onClearRequest?: () => void;
 }
 
-// Chevron button appended to split buttons — defined outside to prevent remounting on every render
-const Chevron = ({ open, onClick, ariaLabel, ariaExpanded }: { open: boolean; active: boolean; onClick: () => void; ariaLabel?: string; ariaExpanded?: boolean }) => (
-  <button
-    onClick={onClick}
-    title="More options"
-    aria-label={ariaLabel}
-    aria-expanded={ariaExpanded}
-    className={`w-6 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors ${
-      open ? "bg-black/[0.08] text-[#111]" : "text-[#aaa] hover:bg-black/[0.07] hover:text-[#111]"
-    }`}
-  >
-    <MdKeyboardArrowUp
-      className={`w-4 h-4 transition-transform duration-150 ${open ? "" : "rotate-180"}`}
-    />
-  </button>
-);
+
 
 export default function DrawingTools({
   tool, onToolChange, onAddShape, onAddText, onAddGif, onAddImage, closeSignal, uploadSignal, activeShapeType, onPopoverOpened, onClearRequest,
 }: DrawingToolsProps) {
-  const [lastShape, setLastShape]   = useState<ShapeType>("rect");
-  const [drawOpen, setDrawOpen]     = useState(false);
-  const [shapeOpen, setShapeOpen]   = useState(false);
-  const [gifOpen, setGifOpen]       = useState(false);
-  const [uploading, setUploading]   = useState(false);
+  const [lastShape, setLastShape] = useState<ShapeType>("rect");
+  const [drawOpen, setDrawOpen] = useState(false);
+  const [shapeOpen, setShapeOpen] = useState(false);
+  const [gifOpen, setGifOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [gifPopoverStyle, setGifPopoverStyle] = useState<React.CSSProperties>({});
-  const uploadFileRef  = useRef<HTMLInputElement>(null);
-  const gifButtonRef   = useRef<HTMLButtonElement>(null);
+  const uploadFileRef = useRef<HTMLInputElement>(null);
+  const gifButtonRef = useRef<HTMLButtonElement>(null);
 
   // Close all when a sibling component opens a popover
   useEffect(() => {
@@ -95,11 +100,11 @@ export default function DrawingTools({
     if (tool === "shape" && activeShapeType) setLastShape(activeShapeType);
   }, [tool, activeShapeType]);
 
-  const drawWrapRef    = useRef<HTMLDivElement>(null);
+  const drawWrapRef = useRef<HTMLDivElement>(null);
   const drawPopoverRef = useRef<HTMLDivElement>(null);
-  const shapeWrapRef    = useRef<HTMLDivElement>(null);
+  const shapeWrapRef = useRef<HTMLDivElement>(null);
   const shapePopoverRef = useRef<HTMLDivElement>(null);
-  const gifWrapRef    = useRef<HTMLDivElement>(null);
+  const gifWrapRef = useRef<HTMLDivElement>(null);
   const gifPopoverRef = useRef<HTMLDivElement>(null);
 
   // Click-outside: draw popover
@@ -172,16 +177,59 @@ export default function DrawingTools({
     }
   };
 
-  const toolBtn = (active: boolean, onClick: () => void, title: string, icon: React.ReactNode) => (
+  const toolBtn = (
+    active: boolean,
+    onClick: () => void,
+    title: string,
+    icon: React.ReactNode,
+    opts?: {
+      btnRef?: RefObject<HTMLButtonElement | null>;
+      disabled?: boolean;
+      ariaExpanded?: boolean;
+      activeClass?: string;
+      extraClass?: string;
+      paddingClass?: string;
+    }
+  ) => {
+    const activeClass = opts?.activeClass ?? "bg-accent text-white";
+    return (
+      <button
+        ref={opts?.btnRef}
+        title={title}
+        aria-label={title}
+        aria-expanded={opts?.ariaExpanded}
+        disabled={opts?.disabled}
+        onClick={onClick}
+        className={classNames("rounded-md flex items-center justify-center transition-colors cursor-pointer", {
+          [activeClass]: active,
+          "text-[#111] hover:bg-black/[0.07]": !active,
+          "disabled:opacity-50 disabled:cursor-not-allowed": opts?.disabled,
+          [opts?.extraClass ?? ""]: !!opts?.extraClass,
+          [opts?.paddingClass ?? ""]: !!opts?.paddingClass,
+          "p-2": !opts?.paddingClass,
+        })}
+      >
+        {icon}
+      </button>
+    );
+  };
+
+  const arrowBtn = (
+    open: boolean,
+    onClick: () => void,
+    ariaLabel: string,
+  ) => (
     <button
-      title={title}
-      aria-label={title}
+      title={ariaLabel}
+      aria-label={ariaLabel}
+      aria-expanded={open}
       onClick={onClick}
-      className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
-        active ? "bg-accent text-white" : "text-[#111] hover:bg-black/[0.07]"
-      }`}
+      className={classNames("rounded-md flex items-center justify-center transition-colors cursor-pointer px-1 py-2 text-[#111]", {
+        "bg-black/[0.08]": open,
+        "hover:bg-black/[0.07]": !open,
+      })}
     >
-      {icon}
+      <ChevronUpIcon height={ICON_SIZE} width={6} strokeWidth={ICON_STROKE_WIDTH} className={`transition-transform duration-150 ${open ? "" : "rotate-180"}`} />
     </button>
   );
 
@@ -192,21 +240,22 @@ export default function DrawingTools({
   };
 
   const isDrawActive = tool === "pencil" || tool === "brush" || tool === "line" || tool === "eraser";
+  const drawIconColor = isDrawActive ? ICON_COLOR_ACTIVE : ICON_COLOR;
   const drawIcon = tool === "brush" && isDrawActive
     ? <MdBrush className="w-5 h-5" />
     : tool === "eraser" && isDrawActive
-    ? <MdAutoFixOff className="w-5 h-5" />
-    : tool === "line" && isDrawActive
-    ? <MdHorizontalRule className="w-5 h-5" />
-    : <MdCreate className="w-5 h-5" />;
+      ? <MdAutoFixOff className="w-5 h-5" />
+      : tool === "line" && isDrawActive
+        ? makeIcons(drawIconColor).find(x => x.type === "line")?.icon
+        : makeIcons(drawIconColor).find(x => x.type === "pencil")?.icon;
 
-  const lastShapeIcon = SHAPES.find(s => s.type === lastShape)?.icon ?? <IoTriangleSharp className="w-5 h-5" />;
+  const shapeIconColor = tool === "shape" ? ICON_COLOR_ACTIVE : ICON_COLOR;
+  const lastShapeIcon = makeIcons(shapeIconColor).find(s => s.type === lastShape)?.icon ?? <IoTriangleSharp className="w-5 h-5" />;
 
-  const sep = <div className="w-px h-6 bg-black/[0.1] mx-0.5 self-center flex-shrink-0" />;
 
   return (
     <div
-      className="drawing-ui-overlay fixed bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-1 p-2 rounded-2xl z-[200]"
+      className="drawing-ui-overlay fixed bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 rounded-2xl z-[200]"
       style={{
         background: "rgba(255,255,255,0.92)",
         backdropFilter: "blur(12px)",
@@ -218,47 +267,38 @@ export default function DrawingTools({
         tool === "select",
         () => onToolChange("select"),
         "Select",
-        <MdNearMe className="w-5 h-5 -scale-x-100" />,
+        makeIcons(tool === "select" ? ICON_COLOR_ACTIVE : ICON_COLOR).find(x => x.type === "select")?.icon,
       )}
 
-      {sep}
+
 
       {/* Text */}
       {toolBtn(
         tool === "text",
         () => onAddText(),
         "Text",
-        <MdTextFields className="w-5 h-5" />,
+        makeIcons(tool === "text" ? ICON_COLOR_ACTIVE : ICON_COLOR).find(x => x.type === "text")?.icon
       )}
 
-      {sep}
+
 
       {/* Draw: primary = activate current draw tool (default pencil), chevron = brush / eraser picker */}
       <div ref={drawWrapRef} className="relative flex items-center">
-        <button
-          title={tool === "brush" ? "Brush" : tool === "eraser" ? "Eraser" : tool === "line" ? "Line" : "Pencil"}
-          aria-label={tool === "brush" ? "Brush" : tool === "eraser" ? "Eraser" : tool === "line" ? "Line" : "Pencil"}
-          onClick={() => {
-            if (!isDrawActive) onToolChange("pencil");
-            setDrawOpen(false);
-          }}
-          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
-            isDrawActive ? "bg-accent text-white" : "text-[#111] hover:bg-black/[0.07]"
-          }`}
-        >
-          {drawIcon}
-        </button>
-        <Chevron
-          open={drawOpen}
-          active={isDrawActive}
-          ariaLabel="Drawing tools"
-          ariaExpanded={drawOpen}
-          onClick={() => {
+        {toolBtn(
+          isDrawActive,
+          () => { if (!isDrawActive) onToolChange("pencil"); setDrawOpen(false); },
+          tool === "brush" ? "Brush" : tool === "eraser" ? "Eraser" : tool === "line" ? "Line" : "Pencil",
+          drawIcon,
+        )}
+        {arrowBtn(
+          drawOpen,
+          () => {
             const next = !drawOpen;
             setDrawOpen(next);
             if (next) { setShapeOpen(false); setGifOpen(false); onPopoverOpened?.(); }
-          }}
-        />
+          },
+          "Drawing tools",
+        )}
 
         {drawOpen && (
           <div
@@ -268,54 +308,50 @@ export default function DrawingTools({
           >
             {(
               [
-                { t: "pencil" as Tool, icon: <MdCreate className="w-5 h-5" />,       label: "Pencil" },
-                { t: "line"   as Tool, icon: <MdHorizontalRule className="w-5 h-5" />, label: "Line"   },
-                { t: "brush"  as Tool, icon: <MdBrush className="w-5 h-5" />,         label: "Brush"  },
-                { t: "eraser" as Tool, icon: <MdAutoFixOff className="w-5 h-5" />,    label: "Eraser" },
+                { t: "pencil" as Tool, label: "Pencil" },
+                { t: "line" as Tool, label: "Line" },
+                { t: "brush" as Tool, label: "Brush" },
+                { t: "eraser" as Tool, label: "Eraser" },
               ] as const
-            ).map(({ t, icon, label }) => (
-              <button
-                key={t}
-                title={label}
-                aria-label={label}
-                onClick={() => { onToolChange(t); setDrawOpen(false); }}
-                className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px] cursor-pointer ${
-                  tool === t ? "bg-accent text-white" : "text-[#111] hover:bg-black/[0.07]"
-                }`}
-              >
-                {icon}
-                <span className={`text-xs leading-none ${tool === t ? "text-white/70" : "text-gray-400"}`}>{label}</span>
-              </button>
-            ))}
+            ).map(({ t, label }) => {
+              const icon = makeIcons(tool === t ? ICON_COLOR_ACTIVE : ICON_COLOR).find(i => i.type === t)?.icon;
+              return (
+                <button
+                  key={t}
+                  title={label}
+                  aria-label={label}
+                  onClick={() => { onToolChange(t); setDrawOpen(false); }}
+                  className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors flex-1 min-w-[52px] cursor-pointer ${tool === t ? "bg-accent text-white" : "text-[#111] hover:bg-black/[0.07]"
+                    }`}
+                >
+                  {icon}
+                  <span className={`text-xs leading-none ${tool === t ? "text-white/70" : "text-gray-400"}`}>{label}</span>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
 
-      {sep}
+
 
       {/* Shapes: primary = activate shape draw mode, chevron = shape picker */}
       <div ref={shapeWrapRef} className="relative flex items-center">
-        <button
-          title={`Draw ${lastShape}`}
-          aria-label={`Draw ${lastShape}`}
-          onClick={() => onAddShape(lastShape)}
-          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
-            tool === "shape" ? "bg-accent text-white" : "text-[#111] hover:bg-black/[0.07]"
-          }`}
-        >
-          {lastShapeIcon}
-        </button>
-        <Chevron
-          open={shapeOpen}
-          active={tool === "shape"}
-          ariaLabel="Shape options"
-          ariaExpanded={shapeOpen}
-          onClick={() => {
+        {toolBtn(
+          tool === "shape",
+          () => onAddShape(lastShape),
+          `Draw ${lastShape}`,
+          lastShapeIcon,
+        )}
+        {arrowBtn(
+          shapeOpen,
+          () => {
             const next = !shapeOpen;
             setShapeOpen(next);
             if (next) { setDrawOpen(false); setGifOpen(false); onPopoverOpened?.(); }
-          }}
-        />
+          },
+          "Shape options",
+        )}
 
         {shapeOpen && (
           <div
@@ -323,7 +359,7 @@ export default function DrawingTools({
             className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 flex gap-2 p-3 rounded-2xl popover-enter-up z-[300]"
             style={{ ...popoverStyle, minWidth: 220 }}
           >
-            {SHAPES.map((s) => (
+            {makeIcons(ICON_COLOR).filter(i => SHAPES_TYPES.includes(i.type)).map((s) => (
               <button
                 key={s.type}
                 title={s.label}
@@ -343,16 +379,13 @@ export default function DrawingTools({
         )}
       </div>
 
-      {sep}
+
 
       {/* GIF / Sticker picker */}
       <div ref={gifWrapRef} className="relative">
-        <button
-          ref={gifButtonRef}
-          title="Add GIF or Sticker"
-          aria-label="Insert GIF"
-          aria-expanded={gifOpen}
-          onClick={() => {
+        {toolBtn(
+          gifOpen,
+          () => {
             const next = !gifOpen;
             setGifOpen(next);
             if (next) {
@@ -363,7 +396,7 @@ export default function DrawingTools({
               // fixed-inside-transformed-ancestor bug (the toolbar has
               // transform: translateX(-50%) which creates a new containing block).
               if (gifButtonRef.current && gifWrapRef.current) {
-                const btnRect  = gifButtonRef.current.getBoundingClientRect();
+                const btnRect = gifButtonRef.current.getBoundingClientRect();
                 const wrapRect = gifWrapRef.current.getBoundingClientRect();
                 const POPOVER_W = Math.min(420, window.innerWidth - 16);
                 let leftRel = btnRect.left + btnRect.width / 2 - wrapRect.left - POPOVER_W / 2;
@@ -372,13 +405,11 @@ export default function DrawingTools({
                 setGifPopoverStyle({ position: "absolute", left: leftRel, bottom: "calc(100% + 8px)", width: POPOVER_W });
               }
             }
-          }}
-          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
-            gifOpen ? "bg-black/[0.07] text-[#111]" : "text-[#111] hover:bg-black/[0.07]"
-          }`}
-        >
-          <PiGifFill className="w-5 h-5" />
-        </button>
+          },
+          "Add GIF or Sticker",
+          <PiGifFill className="w-5 h-5" />,
+          { btnRef: gifButtonRef, ariaExpanded: gifOpen, activeClass: "bg-black/[0.07] text-[#111]" },
+        )}
 
         {gifOpen && (
           <div
@@ -396,25 +427,23 @@ export default function DrawingTools({
         )}
       </div>
 
-      {sep}
+
 
       {/* Upload image — opens file dialog directly */}
-      <button
-        title="Upload image"
-        aria-label="Upload image"
-        disabled={uploading}
-        onClick={() => uploadFileRef.current?.click()}
-        className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-[#111] hover:bg-black/[0.07]"
-      >
-        {uploading ? (
+      {toolBtn(
+        false,
+        () => uploadFileRef.current?.click(),
+        "Upload image",
+        uploading ? (
           <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
         ) : (
-          <MdUpload className="w-5 h-5" />
-        )}
-      </button>
+          makeIcons(ICON_COLOR).find(i => i.type === "upload")?.icon
+        ),
+        { disabled: uploading },
+      )}
       <input
         ref={uploadFileRef}
         type="file"

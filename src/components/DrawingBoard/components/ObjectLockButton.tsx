@@ -3,6 +3,7 @@
 import { useRef, useEffect } from "react";
 import type { Canvas } from "fabric";
 import { MdLock, MdLockOpen, MdDeleteOutline } from "react-icons/md";
+import { LockOpenIcon, LockClosedIcon } from "./Icons";
 
 interface ObjectLockButtonProps {
   fabricRef: React.MutableRefObject<Canvas | null>;
@@ -12,10 +13,11 @@ interface ObjectLockButtonProps {
 }
 
 function LockIcon({ open }: { open: boolean }) {
+  
   return open ? (
-    <MdLockOpen size={16} />
+    <LockOpenIcon width={16} height={16} />
   ) : (
-    <MdLock size={16} />
+    <LockClosedIcon width={16} height={16} />
   );
 }
 
