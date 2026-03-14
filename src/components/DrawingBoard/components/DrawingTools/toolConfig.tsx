@@ -29,20 +29,20 @@ export const POPOVER_STYLE: CSSProperties = {
   border: "1px solid rgba(0,0,0,0.08)",
 };
 
-export function makeIcons(color: string): { type: ShapeType; label: string; icon: ReactNode }[] {
+export function makeIcons(color: string, size: number = ICON_SIZE): { type: ShapeType; label: string; icon: ReactNode }[] {
   return [
-    { type: "select", label: "Select", icon: <SelectIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
-    { type: "text", label: "Text", icon: <TextIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
-    { type: "rect", label: "Rectangle", icon: <SquareIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
-    { type: "circle", label: "Circle", icon: <CircleIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
-    { type: "triangle", label: "Triangle", icon: <TriangleIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
-    { type: "star", label: "Star", icon: <StarIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
-    { type: "heart", label: "Heart", icon: <HeartIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
-    { type: "pencil", label: "Pencil", icon: <PencilIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
-    { type: "brush", label: "Brush", icon: <PenIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
-    { type: "line", label: "Line", icon: <LineIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
-    { type: "eraser", label: "Eraser", icon: <EraserIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
-    { type: "upload", label: "Upload", icon: <UploadIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
-    { type: "tv", label: "GIFS", icon: <TVIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
+    { type: "select", label: "Select", icon: <SelectIcon width={size} height={size} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
+    { type: "text", label: "Text", icon: <TextIcon width={size} height={size} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
+    { type: "rect", label: "Rectangle", icon: <SquareIcon width={size} height={size} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
+    { type: "circle", label: "Circle", icon: <CircleIcon width={size} height={size} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
+    { type: "triangle", label: "Triangle", icon: <TriangleIcon width={size} height={size} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
+    { type: "star", label: "Star", icon: <StarIcon width={size} height={size} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
+    { type: "heart", label: "Heart", icon: <HeartIcon width={size} height={size} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
+    { type: "pencil", label: "Pencil", icon: <PencilIcon width={size} height={size} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
+    { type: "brush", label: "Brush", icon: <PenIcon width={size} height={size} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
+    { type: "line", label: "Line", icon: <LineIcon width={size} height={size} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
+    { type: "eraser", label: "Eraser", icon: <EraserIcon width={size} height={size} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
+    { type: "upload", label: "Upload", icon: <UploadIcon width={size} height={size} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
+    { type: "tv", label: "GIFS", icon: <TVIcon width={size} height={size} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
   ];
 }

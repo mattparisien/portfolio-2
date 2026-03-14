@@ -71,8 +71,8 @@ export function DrawToolGroup({ tool, onToolChange, isOpen, onOpen, onClose }: D
           ).map(({ t, label }) => ({
             key: t,
             label,
-            active: tool === t,
-            icon: makeIcons(ICON_COLOR_ACTIVE).find(i => i.type === t)?.icon,
+            active: isDrawActive ? tool === t : t === "pencil",
+            icon: makeIcons(ICON_COLOR_ACTIVE, 13).find(i => i.type === t)?.icon,
             onClick: () => { onToolChange(t); onClose(); },
           }))}
         />

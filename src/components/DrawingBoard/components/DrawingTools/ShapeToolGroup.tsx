@@ -69,12 +69,13 @@ export function ShapeToolGroup({
         <ToolPopover
           popoverRef={popoverRef}
           style={{ minWidth: 100 }}
-          items={makeIcons(ICON_COLOR_ACTIVE)
+          items={makeIcons(ICON_COLOR_ACTIVE, 13)
             .filter(i => SHAPES_TYPES.includes(i.type))
             .map(s => ({
               key: s.type,
               label: s.label,
               icon: s.icon,
+              active: lastShape === s.type,
               onClick: () => {
                 setLastShape(s.type);
                 onAddShape(s.type);

@@ -29,7 +29,7 @@ const ToolPopover = ({
           title={label}
           aria-label={label}
           onClick={onClick}
-          className="flex items-center justify-between gap-1 p-2 rounded-md transition-colors flex-1 min-w-[52px] cursor-pointer text-bg hover:bg-accent"
+          className="flex items-center justify-between gap-3 p-2 rounded-md transition-colors flex-1 min-w-[52px] cursor-pointer text-bg hover:bg-accent"
         >
           <div className="w-[10px] shrink-0">{active && <CheckmarkIcon strokeWidth={1} width={10} height={10} stroke="white" />}</div>
           <div className="flex flex-1 gap-2 items-center">
