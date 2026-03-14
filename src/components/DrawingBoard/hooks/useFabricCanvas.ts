@@ -4,7 +4,8 @@ import type { Canvas, IText, Textbox } from "fabric";
 import type { Tool, FabricMods, TextProps, ShapeType, TextGradient } from "../types";
 import { DEFAULT_TEXT_PROPS } from "../types";
 import type { SaveableObj } from "./useBoardSync";
-import { BOARD_ID, BG_COLOR } from "../constants";
+import { BOARD_ID } from "../constants";
+import { getCanvasBgColor } from "../canvasUtils";
 import { decodeGif } from "../gifDecoder";
 import type { RoomEvent } from "@/liveblocks.config";
 
@@ -672,7 +673,7 @@ export function useFabricCanvas({
         height: window.innerHeight,
         isDrawingMode: false,
         selection: true,
-        backgroundColor: BG_COLOR,
+        backgroundColor: getCanvasBgColor(),
         selectionColor: "rgba(69,151,248,0.15)",
         selectionBorderColor: "#4597f8",
         selectionLineWidth: 2,

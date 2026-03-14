@@ -15,8 +15,6 @@ export const COLORS = [
 
 export const BRUSH_SIZES = [2, 5, 10, 20, 40] as const;
 
-export const BG_COLOR = "#F6F6F6";
-
 // ── Presence / multiplayer ────────────────────────────────────────────────
 
 export const CURSOR_COLORS= [

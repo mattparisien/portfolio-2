@@ -20,7 +20,7 @@ const ToolPopover = ({
   return (
     <div
       ref={popoverRef}
-      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 flex flex-col gap-0 p-2 rounded-lg popover-enter-up"
+      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 flex flex-col gap-0 p-2 rounded-lg bg-fg"
       style={{ ...style }}
     >
       {items.map(({ key, icon, label, active, onClick }) => (

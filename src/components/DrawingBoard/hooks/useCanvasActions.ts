@@ -4,7 +4,8 @@ import type { Canvas, IText } from "fabric";
 import type { Tool, ShapeType, FabricMods, TextProps, TextGradient } from "../types";
 import type { SaveableObj } from "./useBoardSync";
 import type { RoomEvent } from "@/liveblocks.config";
-import { BOARD_ID, BG_COLOR } from "../constants";
+import { BOARD_ID } from "../constants";
+import { getCanvasBgColor } from "../canvasUtils";
 import { decodeGif } from "../gifDecoder";
 
 const MIN_ZOOM = 0.25;
@@ -436,7 +437,7 @@ export function useCanvasActions({
     const fc = fabricRef.current;
     if (!fc) return;
     fc.clear();
-    fc.backgroundColor = BG_COLOR;
+    fc.backgroundColor = getCanvasBgColor();
     fc.renderAll();
     gifCountRef.current = 0;
     stopGifLoop();

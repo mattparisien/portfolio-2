@@ -16,7 +16,8 @@ import { useFabricCanvas } from "./hooks/useFabricCanvas";
 import { useCanvasActions } from "./hooks/useCanvasActions";
 import type { Tool, TextProps, ShapeType, TextGradient } from "./types";
 import { DEFAULT_TEXT_PROPS } from "./types";
-import { BG_COLOR, getOrCreateUser, CURSOR_COLORS } from "./constants";
+import { getOrCreateUser, CURSOR_COLORS } from "./constants";
+import { getCanvasBgColor } from "./canvasUtils";
 import { useWindowWidth } from "@/app/hooks/useWindowWidth";
 import {
   RoomProvider as LiveblocksRoomProvider,
@@ -269,7 +270,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
 
     if (event.type === "CANVAS_CLEARED") {
       fc.clear();
-      fc.backgroundColor = BG_COLOR;
+      fc.backgroundColor = getCanvasBgColor();
       fc.renderAll();
       gifCountRef.current = 0;
       stopGifLoop();

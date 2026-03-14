@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useCallback } from "react";
 import type { StrokeRecord, Tool } from "../types";
-import { applyCtxStyles, replayStroke, clearToBackground } from "../canvasUtils";
-import { BOARD_ID, BG_COLOR } from "../constants";
+import { applyCtxStyles, replayStroke, clearToBackground, getCanvasBgColor } from "../canvasUtils";
+import { BOARD_ID } from "../constants";
 
 interface UseCanvasOptions {
   tool: Tool;
@@ -71,7 +71,7 @@ export function useCanvas(
     if (!ctx) return;
     ctxRef.current = ctx;
 
-    ctx.fillStyle = BG_COLOR;
+    ctx.fillStyle = getCanvasBgColor();
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.setTransform(zoom, 0, 0, zoom, offsetX, offsetY);
     applyCtxStyles(ctx, toolRef.current, colorRef.current, brushSizeRef.current);

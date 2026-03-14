@@ -1,5 +1,13 @@
 import type { Tool, StrokeRecord } from "./types";
-import { BG_COLOR } from "./constants";
+
+export function getCanvasBgColor(): string {
+  const el = document.createElement("div");
+  el.style.backgroundColor = "var(--color-canvas-bg)";
+  document.body.appendChild(el);
+  const resolved = getComputedStyle(el).backgroundColor;
+  document.body.removeChild(el);
+  return resolved || "#F6F6F6";
+}
 
 export function applyCtxStyles(
   ctx: CanvasRenderingContext2D,
@@ -72,7 +80,7 @@ export function clearToBackground(ctx: CanvasRenderingContext2D) {
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0); // pixel-space: fill whole canvas
   ctx.globalCompositeOperation = "source-over";
-  ctx.fillStyle = BG_COLOR;
+  ctx.fillStyle = getCanvasBgColor();
   ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   ctx.restore(); // restores transform + compositeOperation
 }
