@@ -39,7 +39,7 @@ export function makeIcons(color: string, size: number = ICON_SIZE): { type: Shap
     { type: "star", label: "Star", icon: <StarIcon width={size} height={size} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
     { type: "heart", label: "Heart", icon: <HeartIcon width={size} height={size} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
     { type: "pencil", label: "Pencil", icon: <PencilIcon width={size} height={size} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
-    { type: "brush", label: "Brush", icon: <PenIcon width={size} height={size} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
+    { type: "brush", label: "Pen", icon: <PenIcon width={size} height={size} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
     { type: "line", label: "Line", icon: <LineIcon width={size} height={size} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
     { type: "eraser", label: "Eraser", icon: <EraserIcon width={size} height={size} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },
     { type: "upload", label: "Upload", icon: <UploadIcon width={size} height={size} strokeWidth={ICON_STROKE_WIDTH} stroke={color} /> },

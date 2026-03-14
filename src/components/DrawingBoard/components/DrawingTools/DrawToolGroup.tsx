@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { MdBrush, MdAutoFixOff } from "react-icons/md";
+import { MdAutoFixOff } from "react-icons/md";
 import type { Tool } from "../../types";
 import ToolPopover from "./ToolPopover";
 import { ArrowButton, ToolButton } from "./ToolButton";
-import { ICON_COLOR, ICON_COLOR_ACTIVE, makeIcons } from "./toolConfig";
+import { ICON_COLOR, ICON_COLOR_ACTIVE, ICON_SIZE, ICON_STROKE_WIDTH, makeIcons } from "./toolConfig";
+import { PenIcon } from "../Icons";
 
 interface DrawToolGroupProps {
   tool: Tool;
@@ -34,13 +35,13 @@ export function DrawToolGroup({ tool, onToolChange, isOpen, onOpen, onClose }: D
   const isDrawActive = tool === "pencil" || tool === "brush" || tool === "line" || tool === "eraser";
   const drawIconColor = isDrawActive ? ICON_COLOR_ACTIVE : ICON_COLOR;
   const drawIcon =
-    tool === "brush" && isDrawActive ? <MdBrush className="w-5 h-5" /> :
+    tool === "brush" && isDrawActive ? <PenIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={drawIconColor} /> :
     tool === "eraser" && isDrawActive ? <MdAutoFixOff className="w-5 h-5" /> :
     tool === "line" && isDrawActive ? makeIcons(drawIconColor).find(x => x.type === "line")?.icon :
     makeIcons(drawIconColor).find(x => x.type === "pencil")?.icon;
 
   const drawLabel =
-    tool === "brush" ? "Brush" :
+    tool === "brush" ? "Pen" :
     tool === "eraser" ? "Eraser" :
     tool === "line" ? "Line" : "Pencil";
 
@@ -65,7 +66,7 @@ export function DrawToolGroup({ tool, onToolChange, isOpen, onOpen, onClose }: D
             [
               { t: "pencil" as Tool, label: "Pencil" },
               { t: "line" as Tool, label: "Line" },
-              { t: "brush" as Tool, label: "Brush" },
+              { t: "brush" as Tool, label: "Pen" },
               { t: "eraser" as Tool, label: "Eraser" },
             ] as const
           ).map(({ t, label }) => ({
