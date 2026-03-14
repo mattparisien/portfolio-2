@@ -137,12 +137,11 @@ export function useCanvasActions({
     const vpt = fc.viewportTransform as number[];
     const cx = (window.innerWidth  / 2 - vpt[4]) / vpt[0];
     const cy = (window.innerHeight / 2 - vpt[5]) / vpt[3];
-    const txt = new mods.Textbox("Type something", {
+    const txt = new mods.IText("Type something", {
       left: cx,
       top: cy,
       originX: "center",
       originY: "center",
-      width: 300,
       fontSize: Math.max(brushSizeRef.current * 2, 48),
       fill: colorRef.current,
       fontFamily: "sans-serif",

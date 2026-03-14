@@ -4,7 +4,7 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import type { Canvas } from "fabric";
 import PropertiesPanel from "./components/PropertiesPanel";
 import BoardHeader from "./components/BoardHeader";
-import DrawingTools from "./components/DrawingTools";
+import DrawingTools from "./components/DrawingTools/DrawingTools";
 import RemoteCursors from "./components/RemoteCursors";
 import ZoomNav from "./components/ZoomNav";
 import ActiveUsers from "./components/ActiveUsers";

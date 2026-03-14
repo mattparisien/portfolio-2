@@ -502,12 +502,11 @@ export function useFabricCanvas({
         const vpt = fc.viewportTransform as number[];
         const cx = (lastMouse.x - vpt[4]) / vpt[0];
         const cy = (lastMouse.y - vpt[5]) / vpt[3];
-        const txt = new mods.Textbox("Type something", {
+        const txt = new mods.IText("Type something", {
           left: cx,
           top: cy,
           originX: "center",
           originY: "center",
-          width: 300,
           fontSize: Math.max(brushSizeRef.current * 2, 24),
           fill: colorRef.current,
           fontFamily: "sans-serif",
@@ -1174,10 +1173,9 @@ export function useFabricCanvas({
           if (pendingTextRef.current !== null) return;
 
           const pointer = fc.getScenePoint(e.e);
-          const txt = new modsRef.current!.Textbox("", {
+          const txt = new modsRef.current!.IText("", {
             left: pointer.x,
             top: pointer.y,
-            width: 300,
             fontSize: Math.max(brushSizeRef.current * 2, 48),
             fill: colorRef.current,
             fontFamily: "sans-serif",
