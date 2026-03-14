@@ -215,7 +215,7 @@ export default function ColorPopover({ color, gradient = null, fabricRef, onColo
         <>
           <div className="mb-3">
             <ColorPicker
-              color={color.startsWith("#") ? color : "#000000"}
+              color={typeof color === "string" && color.startsWith("#") ? color : "#000000"}
               onChange={c => { onGradientChange?.(null); onColorChange(c); }}
             />
           </div>

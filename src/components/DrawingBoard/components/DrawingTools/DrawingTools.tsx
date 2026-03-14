@@ -8,6 +8,8 @@ import { ShapeToolGroup } from "./ShapeToolGroup";
 import { ToolButton } from "./ToolButton";
 import { UploadButton } from "./UploadButton";
 import { ICON_COLOR, ICON_COLOR_ACTIVE, makeIcons } from "./toolConfig";
+import OverlaySurface from "../../../OverlaySurface";
+import ToolOverlaySurface from "../ToolOverlaySurface";
 
 interface DrawingToolsProps {
   tool: Tool;
@@ -61,14 +63,7 @@ export default function DrawingTools({
   });
 
   return (
-    <div
-      className="drawing-ui-overlay fixed bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 rounded-xl z-[200]"
-      style={{
-        background: "rgba(255,255,255,0.92)",
-        backdropFilter: "blur(12px)",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-      }}
-    >
+    <ToolOverlaySurface className="fixed bottom-5 left-1/2 -translate-x-1/2">
       <ToolButton
         active={tool === "select"}
         onClick={() => onToolChange("select")}
@@ -97,6 +92,6 @@ export default function DrawingTools({
       <GifToolGroup onAddGif={onAddGif} {...groupProps("gif")} />
 
       <UploadButton onAddImage={onAddImage} uploadSignal={uploadSignal} />
-    </div>
-  );
+    </ToolOverlaySurface>
+  )
 }

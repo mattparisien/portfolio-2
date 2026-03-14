@@ -2,7 +2,9 @@
 
 import type { Canvas } from "fabric";
 import { useEffect, useRef } from "react";
+import FloatingPanel from "../../OverlaySurface";
 import { LockClosedIcon, LockOpenIcon, TrashIcon } from "./Icons";
+import ToolOverlaySurface from "./ToolOverlaySurface";
 
 interface ObjectLockButtonProps {
   fabricRef: React.MutableRefObject<Canvas | null>;
@@ -11,9 +13,9 @@ interface ObjectLockButtonProps {
   onDelete?: () => void;
 }
 
-function LockIcon({ open, stroke }: { open: boolean; stroke?: string }) {
+function LockIcon({ open, stroke, className }: { open: boolean; stroke?: string, className?: string }) {
   return open ? (
-    <LockOpenIcon width={16} height={16} stroke={stroke} strokeWidth={1} />
+    <LockOpenIcon width={16} height={16} stroke={stroke} strokeWidth={1} className={className} />
   ) : (
     <LockClosedIcon width={16} height={16} stroke={stroke} strokeWidth={1} />
   );
@@ -61,43 +63,23 @@ export default function ObjectLockButton({ fabricRef, locked, onToggle, onDelete
   }, [fabricRef]);
 
   return (
-    <div
+    <ToolOverlaySurface
       ref={btnRef}
-      className="fixed z-[300] flex items-center select-none"
-      style={{
-        left: "-9999px",
-        top: "-9999px",
-        background: "rgba(255,255,255,0.96)",
-        border: "1px solid rgba(0,0,0,0.1)",
-        backdropFilter: "blur(12px)",
-        borderRadius: 999,
-        padding: "5px 10px",
-        gap: 0,
-      }}
+      className="fixed flex items-center select-none -left-[9999px] -top-[9999px] gap-0"
     >
       <button
         className="flex items-center justify-center cursor-pointer hover:opacity-70 active:scale-95 transition-opacity"
-        style={{
-          background: locked ? "#111" : "transparent",
-          color: locked ? "#fff" : "#444",
-          padding: "2px 6px",
-          borderRadius: 999,
-        }}
         onClick={onToggle}
         title={locked ? "Unlock object" : "Lock object"}
         aria-label={locked ? "Unlock object" : "Lock object"}
       >
-        <LockIcon open={!locked} stroke={locked ? "#fff" : "#444"} />
+        <LockIcon open={!locked} stroke={"#444"} />
       </button>
       {onDelete && !locked && (
         <>
           <div style={{ width: 1, height: 16, background: "rgba(0,0,0,0.08)", flexShrink: 0 }} />
           <button
             className="flex items-center justify-center cursor-pointer hover:opacity-70 active:scale-95 transition-opacity"
-            style={{
-              color: "#444",
-              padding: "2px 6px",
-            }}
             onClick={onDelete}
             title="Delete object"
             aria-label="Delete object"
@@ -106,6 +88,6 @@ export default function ObjectLockButton({ fabricRef, locked, onToggle, onDelete
           </button>
         </>
       )}
-    </div>
+    </ToolOverlaySurface>
   );
 }

@@ -395,10 +395,15 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
           className="pointer-events-none fixed z-[9999]"
           style={{ left: 0, top: 0, transform: `translate(${localCursor.x}px, ${localCursor.y}px)`, willChange: "transform" }}
         >
-          <svg width="13" height="15" viewBox="0 0 317 354" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg width="17" height="17" viewBox="0 0 317 354" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path
               d="M0.222591 12C-1.53354 3.60665 7.45159 -2.92141 14.8914 1.34245L311.358 171.251C318.902 175.574 317.649 186.816 309.339 189.372L165.447 233.635C163.219 234.321 161.303 235.767 160.033 237.723L88.0181 348.658C83.1885 356.097 71.7717 353.964 69.9552 345.282L0.222591 12Z"
               fill="#1a1a1a"
+              strokeWidth="14px"
+              stroke="white"
+              style={{
+                filter: "drop-shadow(0 0 1px rgba(255,255,255,0.8))",
+              }}
             />
           </svg>
         </div>

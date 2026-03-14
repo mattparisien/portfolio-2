@@ -20,7 +20,7 @@ const ToolPopover = ({
   return (
     <div
       ref={popoverRef}
-      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 flex flex-col gap-0 p-2 rounded-lg popover-enter-up z-[300] bg-fg shadow-lg"
+      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 flex flex-col gap-0 p-2 rounded-lg popover-enter-up"
       style={{ ...style }}
     >
       {items.map(({ key, icon, label, active, onClick }) => (
@@ -33,8 +33,8 @@ const ToolPopover = ({
         >
           <div className="w-[10px] shrink-0">{active && <CheckmarkIcon strokeWidth={1} width={10} height={10} stroke="white" />}</div>
           <div className="flex flex-1 gap-2 items-center">
-          {icon}
-          <span className="text-xs leading-none text-bg">{label}</span>
+            {icon}
+            <span className="text-xs leading-none text-bg">{label}</span>
           </div>
         </button>
       ))}

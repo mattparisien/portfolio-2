@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { useOthers } from "@/liveblocks.config";
+import { CursorArrowIcon } from "./Icons";
 
 /** Convert canvas world coords → local screen coords using the local viewport transform. */
 function worldToScreen(wx: number, wy: number, vpt: number[]): { x: number; y: number } {
@@ -31,19 +32,7 @@ function Cursor({ x, y, name, color }: { x: number; y: number; name: string; col
       }}
     >
       {/* Custom cursor arrow */}
-      <svg
-        width="13"
-        height="15"
-        viewBox="0 0 317 354"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        style={{ display: "block" }}
-      >
-        <path
-          d="M0.222591 12C-1.53354 3.60665 7.45159 -2.92141 14.8914 1.34245L311.358 171.251C318.902 175.574 317.649 186.816 309.339 189.372L165.447 233.635C163.219 234.321 161.303 235.767 160.033 237.723L88.0181 348.658C83.1885 356.097 71.7717 353.964 69.9552 345.282L0.222591 12Z"
-          fill={color}
-        />
-      </svg>
+      <CursorArrowIcon fill={color} style={{ display: "block" }} />
 
       {/* Name label */}
       <div

@@ -9,6 +9,7 @@ import {
   MdFormatAlignCenter,
   MdFormatAlignRight,
 } from "react-icons/md";
+import OverlaySurface from "@/components/OverlaySurface";
 
 const FONT_FAMILIES = [
   "sans-serif",
@@ -187,11 +188,10 @@ function ToggleBtn({
       title={title}
       onClick={onClick}
       style={style}
-      className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm transition-all duration-150 select-none cursor-pointer flex-shrink-0 ${
-        active
-          ? "bg-black text-white shadow-sm"
-          : "hover:bg-black/[0.07] text-gray-600 hover:text-gray-900"
-      }`}
+      className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm transition-all duration-150 select-none cursor-pointer flex-shrink-0 ${active
+        ? "bg-black text-white shadow-sm"
+        : "hover:bg-black/[0.07] text-gray-600 hover:text-gray-900"
+        }`}
     >
       {children}
     </button>
@@ -261,24 +261,22 @@ export default function PropertiesPanel({
   // Compute a CSS gradient string for the fill swatch when a gradient is active
   const fillGradientCss = fillGradient
     ? `linear-gradient(${fillGradient.angle}deg, ${[...fillGradient.stops]
-        .sort((a, b) => a.offset - b.offset)
-        .map(s => `${s.color} ${Math.round(s.offset * 100)}%`)
-        .join(", ")})`
+      .sort((a, b) => a.offset - b.offset)
+      .map(s => `${s.color} ${Math.round(s.offset * 100)}%`)
+      .join(", ")})`
     : undefined;
 
   return (
-    <div
-      className="drawing-ui-overlay fixed right-0 top-0 h-screen w-[220px] panel-slide-in z-[200] flex flex-col overflow-y-auto"
+    <OverlaySurface
+      borderLeft
+      className="fixed right-0 top-0 h-screen w-[220px] flex flex-col overflow-y-auto"
       style={{
-        background: "rgba(255,255,255,0.97)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        borderLeft: "1px solid rgba(0,0,0,0.08)",
         paddingTop: 76,
         paddingBottom: 88,
         scrollbarWidth: "none",
       }}
     >
+
       {(selectedIsText || tool === "text") ? (
         /* ═══════════════════ TEXT VIEW ═══════════════════ */
         <>
@@ -435,7 +433,7 @@ export default function PropertiesPanel({
                   color={strokeColor}
                   isOpen={strokeColorOpen}
                   onSwatchClick={() => (strokeColorOpen ? onCloseColor() : onOpenStrokeColor())}
-                  onColorChange={onStrokeColorChange ?? (() => {})}
+                  onColorChange={onStrokeColorChange ?? (() => { })}
                 />
               </div>
             </>
@@ -467,6 +465,6 @@ export default function PropertiesPanel({
           </div>
         </>
       )}
-    </div>
+    </OverlaySurface>
   );
 }
