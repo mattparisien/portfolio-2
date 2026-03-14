@@ -73,7 +73,7 @@ export function useCanvasActions({
     const fc = fabricRef.current;
     const mods = modsRef.current;
     if (!fc || !mods) return;
-    if (tool === "pencil" || tool === "brush") {
+    if (tool === "pencil") {
       fc.isDrawingMode = true;
       fc.selection = false;
       const b = new mods.PencilBrush(fc);
@@ -84,15 +84,14 @@ export function useCanvasActions({
       // Apply simplification (Ramer-Douglas-Peucker tolerance in px).
       // Fabric's PencilBrush runs this after the stroke is completed.
       (b as unknown as Record<string, unknown>).decimate = simplify;
-      if (tool === "brush") {
-        // Soft round brush: wider
-        b.width = brushSize * 3;
-        (b as unknown as Record<string, unknown>).strokeLineCap = "round";
-        (b as unknown as Record<string, unknown>).strokeLineJoin = "round";
-      } else {
-        b.width = brushSize;
-      }
+      b.width = brushSize;
       fc.freeDrawingBrush = b;
+    } else if (tool === "brush") {
+      // Bezier pen tool — mouse handling is done by usePenTool; just configure canvas state
+      fc.isDrawingMode = false;
+      fc.selection = false;
+      fc.discardActiveObject();
+      fc.getObjects().forEach((o) => { o.selectable = false; o.evented = false; });
     } else if (tool === "line") {
       fc.isDrawingMode = false;
       fc.selection = false;
@@ -124,7 +123,7 @@ export function useCanvasActions({
       tool === "text"                                    ? "text"      :
       tool === "pencil" || tool === "brush"              ? "crosshair" :
       tool === "line"                                    ? "crosshair" :
-      tool === "eraser"                                  ? "cell"      :
+      tool === "eraser"                                  ? "crosshair"  :
       tool === "shape"                                   ? "crosshair" :
       "default";
     fc.requestRenderAll();

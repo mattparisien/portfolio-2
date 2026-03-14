@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { MdAutoFixOff } from "react-icons/md";
 import type { Tool } from "../../types";
 import ToolPopover from "./ToolPopover";
 import { ArrowButton, ToolButton } from "./ToolButton";
@@ -36,7 +35,7 @@ export function DrawToolGroup({ tool, onToolChange, isOpen, onOpen, onClose }: D
   const drawIconColor = isDrawActive ? ICON_COLOR_ACTIVE : ICON_COLOR;
   const drawIcon =
     tool === "brush" && isDrawActive ? <PenIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={drawIconColor} /> :
-    tool === "eraser" && isDrawActive ? <MdAutoFixOff className="w-5 h-5" /> :
+    tool === "eraser" && isDrawActive ? makeIcons(drawIconColor).find(x => x.type === "eraser")?.icon :
     tool === "line" && isDrawActive ? makeIcons(drawIconColor).find(x => x.type === "line")?.icon :
     makeIcons(drawIconColor).find(x => x.type === "pencil")?.icon;
 

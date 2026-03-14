@@ -18,6 +18,7 @@ import type { Tool, TextProps, ShapeType, TextGradient } from "./types";
 import { DEFAULT_TEXT_PROPS } from "./types";
 import { getOrCreateUser, CURSOR_COLORS } from "./constants";
 import { getCanvasBgColor } from "./canvasUtils";
+import { usePenTool } from "./hooks/usePenTool";
 import { useWindowWidth } from "@/app/hooks/useWindowWidth";
 import {
   RoomProvider as LiveblocksRoomProvider,
@@ -137,6 +138,8 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
   const isMobile      = windowWidth > 0 && windowWidth < 768;
   const showMobileWarn = isMobile && !mobileWarnDismissed;
 
+  const penOverlayRef    = useRef<HTMLCanvasElement>(null);
+
   // Keep refs in sync so async canvas callbacks always read the latest values
   const toolRef          = useRef<Tool>("select");
   const colorRef         = useRef("#000000");
@@ -221,6 +224,18 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
       broadcast: broadcastEvent,
       fillGradientRef,
     });
+
+  usePenTool({
+    overlayRef:   penOverlayRef,
+    fabricRef,
+    modsRef,
+    active:       tool === "brush",
+    colorRef,
+    brushSizeRef,
+    opacityRef,
+    saveObject,
+    setTool,
+  });
 
   const activateShapeTool = useCallback((st: ShapeType) => {
     setShapeType(st);
@@ -350,10 +365,10 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
 
   return (
     <div
-      className={`fixed inset-0 overflow-hidden ${tool === "pencil" || tool === "brush" || tool === "select" ? "board-no-cursor" : ""}`}
+      className={`fixed inset-0 overflow-hidden ${tool === "pencil" || tool === "select" ? "board-no-cursor" : ""}`}
       style={{
         overscrollBehavior: "none",
-        cursor: tool === "eraser" ? "cell"
+        cursor: tool === "eraser" ? "crosshair"
           : tool === "text" ? "text"
           : tool === "line" || tool === "shape" ? "crosshair"
           : undefined,
@@ -365,28 +380,22 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
       }}
     >
       <canvas ref={canvasElRef} className="absolute inset-0 touch-none" />
+      {/* Pen tool overlay — renders anchor points and bezier preview */}
+      <canvas ref={penOverlayRef} className="absolute inset-0 pointer-events-none" />
 
       {/* Other users' cursors */}
       <RemoteCursors vpt={vpt} />
 
-      {/* Local cursor — only show custom SVG for pencil/brush */}
-      {localCursor && !isOverUI && !isOverHandle && (tool === "pencil" || tool === "brush") && (
+      {/* Local cursor — only show custom SVG for pencil (pen tool uses native crosshair) */}
+      {localCursor && !isOverUI && !isOverHandle && tool === "pencil" && (
         <div
           className="pointer-events-none fixed z-[9999]"
           style={{ left: 0, top: 0, transform: `translate(${localCursor.x}px, ${localCursor.y}px)`, willChange: "transform", opacity: localCursor ? 1 : 0, transition: "opacity 0.15s ease" }}
         >
-          {tool === "pencil" ? (
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ transform: "translate(-2px, -18px)" }} xmlns="http://www.w3.org/2000/svg">
-              <path d="M15 1L19 5L6.5 17.5L1 19L2.5 13.5Z" fill="#1a1a1a" stroke="white" strokeWidth="1" strokeLinejoin="round"/>
-              <line x1="12.5" y1="3.5" x2="16.5" y2="7.5" stroke="white" strokeWidth="0.8"/>
-            </svg>
-          ) : (
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ transform: "translate(-2px, -18px)" }} xmlns="http://www.w3.org/2000/svg">
-              <path d="M15 1L19 5L7 17C5.5 17.5 2 18.5 1.5 18C1 17.5 2 14 2.5 12.5Z" fill="#1a1a1a" stroke="white" strokeWidth="1" strokeLinejoin="round"/>
-              <ellipse cx="2.2" cy="17.8" rx="1.8" ry="1.2" fill="#555"/>
-              <line x1="12.5" y1="3.5" x2="16.5" y2="7.5" stroke="white" strokeWidth="0.8"/>
-            </svg>
-          )}
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ transform: "translate(-2px, -18px)" }} xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 1L19 5L6.5 17.5L1 19L2.5 13.5Z" fill="#1a1a1a" stroke="white" strokeWidth="1" strokeLinejoin="round"/>
+            <line x1="12.5" y1="3.5" x2="16.5" y2="7.5" stroke="white" strokeWidth="0.8"/>
+          </svg>
         </div>
       )}
 

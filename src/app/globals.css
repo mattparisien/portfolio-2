@@ -5,7 +5,8 @@
   --color-accent: var(--color-blue-500);
   --color-fg: var(--color-neutral-900);
   --color-bg: white;
-  --color-canvas-bg: var(--color-neutral-100);
+  --color-canvas-bg: var(--color-neutral-50);
+  --color-overlay-bg: white;
   --shadow-sm: none;
   --shadow: none;
   --shadow-md: none;

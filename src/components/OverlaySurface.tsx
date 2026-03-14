@@ -18,7 +18,7 @@ const OverlaySurface = forwardRef<HTMLDivElement, FloatingPanelProps>(
     ({ children, className, boxShadow = false, borderTop = false, borderLeft = false, borderRight = false, borderBottom = false, rounded = false, style, onPointerOver }, ref) => (
         <div
             ref={ref}
-            className={classNames("drawing-ui-overlay z-[300]", className, {
+            className={classNames("drawing-ui-overlay z-[300] bg-overlay-bg", className, {
                 "border-t border-neutral-200": borderTop,
                 "border-l border-neutral-200": borderLeft,
                 "border-r border-neutral-200": borderRight,
@@ -27,9 +27,6 @@ const OverlaySurface = forwardRef<HTMLDivElement, FloatingPanelProps>(
             })}
             onPointerOver={onPointerOver}
             style={{
-                background: "rgba(255,255,255,0.96)",
-                backdropFilter: "blur(12px)",
-                WebkitBackdropFilter: "blur(12px)",
                 ...(boxShadow ? { boxShadow: "0 4px 12px rgba(0,0,0,0.1)" } : {}),
                 ...style,
             }}

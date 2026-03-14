@@ -5,8 +5,8 @@ const ToolOverlaySurface = forwardRef<HTMLDivElement, { children: React.ReactNod
     ({ children, className, style }, ref) => (
         <OverlaySurface
             ref={ref}
-            className={`flex items-center gap-2 p-2 z-[200] ${className}`}
-            style={style}
+            className={`flex items-center gap-2 p-2 ${className}`}
+            style={{ zIndex: 150, ...style }}
             rounded
             boxShadow
             borderTop

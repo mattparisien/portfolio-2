@@ -700,11 +700,10 @@ export function useFabricCanvas({
       {
         const upperEl = (fc as unknown as { upperCanvasEl: HTMLElement }).upperCanvasEl;
         fc.setCursor = (value: string) => {
-          const isPencilOrBrush = toolRef.current === "pencil" || toolRef.current === "brush";
+          const isPencil = toolRef.current === "pencil"; // pen (brush) shows native crosshair
           const show = value.includes("resize") || value.startsWith("url(") || value === "grabbing" || value === "not-allowed" || value === "alias"
-            || (value === "crosshair" && !isPencilOrBrush)
-            || value === "text"
-            || value === "cell";
+            || (value === "crosshair" && !isPencil)
+            || value === "text";
           upperEl.style.setProperty("cursor", show ? value : "none", "important");
           setIsOverHandle?.(show);
         };
