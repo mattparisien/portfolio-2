@@ -31,6 +31,7 @@ export interface PropertiesPanelProps {
   hasSelection: boolean;
   selectedIsText: boolean;
   selectedIsShape: boolean;
+  selectedIsLine: boolean;
   /** Fill / drawing color */
   color: string;
   /** Active gradient for the fill swatch (non-text objects) */
@@ -224,6 +225,7 @@ export default function PropertiesPanel({
   tool,
   selectedIsText,
   selectedIsShape,
+  selectedIsLine,
   color,
   fillGradient,
   strokeColor,
@@ -411,12 +413,12 @@ export default function PropertiesPanel({
       ) : (
         /* ═══════════════════ OBJECT / DRAWING VIEW ═══════════════════ */
         <>
-          {/* ── Fill color ── */}
+          {/* ── Fill / Stroke color ── */}
           <div className="px-4 pt-3 pb-3">
-            <SectionLabel>Fill</SectionLabel>
+            <SectionLabel>{selectedIsLine ? "Stroke" : "Fill"}</SectionLabel>
             <ColorRow
               color={color}
-              gradientCss={fillGradientCss}
+              gradientCss={selectedIsLine ? undefined : fillGradientCss}
               isOpen={fillColorOpen}
               onSwatchClick={() => (fillColorOpen ? onCloseColor() : onOpenFillColor())}
               onColorChange={onFillColorChange}

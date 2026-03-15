@@ -142,6 +142,7 @@ interface UseFabricCanvasOptions {
   setSelectedIsText: (v: boolean) => void;
   setSelectedIsGif: (v: boolean) => void;
   setSelectedIsPath: (v: boolean) => void;
+  setSelectedIsLine: (v: boolean) => void;
   setSelectedIsLocked: (v: boolean) => void;
   setShapeStrokeColor: (c: string) => void;
   setColor: (c: string) => void;
@@ -177,6 +178,7 @@ export function useFabricCanvas({
   setSelectedIsText,
   setSelectedIsGif,
   setSelectedIsPath,
+  setSelectedIsLine,
   setSelectedIsLocked,
   setShapeStrokeColor,
   setColor,
@@ -848,17 +850,25 @@ export function useFabricCanvas({
         const isText = !!obj && ((obj as { type?: string }).type === "i-text" || (obj as { type?: string }).type === "textbox");
         const isGif  = !!obj && !!(obj as { giphyId?: string }).giphyId;
         const isPath  = !!obj && (obj as { type?: string }).type === "path" && !(obj as { giphyId?: string }).giphyId;
-        // Any non-text, non-gif, non-path object is a shape (rect, circle, etc.)
-        const isShape = !!obj && !isText && !isGif && !isPath;
+        const isLine  = !!obj && (obj as { type?: string }).type === "line";
+        // Any non-text, non-gif, non-path, non-line object is a shape (rect, circle, etc.)
+        const isShape = !!obj && !isText && !isGif && !isPath && !isLine;
         setSelectedIsText(isText);
         setSelectedIsGif(isGif);
         setSelectedIsPath(isPath);
+        setSelectedIsLine(isLine);
         if (isText) setTextProps(extractTextProps(obj as IText));
         if (isPath) {
           const pathObj = obj as unknown as { stroke?: string; strokeWidth?: number; opacity?: number };
           if (pathObj.stroke) setColor(pathObj.stroke);
           if (pathObj.strokeWidth != null) setBrushSize(pathObj.strokeWidth);
           if (pathObj.opacity != null) setOpacity(pathObj.opacity);
+        }
+        if (isLine) {
+          const lineObj = obj as unknown as { stroke?: string; strokeWidth?: number; opacity?: number };
+          if (lineObj.stroke && typeof lineObj.stroke === "string") setColor(lineObj.stroke);
+          if (lineObj.strokeWidth != null) setBrushSize(lineObj.strokeWidth);
+          if (lineObj.opacity != null) setOpacity(lineObj.opacity);
         }
         if (isShape) {
           const shapeObj = obj as unknown as { fill?: string; stroke?: string; opacity?: number };
@@ -886,6 +896,7 @@ export function useFabricCanvas({
         setSelectedIsText(false);
         setSelectedIsGif(false);
         setSelectedIsPath(false);
+        setSelectedIsLine(false);
         setSelectedIsLocked(false);
         if (!pendingMultiSave) return;
         const objs = pendingMultiSave;
@@ -1020,7 +1031,6 @@ export function useFabricCanvas({
                 stroke: colorRef.current,
                 strokeWidth: brushSizeRef.current,
                 strokeLineCap: "round",
-                fill: "",
                 selectable: false,
                 hasControls: false,
                 hasBorders: false,
@@ -1230,7 +1240,7 @@ export function useFabricCanvas({
       fabricRef.current = null;
       modsRef.current   = null;
     };
-  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, opacityRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setVpt, setHasSelection, setSelectedIsText, setSelectedIsGif, setSelectedIsPath, setSelectedIsLocked, setShapeStrokeColor, setColor, setBrushSize, setOpacity, setTextProps, setIsSyncing, broadcast, shapeTypeRef, fillGradientRef, setIsOverHandle]);
+  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, opacityRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setVpt, setHasSelection, setSelectedIsText, setSelectedIsGif, setSelectedIsPath, setSelectedIsLine, setSelectedIsLocked, setShapeStrokeColor, setColor, setBrushSize, setOpacity, setTextProps, setIsSyncing, broadcast, shapeTypeRef, fillGradientRef, setIsOverHandle]);
 
   return { modsRef, undoFnRef, redoFnRef, deleteFnRef };
 }

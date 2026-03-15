@@ -1,8 +1,8 @@
 "use client";
 
+import classNames from "classnames";
 import type { Canvas } from "fabric";
 import { useEffect, useRef } from "react";
-import FloatingPanel from "../../OverlaySurface";
 import { LockClosedIcon, LockOpenIcon, TrashIcon } from "./Icons";
 import ToolOverlaySurface from "./ToolOverlaySurface";
 
@@ -13,11 +13,40 @@ interface ObjectLockButtonProps {
   onDelete?: () => void;
 }
 
-function LockIcon({ open, stroke, className }: { open: boolean; stroke?: string, className?: string }) {
+function LockIcon({ open, className }: { open: boolean; className?: string }) {
+
+  const SIZE = 17;
+
   return open ? (
-    <LockOpenIcon width={16} height={16} stroke={stroke} strokeWidth={1} className={className} />
+    <LockOpenIcon width={SIZE} height={SIZE} strokeWidth={1} className={className} />
   ) : (
-    <LockClosedIcon width={16} height={16} stroke={stroke} strokeWidth={1} />
+    <LockClosedIcon width={SIZE} height={SIZE} strokeWidth={1} className={className} />
+  );
+}
+
+function IconBtn({
+  onClick,
+  title,
+  active,
+  children,
+}: {
+  onClick: () => void;
+  title: string;
+  active?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      className={classNames(
+        "flex items-center justify-center cursor-pointer active:scale-95 rounded-lg !p-1 transition-colors",
+        { "bg-accent/40": active, "hover:bg-overlay-hover": !active }
+      )}
+      onClick={onClick}
+      title={title}
+      aria-label={title}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -65,27 +94,23 @@ export default function ObjectLockButton({ fabricRef, locked, onToggle, onDelete
   return (
     <ToolOverlaySurface
       ref={btnRef}
-      className="fixed flex items-center select-none -left-[9999px] -top-[9999px] gap-0"
+      className="fixed flex items-center select-none -left-[9999px] -top-[9999px] gap-0 !p-1"
     >
-      <button
-        className="flex items-center justify-center cursor-pointer hover:opacity-70 active:scale-95 transition-opacity"
+      <IconBtn
         onClick={onToggle}
         title={locked ? "Unlock object" : "Lock object"}
-        aria-label={locked ? "Unlock object" : "Lock object"}
+        active={locked}
       >
-        <LockIcon open={!locked} stroke={"#444"} />
-      </button>
+        <LockIcon open={!locked} className={classNames("", {
+          "[&>path]:stroke-accent": locked,
+          "[&>path]:stroke-overlay-fg": !locked,
+        })}/>
+      </IconBtn>
       {onDelete && !locked && (
         <>
-          <div style={{ width: 1, height: 16, background: "rgba(0,0,0,0.08)", flexShrink: 0 }} />
-          <button
-            className="flex items-center justify-center cursor-pointer hover:opacity-70 active:scale-95 transition-opacity"
-            onClick={onDelete}
-            title="Delete object"
-            aria-label="Delete object"
-          >
-            <TrashIcon width={16} height={16} strokeWidth={1}/>
-          </button>
+          <IconBtn onClick={onDelete} title="Delete object">
+            <TrashIcon width={16} height={16} strokeWidth={1} className={"[&>path]:stroke-overlay-fg"}/>
+          </IconBtn>
         </>
       )}
     </ToolOverlaySurface>

@@ -94,6 +94,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
   const [selectedIsText, setSelectedIsText]     = useState(false);
   const [selectedIsGif, setSelectedIsGif]       = useState(false);
   const [selectedIsPath, setSelectedIsPath]     = useState(false);
+  const [selectedIsLine, setSelectedIsLine]     = useState(false);
   const [selectedIsLocked, setSelectedIsLocked] = useState(false);
   const [shapeStrokeColor, setShapeStrokeColor] = useState("#000000");
   const [opacity, setOpacity]                   = useState(1);
@@ -130,7 +131,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
 
   const onDrawingToolsPopoverOpened = () => { setColorPopoverSlot(null); };
 
-  const selectedIsShape = hasSelection && !selectedIsText && !selectedIsGif && !selectedIsPath;
+  const selectedIsShape = hasSelection && !selectedIsText && !selectedIsGif && !selectedIsPath && !selectedIsLine;
   const panelVisible    = selectedIsText || (!selectedIsGif && (tool === "pencil" || tool === "brush" || hasSelection));
 
   // Mobile detection
@@ -188,6 +189,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
     setSelectedIsText,
     setSelectedIsGif,
     setSelectedIsPath,
+    setSelectedIsLine,
     setSelectedIsLocked,
     setShapeStrokeColor,
     setColor,
@@ -438,6 +440,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
           hasSelection={hasSelection}
           selectedIsText={selectedIsText}
           selectedIsShape={selectedIsShape}
+          selectedIsLine={selectedIsLine}
           color={color}
           fillGradient={fillGradient}
           strokeColor={selectedIsShape ? shapeStrokeColor : undefined}
