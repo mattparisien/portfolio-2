@@ -5,7 +5,7 @@ import type { Tool, ShapeType, FabricMods, TextProps, TextGradient } from "../ty
 import type { SaveableObj } from "./useBoardSync";
 import type { RoomEvent } from "@/liveblocks.config";
 import { BOARD_ID } from "../constants";
-import { getCanvasBgColor } from "../canvasUtils";
+import { getCanvasBgColor, gradientCoordsFromAngle } from "../canvasUtils";
 import { decodeGif } from "../gifDecoder";
 
 const MIN_ZOOM = 0.25;
@@ -15,13 +15,11 @@ const ZOOM_STEP = 0.1;
 // ── Shared gradient builder ────────────────────────────────────────────────
 function buildFabricGradient(gradient: TextGradient, mods: FabricMods) {
   const { stops, angle } = gradient;
-  const rad = (angle * Math.PI) / 180;
-  const dx = Math.sin(rad);
-  const dy = -Math.cos(rad);
+  const coords = gradientCoordsFromAngle(angle);
   return new mods.Gradient({
     type: "linear",
     gradientUnits: "percentage",
-    coords: { x1: 0.5 - dx * 0.5, y1: 0.5 - dy * 0.5, x2: 0.5 + dx * 0.5, y2: 0.5 + dy * 0.5 },
+    coords,
     colorStops: stops.map(s => ({ offset: s.offset, color: s.color })),
   });
 }

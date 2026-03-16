@@ -1,5 +1,11 @@
 import { GifReader } from "omggif";
 
+/** Convert a GIF centisecond delay to milliseconds, clamping to a minimum
+ *  of 20 ms so a 0-delay frame never causes a render-blocking infinite loop. */
+export function clampDelay(centisecs: number): number {
+  return Math.max(centisecs * 10, 20);
+}
+
 export interface DecodedGif {
   /** A horizontal spritesheet with every frame side-by-side */
   spritesheet: HTMLCanvasElement;
@@ -42,7 +48,7 @@ export function decodeGif(buffer: ArrayBuffer): DecodedGif {
 
   for (let i = 0; i < totalFrames; i++) {
     const info  = reader.frameInfo(i);
-    delays.push(Math.max((info.delay ?? 5) * 10, 20)); // centisecs → ms, min 20ms
+    delays.push(clampDelay(info.delay ?? 5));
 
     // Apply previous frame's disposal before drawing this frame
     if (i > 0) {

@@ -86,6 +86,21 @@ export function clearToBackground(ctx: CanvasRenderingContext2D) {
   ctx.restore(); // restores transform + compositeOperation
 }
 
+// ── Gradient angle → normalised linear-gradient coords (0–1 range) ─────────
+/** Converts a CSS-style angle in degrees to Fabric.js percentage-unit
+ *  gradient coords (x1/y1 start → x2/y2 end). */
+export function gradientCoordsFromAngle(angle: number) {
+  const rad = (angle * Math.PI) / 180;
+  const dx  = Math.sin(rad);
+  const dy  = -Math.cos(rad);
+  return {
+    x1: 0.5 - dx * 0.5,
+    y1: 0.5 - dy * 0.5,
+    x2: 0.5 + dx * 0.5,
+    y2: 0.5 + dy * 0.5,
+  };
+}
+
 // ── Ramer-Douglas-Peucker path simplification (curve-preserving) ───────────
 export type PathCmd = [string, ...number[]];
 
