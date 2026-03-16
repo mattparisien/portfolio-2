@@ -119,7 +119,8 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
   const [uploadSignal, setUploadSignal]           = useState(0);
 
   // Shared singleton color popover — lifted here so only one instance ever exists.
-  const [localCursor, setLocalCursor] = useState<{ x: number; y: number } | null>(null);
+  const [localCursor, setLocalCursor] = useState<{ x: number; y: number } | null>({ x: -999, y: -999 });
+  const [cursorOnScreen, setCursorOnScreen] = useState(false);
   const [isOverUI, setIsOverUI]       = useState(false);
   const [isOverHandle, setIsOverHandle] = useState(false);
 
@@ -371,8 +372,9 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
         y: (e.clientY - v[5]) / v[3],
       }});
       setLocalCursor({ x: e.clientX, y: e.clientY });
+      setCursorOnScreen(true);
     };
-    const onLeave = () => { updateMyPresence({ cursor: null }); setLocalCursor(null); };
+    const onLeave = () => { updateMyPresence({ cursor: null }); setCursorOnScreen(false); };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerleave", onLeave);
     document.addEventListener("mouseleave", onLeave);
@@ -409,20 +411,20 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
       <RemoteCursors vpt={vpt} />
 
       {/* Local cursor — only show custom SVG for pencil (pen tool uses native crosshair) */}
-      {localCursor && !isOverUI && !isOverHandle && tool === "pencil" && (
+      {cursorOnScreen && !isOverUI && !isOverHandle && tool === "pencil" && (
         <div
           className="pointer-events-none fixed z-[9999]"
-          style={{ left: 0, top: 0, transform: `translate(${localCursor.x}px, ${localCursor.y}px)`, willChange: "transform", opacity: localCursor ? 1 : 0, transition: "opacity 0.15s ease" }}
+          style={{ left: 0, top: 0, transform: `translate(${localCursor!.x}px, ${localCursor!.y}px)`, willChange: "transform" }}
         >
           <PencilCursorIcon />
         </div>
       )}
 
       {/* Default arrow cursor for select / unhandled tools */}
-      {localCursor && !isOverUI && !isOverHandle && tool === "select" && (
+      {cursorOnScreen && !isOverUI && !isOverHandle && tool === "select" && (
         <div
           className="pointer-events-none fixed z-[9999]"
-          style={{ left: 0, top: 0, transform: `translate(${localCursor.x}px, ${localCursor.y}px)`, willChange: "transform" }}
+          style={{ left: 0, top: 0, transform: `translate(${localCursor!.x}px, ${localCursor!.y}px)`, willChange: "transform" }}
         >
           <CursorArrowIcon />
         </div>

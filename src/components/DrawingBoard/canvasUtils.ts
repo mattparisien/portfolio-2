@@ -77,6 +77,7 @@ export function replayStroke(
 /** Clear canvas and redraw the background colour. Always resets the transform
  *  first so the fill covers the entire canvas surface regardless of current zoom. */
 export function clearToBackground(ctx: CanvasRenderingContext2D) {
+
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0); // pixel-space: fill whole canvas
   ctx.globalCompositeOperation = "source-over";
@@ -84,3 +85,83 @@ export function clearToBackground(ctx: CanvasRenderingContext2D) {
   ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   ctx.restore(); // restores transform + compositeOperation
 }
+
+// ── Ramer-Douglas-Peucker path simplification (curve-preserving) ───────────
+export type PathCmd = [string, ...number[]];
+
+export function autoSimplifyPath(cmds: PathCmd[], eps = 2): PathCmd[] {
+  const anchors: [number, number][] = [];
+  const anchorCmdIdx: number[] = [];
+  const hasClosingZ = cmds.at(-1)?.[0] === "Z";
+
+  for (let i = 0; i < cmds.length; i++) {
+    const c = cmds[i];
+    if      (c[0] === "M") { anchors.push([c[1], c[2]]); anchorCmdIdx.push(i); }
+    else if (c[0] === "L") { anchors.push([c[1], c[2]]); anchorCmdIdx.push(i); }
+    else if (c[0] === "Q") { anchors.push([c[3], c[4]]); anchorCmdIdx.push(i); }
+    else if (c[0] === "C") { anchors.push([c[5], c[6]]); anchorCmdIdx.push(i); }
+  }
+  if (anchors.length < 2) return cmds;
+
+  const perpDist = (p: [number, number], a: [number, number], b: [number, number]) => {
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    if (!dx && !dy) return Math.hypot(p[0] - a[0], p[1] - a[1]);
+    const t = ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / (dx * dx + dy * dy);
+    return Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
+  };
+
+  const keepSet = new Set<number>([0, anchors.length - 1]);
+  const rdp = (lo: number, hi: number) => {
+    if (hi - lo <= 1) return;
+    let max = 0, split = lo;
+    for (let i = lo + 1; i < hi; i++) {
+      const d = perpDist(anchors[i], anchors[lo], anchors[hi]);
+      if (d > max) { max = d; split = i; }
+    }
+    if (max > eps) { keepSet.add(split); rdp(lo, split); rdp(split, hi); }
+  };
+  rdp(0, anchors.length - 1);
+
+  const kept = [...keepSet].sort((a, b) => a - b);
+
+  const buildSpanCmd = (from: number, to: number): PathCmd => {
+    if (to - from === 1) return [...cmds[anchorCmdIdx[to]]] as PathCmd;
+
+    const p0 = anchors[from], p3 = anchors[to];
+    const chord = Math.hypot(p3[0] - p0[0], p3[1] - p0[1]);
+    if (chord < 0.001) return ["L", p3[0], p3[1]];
+    const sc = chord / 3;
+
+    const f = cmds[anchorCmdIdx[from + 1]];
+    let cp1x: number, cp1y: number;
+    if (f[0] === "Q" || f[0] === "C") {
+      const dx = f[1] - p0[0], dy = f[2] - p0[1];
+      const l = Math.hypot(dx, dy) || chord;
+      cp1x = p0[0] + (dx / l) * sc; cp1y = p0[1] + (dy / l) * sc;
+    } else {
+      cp1x = p0[0] + (p3[0] - p0[0]) / 3; cp1y = p0[1] + (p3[1] - p0[1]) / 3;
+    }
+
+    const lc = cmds[anchorCmdIdx[to]];
+    let cp2x: number, cp2y: number;
+    if (lc[0] === "Q") {
+      const dx = p3[0] - lc[1], dy = p3[1] - lc[2];
+      const l = Math.hypot(dx, dy) || chord;
+      cp2x = p3[0] - (dx / l) * sc; cp2y = p3[1] - (dy / l) * sc;
+    } else if (lc[0] === "C") {
+      const dx = p3[0] - lc[3], dy = p3[1] - lc[4];
+      const l = Math.hypot(dx, dy) || chord;
+      cp2x = p3[0] - (dx / l) * sc; cp2y = p3[1] - (dy / l) * sc;
+    } else {
+      cp2x = p3[0] - (p3[0] - p0[0]) / 3; cp2y = p3[1] - (p3[1] - p0[1]) / 3;
+    }
+
+    return ["C", cp1x, cp1y, cp2x, cp2y, p3[0], p3[1]];
+  };
+
+  const out: PathCmd[] = [[...cmds[anchorCmdIdx[0]]] as PathCmd];
+  for (let k = 1; k < kept.length; k++) out.push(buildSpanCmd(kept[k - 1], kept[k]));
+  if (hasClosingZ) out.push(["Z"]);
+  return out;
+}
+
