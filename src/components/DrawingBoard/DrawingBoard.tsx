@@ -20,6 +20,7 @@ import { getOrCreateUser, CURSOR_COLORS } from "./constants";
 import { getCanvasBgColor } from "./canvasUtils";
 import { usePenTool } from "./hooks/usePenTool";
 import { useWindowWidth } from "@/app/hooks/useWindowWidth";
+import { CursorArrowIcon, PencilCursorIcon } from "./components/Icons";
 import {
   RoomProvider as LiveblocksRoomProvider,
   useBroadcastEvent,
@@ -86,7 +87,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
 
   const [tool, setTool]                         = useState<Tool>("select");
   const [color, setColor]                       = useState("#000000");
-  const [brushSize, setBrushSize]               = useState(5);
+  const [brushSize, setBrushSize]               = useState(1);
   const [isSyncing, setIsSyncing]               = useState(false);
   const [zoom, setZoom]                         = useState(1);
   const [vpt, setVpt]                           = useState<number[]>([1, 0, 0, 1, 0, 0]);
@@ -131,6 +132,19 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
 
   const onDrawingToolsPopoverOpened = () => { setColorPopoverSlot(null); };
 
+  // ── Per-tool defaults ─────────────────────────────────────────────────
+  // Wraps setTool so that switching tools resets brushSize / stroke color
+  // to sensible defaults for each tool category.
+  const changeTool = useCallback((t: Tool) => {
+    setTool(t);
+    if (t === "shape") {
+      setBrushSize(0);
+      setShapeStrokeColor("#000000");
+    } else if (t === "pencil" || t === "brush" || t === "line") {
+      setBrushSize(1);
+    }
+  }, []);
+
   const selectedIsShape = hasSelection && !selectedIsText && !selectedIsGif && !selectedIsPath && !selectedIsLine;
   const panelVisible    = selectedIsText || (!selectedIsGif && (tool === "pencil" || tool === "brush" || hasSelection));
 
@@ -142,18 +156,20 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
   const penOverlayRef    = useRef<HTMLCanvasElement>(null);
 
   // Keep refs in sync so async canvas callbacks always read the latest values
-  const toolRef          = useRef<Tool>("select");
-  const colorRef         = useRef("#000000");
-  const brushSizeRef     = useRef(5);
-  const opacityRef       = useRef(1);
-  const shapeTypeRef     = useRef<ShapeType>("rect");
-  const fillGradientRef  = useRef<TextGradient | null>(null);
-  toolRef.current          = tool;
-  colorRef.current         = color;
-  brushSizeRef.current     = brushSize;
-  opacityRef.current       = opacity;
-  shapeTypeRef.current     = shapeType;
-  fillGradientRef.current  = fillGradient;
+  const toolRef               = useRef<Tool>("select");
+  const colorRef              = useRef("#000000");
+  const brushSizeRef          = useRef(1);
+  const opacityRef            = useRef(1);
+  const shapeTypeRef          = useRef<ShapeType>("rect");
+  const fillGradientRef       = useRef<TextGradient | null>(null);
+  const shapeStrokeColorRef   = useRef("#000000");
+  toolRef.current               = tool;
+  colorRef.current              = color;
+  brushSizeRef.current          = brushSize;
+  opacityRef.current            = opacity;
+  shapeTypeRef.current          = shapeType;
+  fillGradientRef.current       = fillGradient;
+  shapeStrokeColorRef.current   = shapeStrokeColor;
 
   // ── Liveblocks ────────────────────────────────────────────────────────
   const broadcastEvent               = useBroadcastEvent();
@@ -201,6 +217,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
     broadcast: broadcastEvent,
     shapeTypeRef,
     fillGradientRef,
+    shapeStrokeColorRef,
     setIsOverHandle,
     setCanvasEmpty,
     initialObjects,
@@ -225,6 +242,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
       setTextProps,
       broadcast: broadcastEvent,
       fillGradientRef,
+      shapeStrokeColorRef,
     });
 
   usePenTool({
@@ -242,6 +260,8 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
   const activateShapeTool = useCallback((st: ShapeType) => {
     setShapeType(st);
     setTool("shape");
+    setBrushSize(0);
+    setShapeStrokeColor("#000000");
   }, []);
 
   // ── Global keyboard shortcuts for tool switching / actions ────────────
@@ -253,7 +273,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
       // Shift+P → pencil
       if (e.shiftKey && !isMod && (e.key === "P" || e.key === "p")) {
         e.preventDefault();
-        setTool("pencil");
+        changeTool("pencil");
         return;
       }
       // O → circle
@@ -277,7 +297,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [activateShapeTool, setTool]);
+  }, [activateShapeTool, setTool, changeTool]);
 
   // ── Apply remote canvas events from other users ───────────────────
   useEventListener(({ event }) => {
@@ -394,10 +414,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
           className="pointer-events-none fixed z-[9999]"
           style={{ left: 0, top: 0, transform: `translate(${localCursor.x}px, ${localCursor.y}px)`, willChange: "transform", opacity: localCursor ? 1 : 0, transition: "opacity 0.15s ease" }}
         >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ transform: "translate(-2px, -18px)" }} xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 1L19 5L6.5 17.5L1 19L2.5 13.5Z" fill="#1a1a1a" stroke="white" strokeWidth="1" strokeLinejoin="round"/>
-            <line x1="12.5" y1="3.5" x2="16.5" y2="7.5" stroke="white" strokeWidth="0.8"/>
-          </svg>
+          <PencilCursorIcon />
         </div>
       )}
 
@@ -407,17 +424,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
           className="pointer-events-none fixed z-[9999]"
           style={{ left: 0, top: 0, transform: `translate(${localCursor.x}px, ${localCursor.y}px)`, willChange: "transform" }}
         >
-          <svg width="17" height="17" viewBox="0 0 317 354" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M0.222591 12C-1.53354 3.60665 7.45159 -2.92141 14.8914 1.34245L311.358 171.251C318.902 175.574 317.649 186.816 309.339 189.372L165.447 233.635C163.219 234.321 161.303 235.767 160.033 237.723L88.0181 348.658C83.1885 356.097 71.7717 353.964 69.9552 345.282L0.222591 12Z"
-              fill="#1a1a1a"
-              strokeWidth="14px"
-              stroke="white"
-              style={{
-                filter: "drop-shadow(0 0 1px rgba(255,255,255,0.8))",
-              }}
-            />
-          </svg>
+          <CursorArrowIcon />
         </div>
       )}
 
@@ -465,7 +472,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
       <DrawingTools
         tool={tool}
         color={color}
-        onToolChange={setTool}
+        onToolChange={changeTool}
         onAddShape={activateShapeTool}
         onAddText={addText}
         onAddGif={addGif}

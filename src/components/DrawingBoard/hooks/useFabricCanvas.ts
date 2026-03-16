@@ -154,6 +154,7 @@ interface UseFabricCanvasOptions {
   broadcast?: (event: RoomEvent) => void;
   shapeTypeRef: React.MutableRefObject<ShapeType>;
   fillGradientRef: React.MutableRefObject<TextGradient | null>;
+  shapeStrokeColorRef: React.MutableRefObject<string>;
   setIsOverHandle?: (v: boolean) => void;
   setCanvasEmpty?: (v: boolean) => void;
   initialObjects: { fabricJSON: string }[];
@@ -190,6 +191,7 @@ export function useFabricCanvas({
   broadcast,
   shapeTypeRef,
   fillGradientRef,
+  shapeStrokeColorRef,
   setIsOverHandle,
   setCanvasEmpty,
   initialObjects,
@@ -993,11 +995,12 @@ export function useFabricCanvas({
       function buildPreviewShape(type: ShapeType, left: number, top: number, w: number, h: number) {
         const mods = modsRef.current;
         if (!mods) return null;
+        const previewStroke = shapeStrokeColorRef.current;
         const common = {
           left, top,
           fill: colorRef.current,
-          stroke: "#000000",
-          strokeWidth: 2,
+          stroke: previewStroke,
+          strokeWidth: previewStroke === "transparent" ? 0 : 2,
           paintFirst: "stroke" as const,
           strokeUniform: true,
           selectable: false,

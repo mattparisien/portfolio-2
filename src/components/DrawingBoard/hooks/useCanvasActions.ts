@@ -45,6 +45,7 @@ interface UseCanvasActionsOptions {
   setTextProps: Dispatch<SetStateAction<TextProps>>;
   broadcast?: (event: RoomEvent) => void;
   fillGradientRef: React.MutableRefObject<TextGradient | null>;
+  shapeStrokeColorRef?: React.MutableRefObject<string>;
 }
 
 export function useCanvasActions({
@@ -66,6 +67,7 @@ export function useCanvasActions({
   setTextProps,
   broadcast,
   fillGradientRef,
+  shapeStrokeColorRef,
 }: UseCanvasActionsOptions) {
 
   // ── Sync tool / color / brush → fabric ────────────────────────────────
@@ -166,10 +168,11 @@ export function useCanvasActions({
     const vpt = fc.viewportTransform as number[];
     const cx = (window.innerWidth  / 2 - vpt[4]) / vpt[0];
     const cy = (window.innerHeight / 2 - vpt[5]) / vpt[3];
+    const strokeColor = shapeStrokeColorRef?.current ?? "transparent";
     const common = {
       fill: colorRef.current,
-      stroke: "#000000",
-      strokeWidth: 2,
+      stroke: strokeColor,
+      strokeWidth: strokeColor === "transparent" ? 0 : 2,
       // paintFirst:'stroke' paints the stroke first then fill on top,
       // so the inner half is hidden → stroke appears fully outside the shape.
       paintFirst: "stroke" as const,

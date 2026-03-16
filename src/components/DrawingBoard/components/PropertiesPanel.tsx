@@ -451,7 +451,7 @@ export default function PropertiesPanel({
                 label="Weight"
                 value={strokeWeight}
                 displayValue={`${strokeWeight}px`}
-                min={1}
+                min={0}
                 max={60}
                 onChange={onStrokeWeightChange}
               />
