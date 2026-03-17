@@ -5,7 +5,7 @@ import { IoTriangleSharp } from "react-icons/io5";
 import type { ShapeType, Tool } from "../../types";
 import ToolPopover from "./ToolPopover";
 import { ArrowButton, ToolButton } from "./ToolButton";
-import { ICON_COLOR, ICON_COLOR_ACTIVE, SHAPES_TYPES, makeIcons } from "./toolConfig";
+import { ICON_SIZE, SHAPES_TYPES, makeIcons } from "./toolConfig";
 
 interface ShapeToolGroupProps {
   tool: Tool;
@@ -45,9 +45,8 @@ export function ShapeToolGroup({
     return () => document.removeEventListener("mousedown", handler);
   }, [isOpen, onClose]);
 
-  const shapeIconColor = tool === "shape" ? ICON_COLOR_ACTIVE : ICON_COLOR;
   const lastShapeIcon =
-    makeIcons(shapeIconColor).find(s => s.type === lastShape)?.icon ?? (
+    makeIcons(ICON_SIZE, tool === "shape").find(s => s.type === lastShape)?.icon ?? (
       <IoTriangleSharp className="w-5 h-5" />
     );
 
@@ -60,16 +59,16 @@ export function ShapeToolGroup({
       >
         {lastShapeIcon}
       </ToolButton>
-      <ArrowButton
+      {/* <ArrowButton
         open={isOpen}
         onClick={() => (isOpen ? onClose() : onOpen())}
         ariaLabel="Shape options"
-      />
+      /> */}
       {isOpen && (
         <ToolPopover
           popoverRef={popoverRef}
           style={{ minWidth: 100 }}
-          items={makeIcons(ICON_COLOR_ACTIVE, 13)
+          items={makeIcons(13)
             .filter(i => SHAPES_TYPES.includes(i.type))
             .map(s => ({
               key: s.type,

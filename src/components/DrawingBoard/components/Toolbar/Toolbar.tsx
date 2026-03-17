@@ -2,16 +2,15 @@
 
 import { useEffect, useState } from "react";
 import type { ShapeType, Tool } from "../../types";
+import ToolOverlaySurface from "../ToolOverlaySurface";
 import { DrawToolGroup } from "./DrawToolGroup";
 import { GifToolGroup } from "./GifToolGroup";
 import { ShapeToolGroup } from "./ShapeToolGroup";
 import { ToolButton } from "./ToolButton";
 import { UploadButton } from "./UploadButton";
-import { ICON_COLOR, ICON_COLOR_ACTIVE, makeIcons } from "./toolConfig";
-import OverlaySurface from "../../../OverlaySurface";
-import ToolOverlaySurface from "../ToolOverlaySurface";
+import { ICON_SIZE, makeIcons } from "./toolConfig";
 
-interface DrawingToolsProps {
+interface ToolbarProps {
   tool: Tool;
   color: string;
   onToolChange: (t: Tool) => void;
@@ -32,7 +31,7 @@ interface DrawingToolsProps {
 
 type OpenGroup = "draw" | "shape" | "gif" | null;
 
-export default function DrawingTools({
+export default function Toolbar({
   tool,
   onToolChange,
   onAddShape,
@@ -43,7 +42,7 @@ export default function DrawingTools({
   uploadSignal,
   activeShapeType,
   onPopoverOpened,
-}: DrawingToolsProps) {
+}: ToolbarProps) {
   const [openGroup, setOpenGroup] = useState<OpenGroup>(null);
 
   useEffect(() => {
@@ -63,13 +62,13 @@ export default function DrawingTools({
   });
 
   return (
-    <ToolOverlaySurface className="fixed bottom-5 left-1/2 -translate-x-1/2">
+    <ToolOverlaySurface className="fixed right-0 top-1/2 -translate-y-1/2 overflow-hidden">
       <ToolButton
         active={tool === "select"}
         onClick={() => onToolChange("select")}
         title="Select"
       >
-        {makeIcons(tool === "select" ? ICON_COLOR_ACTIVE : ICON_COLOR).find(x => x.type === "select")?.icon}
+        {makeIcons(ICON_SIZE, tool === "select").find(x => x.type === "select")?.icon}
       </ToolButton>
 
       <ToolButton
@@ -77,7 +76,7 @@ export default function DrawingTools({
         onClick={() => onAddText()}
         title="Text"
       >
-        {makeIcons(tool === "text" ? ICON_COLOR_ACTIVE : ICON_COLOR).find(x => x.type === "text")?.icon}
+        {makeIcons(ICON_SIZE, tool === "text").find(x => x.type === "text")?.icon}
       </ToolButton>
 
       <DrawToolGroup tool={tool} onToolChange={onToolChange} {...groupProps("draw")} />

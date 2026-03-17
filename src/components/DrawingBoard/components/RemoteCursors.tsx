@@ -29,10 +29,11 @@ function Cursor({ x, y, name, color }: { x: number; y: number; name: string; col
         top: 0,
         transform: `translate(${x}px, ${y}px)`,
         willChange: "transform",
+        color: color,
       }}
     >
       {/* Custom cursor arrow */}
-      <CursorArrowIcon fill={color} style={{ display: "block" }} />
+      <CursorArrowIcon pathClassName="fill-current" svgClassName="block" />
 
       {/* Name label */}
       <div

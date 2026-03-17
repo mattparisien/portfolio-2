@@ -10,12 +10,16 @@ interface FloatingPanelProps {
     borderRight?: boolean;
     borderBottom?: boolean;
     rounded?: boolean;
+    roundedTopLeft?: boolean;
+    roundedTopRight?: boolean;
+    roundedBottomLeft?: boolean;
+    roundedBottomRight?: boolean;
     onPointerOver?: React.PointerEventHandler<HTMLDivElement>;
     style?: React.CSSProperties;
 }
 
 const OverlaySurface = forwardRef<HTMLDivElement, FloatingPanelProps>(
-    ({ children, className, boxShadow = false, borderTop = false, borderLeft = false, borderRight = false, borderBottom = false, rounded = false, style, onPointerOver }, ref) => (
+    ({ children, className, boxShadow = false, borderTop = false, borderLeft = false, borderRight = false, borderBottom = false, rounded = false, roundedTopLeft = false, roundedTopRight = false, roundedBottomLeft = false, roundedBottomRight = false, style, onPointerOver }, ref) => (
         <div
             ref={ref}
             className={classNames("drawing-ui-overlay z-[300] bg-overlay-bg", className, {
@@ -24,6 +28,10 @@ const OverlaySurface = forwardRef<HTMLDivElement, FloatingPanelProps>(
                 "border-r border-neutral-200": borderRight,
                 "border-b border-neutral-200": borderBottom,
                 "rounded-xl": rounded,
+                "rounded-tl-xl": roundedTopLeft,
+                "rounded-tr-xl": roundedTopRight,
+                "rounded-bl-xl": roundedBottomLeft,
+                "rounded-br-xl": roundedBottomRight,
             })}
             onPointerOver={onPointerOver}
             style={{

@@ -4,10 +4,10 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import type { Canvas } from "fabric";
 import PropertiesPanel from "./components/PropertiesPanel";
 import BoardHeader from "./components/BoardHeader";
-import DrawingTools from "./components/DrawingTools/DrawingTools";
+import Toolbar from "./components/Toolbar/Toolbar";
 import RemoteCursors from "./components/RemoteCursors";
-import ZoomNav from "./components/ZoomNav";
-import ActiveUsers from "./components/ActiveUsers";
+// import ZoomNav from "./components/ZoomNav";
+// import ActiveUsers from "./components/ActiveUsers";
 import ObjectLockButton from "./components/ObjectLockButton";
 import ColorPopover from "./components/ColorPopover";
 import { useGifLoop } from "./hooks/useGifLoop";
@@ -471,7 +471,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
           onTextColorChange={(c) => { setColor(c); recolorSelected(c); }}
         />
       )}
-      <DrawingTools
+      <Toolbar
         tool={tool}
         color={color}
         onToolChange={changeTool}
@@ -485,15 +485,15 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
         onPopoverOpened={onDrawingToolsPopoverOpened}
         onClearRequest={() => setClearConfirmOpen(true)}
       />
-      {!panelVisible && <ZoomNav zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} />}
+      {/* {!panelVisible && <ZoomNav zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} />} */}
       <BoardHeader isSyncing={isSyncing} />
 
       {/* Top-right cluster: active users */}
-      {!panelVisible && (
+      {/* {!panelVisible && (
         <div className="absolute top-5 right-5 z-[200]">
           <ActiveUsers />
         </div>
-      )}
+      )} */}
       {/* Lock/unlock button floats above the selected object — self-positions via RAF */}
       {hasSelection && (
         <ObjectLockButton

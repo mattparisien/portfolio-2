@@ -13,14 +13,14 @@ interface ObjectLockButtonProps {
   onDelete?: () => void;
 }
 
-function LockIcon({ open, className }: { open: boolean; className?: string }) {
+function LockIcon({ open, pathClassName }: { open: boolean; pathClassName?: string }) {
 
   const SIZE = 17;
 
   return open ? (
-    <LockOpenIcon width={SIZE} height={SIZE} strokeWidth={1} className={className} />
+    <LockOpenIcon width={SIZE} height={SIZE} pathClassName={pathClassName} />
   ) : (
-    <LockClosedIcon width={SIZE} height={SIZE} strokeWidth={1} className={className} />
+    <LockClosedIcon width={SIZE} height={SIZE} pathClassName={pathClassName} />
   );
 }
 
@@ -101,15 +101,15 @@ export default function ObjectLockButton({ fabricRef, locked, onToggle, onDelete
         title={locked ? "Unlock object" : "Lock object"}
         active={locked}
       >
-        <LockIcon open={!locked} className={classNames("", {
-          "[&>path]:stroke-accent": locked,
-          "[&>path]:stroke-overlay-fg": !locked,
-        })}/>
+        <LockIcon open={!locked} pathClassName={classNames("stroke-1", {
+          "stroke-accent": locked,
+          "stroke-overlay-fg": !locked,
+        })} />
       </IconBtn>
       {onDelete && !locked && (
         <>
           <IconBtn onClick={onDelete} title="Delete object">
-            <TrashIcon width={16} height={16} strokeWidth={1} className={"[&>path]:stroke-overlay-fg"}/>
+            <TrashIcon width={16} height={16} pathClassName="stroke-overlay-fg stroke-1" />
           </IconBtn>
         </>
       )}

@@ -5,7 +5,7 @@
   --color-accent: var(--color-blue-500);
   --color-fg: var(--color-neutral-900);
   --color-bg: white;
-  --color-canvas-bg: var(--color-neutral-50);
+  --color-canvas-bg: white;
   --color-overlay-bg: white;
   --color-overlay-hover: var(--color-neutral-200);
   --transition-overlay-hover: background-color 0.2s ease;

@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import type { Tool } from "../../types";
 import ToolPopover from "./ToolPopover";
 import { ArrowButton, ToolButton } from "./ToolButton";
-import { ICON_COLOR, ICON_COLOR_ACTIVE, ICON_SIZE, ICON_STROKE_WIDTH, makeIcons } from "./toolConfig";
+import { ICON_FILL_CLASS, ICON_SIZE, makeIcons } from "./toolConfig";
 import { PenIcon } from "../Icons";
 
 interface DrawToolGroupProps {
@@ -32,12 +32,11 @@ export function DrawToolGroup({ tool, onToolChange, isOpen, onOpen, onClose }: D
   }, [isOpen, onClose]);
 
   const isDrawActive = tool === "pencil" || tool === "brush" || tool === "line" || tool === "eraser";
-  const drawIconColor = isDrawActive ? ICON_COLOR_ACTIVE : ICON_COLOR;
   const drawIcon =
-    tool === "brush" && isDrawActive ? <PenIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} stroke={drawIconColor} /> :
-    tool === "eraser" && isDrawActive ? makeIcons(drawIconColor).find(x => x.type === "eraser")?.icon :
-    tool === "line" && isDrawActive ? makeIcons(drawIconColor).find(x => x.type === "line")?.icon :
-    makeIcons(drawIconColor).find(x => x.type === "pencil")?.icon;
+    tool === "brush" && isDrawActive ? <PenIcon width={ICON_SIZE} height={ICON_SIZE} pathClassName={ICON_FILL_CLASS} /> :
+    tool === "eraser" && isDrawActive ? makeIcons(ICON_SIZE, true).find(x => x.type === "eraser")?.icon :
+    tool === "line" && isDrawActive ? makeIcons(ICON_SIZE, true).find(x => x.type === "line")?.icon :
+    makeIcons(ICON_SIZE, isDrawActive).find(x => x.type === "pencil")?.icon;
 
   const drawLabel =
     tool === "brush" ? "Pen" :
@@ -53,11 +52,11 @@ export function DrawToolGroup({ tool, onToolChange, isOpen, onOpen, onClose }: D
       >
         {drawIcon}
       </ToolButton>
-      <ArrowButton
+      {/* <ArrowButton
         open={isOpen}
         onClick={() => (isOpen ? onClose() : onOpen())}
         ariaLabel="Drawing tools"
-      />
+      /> */}
       {isOpen && (
         <ToolPopover
           popoverRef={popoverRef}
@@ -72,7 +71,7 @@ export function DrawToolGroup({ tool, onToolChange, isOpen, onOpen, onClose }: D
             key: t,
             label,
             active: isDrawActive ? tool === t : t === "pencil",
-            icon: makeIcons(ICON_COLOR_ACTIVE, 13).find(i => i.type === t)?.icon,
+            icon: makeIcons(13).find(i => i.type === t)?.icon,
             onClick: () => { onToolChange(t); onClose(); },
           }))}
         />

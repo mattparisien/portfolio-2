@@ -3,7 +3,7 @@
 import classNames from "classnames";
 import type { RefObject } from "react";
 import { ChevronUpIcon } from "../Icons";
-import { ICON_SIZE, ICON_STROKE_WIDTH } from "./toolConfig";
+import { ICON_SIZE } from "./toolConfig";
 
 interface ToolButtonProps {
   active: boolean;
@@ -26,7 +26,7 @@ export function ToolButton({
   btnRef,
   disabled,
   ariaExpanded,
-  activeClass = "bg-accent text-white",
+  activeClass = "bg-pink-100",
   extraClass,
   paddingClass,
 }: ToolButtonProps) {
@@ -39,7 +39,7 @@ export function ToolButton({
       disabled={disabled}
       onClick={onClick}
       className={classNames(
-        "rounded-md flex items-center justify-center transition-colors cursor-pointer",
+        "flex items-center justify-center transition-colors cursor-pointer py-3 px-3",
         {
           [activeClass]: active,
           "text-[#111] hover:bg-black/[0.07]": !active,
@@ -79,8 +79,8 @@ export function ArrowButton({ open, onClick, ariaLabel }: ArrowButtonProps) {
       <ChevronUpIcon
         height={ICON_SIZE}
         width={6}
-        strokeWidth={ICON_STROKE_WIDTH}
-        className={`transition-transform duration-150 ${open ? "" : "rotate-180"}`}
+        pathClassName="stroke-black stroke-1"
+        svgClassName={`transition-transform duration-150 ${open ? "" : "rotate-180"}`}
       />
     </button>
   );

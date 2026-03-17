@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ToolButton } from "./ToolButton";
-import { ICON_COLOR, makeIcons } from "./toolConfig";
+import { makeIcons } from "./toolConfig";
 
 interface UploadButtonProps {
   onAddImage?: (url: string) => void;
@@ -48,7 +48,7 @@ export function UploadButton({ onAddImage, uploadSignal }: UploadButtonProps) {
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
         ) : (
-          makeIcons(ICON_COLOR).find(i => i.type === "upload")?.icon
+          makeIcons().find(i => i.type === "upload")?.icon
         )}
       </ToolButton>
       <input
