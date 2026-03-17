@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import type { TextProps, Tool, TextGradient } from "../types";
 import {
   MdRemove,
@@ -10,7 +11,7 @@ import {
   MdFormatAlignRight,
 } from "react-icons/md";
 import OverlaySurface from "@/components/OverlaySurface";
-import { LockClosedIcon, LockOpenIcon, TrashIcon } from "./Icons";
+import { LockClosedIcon, LockOpenIcon, TrashIcon, StrokeWeightIcon } from "./Icons";
 
 const FONT_FAMILIES = [
   "sans-serif",
@@ -143,6 +144,85 @@ function StepBtn({
   );
 }
 
+function strokeWeightPopoverPos(btn: HTMLButtonElement | null): React.CSSProperties {
+  if (!btn) return {};
+  const r = btn.getBoundingClientRect();
+  return {
+    top: r.bottom + 8,
+    left: Math.max(8, r.left + r.width / 2 - 100),
+  };
+}
+
+function StrokeWeightButton({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  return (
+    <div className="relative flex-shrink-0">
+      <button
+        ref={btnRef}
+        title={`Stroke weight: ${value}px`}
+        onClick={() => setOpen((o) => !o)}
+        className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors cursor-pointer flex-shrink-0 ${
+          open ? "bg-black text-white" : "hover:bg-black/[0.07] text-gray-700"
+        }`}
+      >
+        <StrokeWeightIcon width={16} height={16} />
+      </button>
+      {open && createPortal(
+        <>
+          <div className="fixed inset-0 z-[360]" onClick={() => setOpen(false)} />
+          <div
+            className="fixed z-[370] px-4 pt-3.5 pb-4 rounded-2xl"
+            style={{
+              background: "rgba(255,255,255,0.98)",
+              backdropFilter: "blur(18px)",
+              WebkitBackdropFilter: "blur(18px)",
+              width: 200,
+              border: "1px solid rgba(0,0,0,0.07)",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+              ...strokeWeightPopoverPos(btnRef.current),
+            }}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400 select-none">Stroke Weight</span>
+              <span className="text-sm font-semibold text-gray-800 tabular-nums">{value}px</span>
+            </div>
+            <div className="flex items-center justify-center h-5 mb-3">
+              <div
+                className="rounded-full bg-black/80"
+                style={{
+                  width: Math.min(value * 2.5 + 20, 152),
+                  height: Math.max(1.5, Math.min(value, 16)),
+                }}
+              />
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={60}
+              step={1}
+              value={value}
+              onChange={(e) => onChange(Number(e.target.value))}
+              className="w-full cursor-pointer"
+              style={{
+                accentColor: "#111",
+                background: `linear-gradient(to right, #111 ${((value - 1) / 59) * 100}%, #e0e0e0 ${((value - 1) / 59) * 100}%)`,
+              }}
+            />
+          </div>
+        </>,
+        document.body,
+      )}
+    </div>
+  );
+}
+
 function NumberInput({
   value,
   min,
@@ -251,7 +331,7 @@ export default function PropertyToolbar({
       borderTop
       borderLeft
       borderRight
-      className="fixed top-3 left-1/2 -translate-x-1/2 flex items-center h-11 px-3 gap-1.5 z-[350] overflow-x-auto max-w-[calc(100vw-32px)]"
+      className="fixed top-appBounds left-1/2 -translate-x-1/2 flex items-center h-11 px-3 gap-1.5 z-[350] overflow-x-auto max-w-[calc(100vw-32px)]"
       style={{ scrollbarWidth: "none" }}
     >
       {isTextMode ? (
@@ -458,7 +538,6 @@ export default function PropertyToolbar({
         <>
           {/* Fill color (or stroke-only label for lines) */}
           <div className="flex items-center gap-1.5 flex-shrink-0">
-            <span className="text-[10px] text-black/40 select-none">{selectedIsLine ? "Stroke" : "Fill"}</span>
             <ColorSwatch
               title={selectedIsLine ? "Stroke colour" : "Fill colour"}
               color={color}
@@ -487,18 +566,7 @@ export default function PropertyToolbar({
           <VDivider />
 
           {/* Weight */}
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <span className="text-[10px] text-black/40 select-none">W</span>
-            <NumberInput
-              title="Stroke weight"
-              value={strokeWeight}
-              min={0}
-              max={60}
-              suffix="px"
-              onChange={onStrokeWeightChange}
-              width={52}
-            />
-          </div>
+          <StrokeWeightButton value={strokeWeight} onChange={onStrokeWeightChange} />
 
           <VDivider />
 

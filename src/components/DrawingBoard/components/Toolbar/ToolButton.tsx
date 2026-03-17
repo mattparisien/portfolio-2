@@ -39,7 +39,7 @@ export function ToolButton({
       disabled={disabled}
       onClick={onClick}
       className={classNames(
-        "flex items-center justify-center transition-colors cursor-pointer py-3 px-3",
+        "flex items-center justify-center transition-colors cursor-pointer",
         {
           [activeClass]: active,
           "text-[#111] hover:bg-neutral-200": !active,
@@ -50,6 +50,7 @@ export function ToolButton({
         }
       )}
     >
+      
       {children}
     </button>
   );

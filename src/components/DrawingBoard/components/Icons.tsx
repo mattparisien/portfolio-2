@@ -30,7 +30,6 @@ export const PencilIcon = ({ width = 22, height = 22, pathClassName, svgClassNam
     )
 }
 
-
 export const CircleIcon = ({ width = 22, height = 22, pathClassName, svgClassName }: IconProps) => {
     return (
         <svg width={width} height={height} viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" className={svgClassName}>
@@ -189,3 +188,10 @@ export const BrushCursorIcon = ({ style }: { style?: React.CSSProperties }) => (
         <line x1="12.5" y1="3.5" x2="16.5" y2="7.5" stroke="white" strokeWidth="0.8" />
     </svg>
 )
+
+export const StrokeWeightIcon = ({ width = 22, height = 22, pathClassName, svgClassName }: IconProps) => {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" width={width} height={height} viewBox="0 0 24 24" className={svgClassName}><rect width="18" height="1.5" x="3" y="4" fill="currentColor" rx=".75"></rect><rect width="18" height="3" x="3" y="8.5" fill="currentColor" rx="1"></rect><rect width="18" height="5.5" x="3" y="14.5" fill="currentColor" rx="1"></rect></svg>
+
+    )
+}

@@ -1,9 +1,8 @@
-import type { Metadata } from "next";
 import 'locomotive-scroll/dist/locomotive-scroll.css';
+import type { Metadata } from "next";
 
 
 import "./globals.css";
-import SmoothScroller from "@/components/SmoothScroller";
 
 export const metadata: Metadata = {
   title: "Crumb",
@@ -26,9 +25,7 @@ export default function RootLayout({
         <meta name="robots" content="noindex, nofollow"></meta>
       </head>
       <body className="antialiased" suppressHydrationWarning>
-        <SmoothScroller>
-          {children}
-        </SmoothScroller>
+        {children}
       </body>
     </html>
   );
