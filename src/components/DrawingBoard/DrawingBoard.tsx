@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect, useCallback } from "react";
 import type { Canvas } from "fabric";
-import PropertiesPanel from "./components/PropertiesPanel";
+import PropertyToolbar from "./components/PropertyToolbar";
 import BoardHeader from "./components/BoardHeader";
 import Toolbar from "./components/Toolbar/Toolbar";
 import RemoteCursors from "./components/RemoteCursors";
@@ -147,7 +147,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
   }, []);
 
   const selectedIsShape = hasSelection && !selectedIsText && !selectedIsGif && !selectedIsPath && !selectedIsLine;
-  const panelVisible    = selectedIsText || (!selectedIsGif && (tool === "pencil" || tool === "brush" || hasSelection));
+  const panelVisible    = hasSelection || tool === "text" || tool === "pencil" || tool === "brush";
 
   // Mobile detection
   const windowWidth   = useWindowWidth();
@@ -442,9 +442,9 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
         </div>
       )}
 
-      {/* Properties panel — slides in from the right when a drawing tool is active or an object is selected */}
+      {/* Property toolbar — Canva-style top bar, visible when an object is selected or drawing tool active */}
       {panelVisible && (
-        <PropertiesPanel
+        <PropertyToolbar
           tool={tool}
           hasSelection={hasSelection}
           selectedIsText={selectedIsText}
@@ -466,9 +466,6 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
           onOpenStrokeColor={() => openColorPopover("toolbar-stroke")}
           onOpenTextColor={() => openColorPopover("text")}
           onCloseColor={closeColorPopover}
-          onFillColorChange={(c) => { setFillGradient(null); setColor(c); if (hasSelection) recolorSelected(c); }}
-          onStrokeColorChange={(c) => { setShapeStrokeColor(c); restrokeSelected(c); }}
-          onTextColorChange={(c) => { setColor(c); recolorSelected(c); }}
         />
       )}
       <Toolbar
