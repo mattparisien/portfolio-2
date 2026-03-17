@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { autoSimplifyPath } from "../components/DrawingBoard/canvasUtils";
-import type { PathCmd } from "../components/DrawingBoard/canvasUtils";
+import { autoSimplifyPath } from "../components/Editor/Canvas/canvasUtils";
+import type { PathCmd } from "../components/Editor/Canvas/canvasUtils";
 
 // ── autoSimplifyPath (Ramer-Douglas-Peucker) ────────────────────────────────
 describe("autoSimplifyPath", () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { DEFAULT_TEXT_PROPS } from "../components/DrawingBoard/types";
+import { DEFAULT_TEXT_PROPS } from "../components/Editor/Canvas/types";
 
 describe("DEFAULT_TEXT_PROPS", () => {
   it("fontFamily is 'sans-serif'", () => {

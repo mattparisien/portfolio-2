@@ -1,9 +1,8 @@
 "use client";
 
 import { useRef, useState, useEffect, useCallback } from "react";
-import type { Canvas } from "fabric";
+import type { Canvas as FabricCanvas } from "fabric";
 import PropertyToolbar from "./components/PropertyToolbar";
-import BoardHeader from "./components/BoardHeader";
 import Toolbar from "./components/Toolbar/Toolbar";
 import RemoteCursors from "./components/RemoteCursors";
 // import ZoomNav from "./components/ZoomNav";
@@ -80,9 +79,9 @@ function CapacityWall() {
 type ColorSlot = "toolbar-fill" | "toolbar-stroke" | "text";
 
 // ── Inner board — uses Liveblocks hooks (must be inside RoomProvider) ─────
-function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: string }[] }) {
+function CanvasInner({ initialObjects }: { initialObjects: { fabricJSON: string }[] }) {
   const canvasElRef = useRef<HTMLCanvasElement>(null);
-  const fabricRef   = useRef<Canvas | null>(null);
+  const fabricRef   = useRef<FabricCanvas | null>(null);
 
   const [tool, setTool]                         = useState<Tool>("select");
   const [color, setColor]                       = useState("#000000");
@@ -536,7 +535,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
         onClearRequest={() => setClearConfirmOpen(true)}
       />
       {/* {!panelVisible && <ZoomNav zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} />} */}
-      <BoardHeader isSyncing={isSyncing} />
+      {/* <BoardHeader isSyncing={isSyncing} /> */}
 
       {/* Top-right cluster: active users */}
       {/* {!panelVisible && (
@@ -651,14 +650,14 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
 }
 
 // ── Outer wrapper — provides the Liveblocks room ──────────────────────────
-export default function DrawingBoard({ initialObjects }: { initialObjects: { fabricJSON: string }[] }) {
+export default function Canvas({ initialObjects }: { initialObjects: { fabricJSON: string }[] }) {
   const [user] = useState(getOrCreateUser);
   return (
     <RoomProvider
       id="main-board"
       initialPresence={{ cursor: null, name: user.name, color: CURSOR_COLORS[0] }}
     >
-      <DrawingBoardInner initialObjects={initialObjects} />
+      <CanvasInner initialObjects={initialObjects} />
     </RoomProvider>
   );
 }

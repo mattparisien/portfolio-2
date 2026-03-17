@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { clampDelay } from "../components/DrawingBoard/gifDecoder";
+import { clampDelay } from "../components/Editor/Canvas/gifDecoder";
 
 // ── clampDelay ──────────────────────────────────────────────────────────────
 // GIF stores delays in centiseconds; clampDelay converts to ms and enforces

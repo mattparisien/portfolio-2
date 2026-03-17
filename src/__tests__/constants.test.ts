@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { BOARD_ID, COLORS, BRUSH_SIZES, CURSOR_COLORS, CURSOR_NAMES, getOrCreateUser } from "../components/DrawingBoard/constants";
+import { BOARD_ID, COLORS, BRUSH_SIZES, CURSOR_COLORS, CURSOR_NAMES, getOrCreateUser } from "../components/Editor/Canvas/constants";
 
 const HEX_COLOR_RE = /^#[0-9A-Fa-f]{6}$/;
 

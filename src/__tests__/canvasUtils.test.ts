@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { applyCtxStyles, replayStroke, clearToBackground, getCanvasBgColor, gradientCoordsFromAngle } from "../components/DrawingBoard/canvasUtils";
-import type { StrokeRecord } from "../components/DrawingBoard/types";
+import { applyCtxStyles, replayStroke, clearToBackground, getCanvasBgColor, gradientCoordsFromAngle } from "../components/Editor/Canvas/canvasUtils";
+import type { StrokeRecord } from "../components/Editor/Canvas/types";
 
 // ── Minimal mock for CanvasRenderingContext2D ──────────────────────────────
 function makeMockCtx() {
