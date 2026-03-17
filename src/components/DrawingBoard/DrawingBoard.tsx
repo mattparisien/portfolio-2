@@ -424,9 +424,9 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
       {cursorOnScreen && !isOverUI && !isOverHandle && tool === "select" && (
         <div
           className="pointer-events-none fixed z-[9999]"
-          style={{ left: 0, top: 0, transform: `translate(${localCursor!.x}px, ${localCursor!.y}px)`, willChange: "transform" }}
+          style={{ left: 0, top: 0, transform: `translate(${localCursor!.x}px, ${localCursor!.y}px)`, willChange: "transform", color: "#1a1a1a" }}
         >
-          <CursorArrowIcon />
+          <CursorArrowIcon pathClassName="fill-current stroke-20 stroke-white" svgClassName="block" />
         </div>
       )}
 

@@ -17,7 +17,7 @@ import {
 } from "../Icons";
 
 export const ICON_SIZE = 25;
-export const ICON_PATH_CLASS = "stroke-neutral-800 stroke-1";
+export const ICON_PATH_CLASS = "stroke-neutral-800 stroke-[0.7]";
 export const ICON_FILL_CLASS = "fill-neutral-800";
 
 export const SHAPES_TYPES = ["rect", "circle", "triangle", "star", "heart"];

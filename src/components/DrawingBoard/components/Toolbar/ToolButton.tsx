@@ -42,7 +42,7 @@ export function ToolButton({
         "flex items-center justify-center transition-colors cursor-pointer py-3 px-3",
         {
           [activeClass]: active,
-          "text-[#111] hover:bg-black/[0.07]": !active,
+          "text-[#111] hover:bg-neutral-200": !active,
           "disabled:opacity-50 disabled:cursor-not-allowed": disabled,
           [extraClass ?? ""]: !!extraClass,
           [paddingClass ?? ""]: !!paddingClass,
