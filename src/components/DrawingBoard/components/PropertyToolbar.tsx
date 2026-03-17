@@ -33,6 +33,7 @@ export interface PropertyToolbarProps {
   selectedIsText: boolean;
   selectedIsShape: boolean;
   selectedIsLine: boolean;
+  selectedIsImage: boolean;
   color: string;
   fillGradient?: TextGradient | null;
   strokeColor?: string;
@@ -52,6 +53,8 @@ export interface PropertyToolbarProps {
   locked?: boolean;
   onToggleLock?: () => void;
   onDelete?: () => void;
+  isRemovingBg?: boolean;
+  onRemoveBg?: () => void;
 }
 
 // ── Primitives ────────────────────────────────────────────────────────────────
@@ -192,6 +195,7 @@ export default function PropertyToolbar({
   selectedIsText,
   selectedIsShape,
   selectedIsLine,
+  selectedIsImage,
   color,
   fillGradient,
   strokeColor,
@@ -211,6 +215,8 @@ export default function PropertyToolbar({
   locked,
   onToggleLock,
   onDelete,
+  isRemovingBg,
+  onRemoveBg,
 }: PropertyToolbarProps) {
   const {
     fontFamily,
@@ -233,7 +239,8 @@ export default function PropertyToolbar({
         .join(", ")})`
     : undefined;
 
-  const isTextMode = selectedIsText || tool === "text";
+  const isTextMode  = selectedIsText || tool === "text";
+  const isImageMode = selectedIsImage;
 
   return (
     <OverlaySurface
@@ -392,8 +399,60 @@ export default function PropertyToolbar({
             </>
           )}
         </>
+      ) : isImageMode ? (
+        /* ══════════════ IMAGE ══════════════ */
+        <>
+          {/* Opacity */}
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <span className="text-[10px] text-black/40 select-none">Op</span>
+            <NumberInput
+              title="Opacity"
+              value={Math.round(opacity * 100)}
+              min={0}
+              max={100}
+              suffix="%"
+              onChange={(v) => onOpacityChange(v / 100)}
+              width={52}
+            />
+          </div>
+
+          {/* Remove background */}
+          {onRemoveBg && (
+            <>
+              <VDivider />
+              <button
+                title="Remove background"
+                onClick={onRemoveBg}
+                disabled={isRemovingBg}
+                className="flex-shrink-0 text-[11px] font-medium px-2.5 py-1 rounded-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-black/[0.06] hover:bg-black/[0.12] text-gray-700"
+              >
+                {isRemovingBg ? "Removing…" : "Remove BG"}
+              </button>
+            </>
+          )}
+
+          {/* Lock / Delete */}
+          {hasSelection && onToggleLock && (
+            <>
+              <VDivider />
+              <ToggleBtn
+                active={!!locked}
+                title={locked ? "Unlock object" : "Lock object"}
+                onClick={onToggleLock}
+              >
+                {locked
+                  ? <LockClosedIcon width={13} height={13} pathClassName="stroke-current stroke-1" />
+                  : <LockOpenIcon   width={13} height={13} pathClassName="stroke-current stroke-1" />}
+              </ToggleBtn>
+              {!locked && onDelete && (
+                <ToggleBtn active={false} title="Delete object" onClick={onDelete}>
+                  <TrashIcon width={13} height={13} pathClassName="stroke-current stroke-1" />
+                </ToggleBtn>
+              )}
+            </>
+          )}
+        </>
       ) : (
-        /* ══════════════ SHAPE / LINE / DRAWING ══════════════ */
         <>
           {/* Fill color (or stroke-only label for lines) */}
           <div className="flex items-center gap-1.5 flex-shrink-0">

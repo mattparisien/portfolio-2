@@ -65,6 +65,7 @@ interface UseFabricCanvasOptions {
   setSelectedIsGif: (v: boolean) => void;
   setSelectedIsPath: (v: boolean) => void;
   setSelectedIsLine: (v: boolean) => void;
+  setSelectedIsImage: (v: boolean) => void;
   setSelectedIsLocked: (v: boolean) => void;
   setShapeStrokeColor: (c: string) => void;
   setColor: (c: string) => void;
@@ -102,6 +103,7 @@ export function useFabricCanvas({
   setSelectedIsGif,
   setSelectedIsPath,
   setSelectedIsLine,
+  setSelectedIsImage,
   setSelectedIsLocked,
   setShapeStrokeColor,
   setColor,
@@ -775,12 +777,14 @@ export function useFabricCanvas({
         const isGif  = !!obj && !!(obj as { giphyId?: string }).giphyId;
         const isPath  = !!obj && (obj as { type?: string }).type === "path" && !(obj as { giphyId?: string }).giphyId;
         const isLine  = !!obj && (obj as { type?: string }).type === "line";
+        const isImage = !!obj && (obj as { type?: string }).type === "image" && !(obj as { giphyId?: string }).giphyId;
         // Any non-text, non-gif, non-path, non-line object is a shape (rect, circle, etc.)
-        const isShape = !!obj && !isText && !isGif && !isPath && !isLine;
+        const isShape = !!obj && !isText && !isGif && !isPath && !isLine && !isImage;
         setSelectedIsText(isText);
         setSelectedIsGif(isGif);
         setSelectedIsPath(isPath);
         setSelectedIsLine(isLine);
+        setSelectedIsImage(isImage);
         if (isText) setTextProps(extractTextProps(obj as IText));
         if (isPath) {
           const pathObj = obj as unknown as { stroke?: string; strokeWidth?: number; opacity?: number };
@@ -821,6 +825,7 @@ export function useFabricCanvas({
         setSelectedIsGif(false);
         setSelectedIsPath(false);
         setSelectedIsLine(false);
+        setSelectedIsImage(false);
         setSelectedIsLocked(false);
         if (!pendingMultiSave) return;
         const objs = pendingMultiSave;

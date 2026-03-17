@@ -95,6 +95,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
   const [selectedIsGif, setSelectedIsGif]       = useState(false);
   const [selectedIsPath, setSelectedIsPath]     = useState(false);
   const [selectedIsLine, setSelectedIsLine]     = useState(false);
+  const [selectedIsImage, setSelectedIsImage]   = useState(false);
   const [selectedIsLocked, setSelectedIsLocked] = useState(false);
   const [shapeStrokeColor, setShapeStrokeColor] = useState("#000000");
   const [opacity, setOpacity]                   = useState(1);
@@ -145,7 +146,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
     }
   }, []);
 
-  const selectedIsShape = hasSelection && !selectedIsText && !selectedIsGif && !selectedIsPath && !selectedIsLine;
+  const selectedIsShape = hasSelection && !selectedIsText && !selectedIsGif && !selectedIsPath && !selectedIsLine && !selectedIsImage;
   const panelVisible    = hasSelection || tool === "text" || tool === "pencil" || tool === "brush";
 
   // Mobile detection
@@ -206,6 +207,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
     setSelectedIsGif,
     setSelectedIsPath,
     setSelectedIsLine,
+    setSelectedIsImage,
     setSelectedIsLocked,
     setShapeStrokeColor,
     setColor,
@@ -244,6 +246,43 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
       fillGradientRef,
       shapeStrokeColorRef,
     });
+
+  const [isRemovingBg, setIsRemovingBg] = useState(false);
+
+  const removeImageBg = useCallback(async () => {
+    const fc = fabricRef.current;
+    if (!fc) return;
+    const obj = fc.getActiveObject() as unknown as { type?: string; getSrc?(): string; setSrc(src: string, opts?: object): Promise<void>; dirty: boolean; setCoords(): void; boardObjectId?: string } | null;
+    if (!obj || obj.type !== "image" || !obj.getSrc) return;
+    const src = obj.getSrc();
+    // Only works with absolute HTTPS URLs (our Cloudflare CDN images)
+    if (!src.startsWith("https://")) return;
+    setIsRemovingBg(true);
+    try {
+      const res = await fetch("/api/remove-bg", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: src }),
+      });
+      if (!res.ok) { console.error("[remove-bg] failed:", await res.text()); return; }
+      const { dataUrl } = await res.json();
+      // Fabric v7: setSrc returns a Promise, no callback
+      await obj.setSrc(dataUrl, { crossOrigin: "anonymous" });
+      obj.dirty = true;
+      obj.setCoords();
+      fc.requestRenderAll();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      saveObjectRef.current?.(obj as any);
+    } catch (e) {
+      console.error("[remove-bg]", e);
+    } finally {
+      setIsRemovingBg(false);
+    }
+  }, [fabricRef]);
+
+  // Keep a stable ref so removeImageBg can call saveObject inside the async callback
+  const saveObjectRef = useRef<((obj: unknown) => void) | null>(null);
+  saveObjectRef.current = saveObject as unknown as (obj: unknown) => void;
 
   usePenTool({
     overlayRef:   penOverlayRef,
@@ -449,6 +488,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
           selectedIsText={selectedIsText}
           selectedIsShape={selectedIsShape}
           selectedIsLine={selectedIsLine}
+          selectedIsImage={selectedIsImage}
           color={color}
           fillGradient={fillGradient}
           strokeColor={selectedIsShape ? shapeStrokeColor : undefined}
@@ -472,6 +512,8 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
             lockSelected(next);
           }}
           onDelete={() => deleteFnRef.current?.()}
+          isRemovingBg={isRemovingBg}
+          onRemoveBg={removeImageBg}
         />
       )}
       <Toolbar
