@@ -7,6 +7,7 @@
   --color-bg: white;
   --color-canvas-bg: white;
   --color-overlay-bg: white;
+  --color-overlay-fg: var(--color-neutral-800);
   --color-overlay-hover: var(--color-neutral-200);
   --transition-overlay-hover: background-color 0.2s ease;
   --shadow-sm: none;

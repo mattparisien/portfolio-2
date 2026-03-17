@@ -10,6 +10,7 @@ import {
   MdFormatAlignRight,
 } from "react-icons/md";
 import OverlaySurface from "@/components/OverlaySurface";
+import { LockClosedIcon, LockOpenIcon, TrashIcon } from "./Icons";
 
 const FONT_FAMILIES = [
   "sans-serif",
@@ -48,6 +49,9 @@ export interface PropertyToolbarProps {
   onOpenStrokeColor: () => void;
   onOpenTextColor: () => void;
   onCloseColor: () => void;
+  locked?: boolean;
+  onToggleLock?: () => void;
+  onDelete?: () => void;
 }
 
 // ── Primitives ────────────────────────────────────────────────────────────────
@@ -184,6 +188,7 @@ function NumberInput({
 
 export default function PropertyToolbar({
   tool,
+  hasSelection,
   selectedIsText,
   selectedIsShape,
   selectedIsLine,
@@ -203,6 +208,9 @@ export default function PropertyToolbar({
   onOpenStrokeColor,
   onOpenTextColor,
   onCloseColor,
+  locked,
+  onToggleLock,
+  onDelete,
 }: PropertyToolbarProps) {
   const {
     fontFamily,
@@ -230,7 +238,10 @@ export default function PropertyToolbar({
   return (
     <OverlaySurface
       rounded
-      boxShadow
+      borderBottom
+      borderTop
+      borderLeft
+      borderRight
       className="fixed top-3 left-1/2 -translate-x-1/2 flex items-center h-11 px-3 gap-1.5 z-[350] overflow-x-auto max-w-[calc(100vw-32px)]"
       style={{ scrollbarWidth: "none" }}
     >
@@ -359,6 +370,27 @@ export default function PropertyToolbar({
               width={52}
             />
           </div>
+
+          {/* Lock / Delete — only when an object is actually selected */}
+          {hasSelection && onToggleLock && (
+            <>
+              <VDivider />
+              <ToggleBtn
+                active={!!locked}
+                title={locked ? "Unlock object" : "Lock object"}
+                onClick={onToggleLock}
+              >
+                {locked
+                  ? <LockClosedIcon width={13} height={13} pathClassName="stroke-current stroke-1" />
+                  : <LockOpenIcon   width={13} height={13} pathClassName="stroke-current stroke-1" />}
+              </ToggleBtn>
+              {!locked && onDelete && (
+                <ToggleBtn active={false} title="Delete object" onClick={onDelete}>
+                  <TrashIcon width={13} height={13} pathClassName="stroke-current stroke-1" />
+                </ToggleBtn>
+              )}
+            </>
+          )}
         </>
       ) : (
         /* ══════════════ SHAPE / LINE / DRAWING ══════════════ */
@@ -422,6 +454,27 @@ export default function PropertyToolbar({
               width={52}
             />
           </div>
+
+          {/* Lock / Delete — only when an object is actually selected */}
+          {hasSelection && onToggleLock && (
+            <>
+              <VDivider />
+              <ToggleBtn
+                active={!!locked}
+                title={locked ? "Unlock object" : "Lock object"}
+                onClick={onToggleLock}
+              >
+                {locked
+                  ? <LockClosedIcon width={13} height={13} pathClassName="stroke-current stroke-1" />
+                  : <LockOpenIcon   width={13} height={13} pathClassName="stroke-current stroke-1" />}
+              </ToggleBtn>
+              {!locked && onDelete && (
+                <ToggleBtn active={false} title="Delete object" onClick={onDelete}>
+                  <TrashIcon width={13} height={13} pathClassName="stroke-current stroke-1" />
+                </ToggleBtn>
+              )}
+            </>
+          )}
         </>
       )}
     </OverlaySurface>

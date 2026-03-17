@@ -62,7 +62,7 @@ export default function Toolbar({
   });
 
   return (
-    <ToolOverlaySurface className="fixed right-0 top-1/2 -translate-y-1/2 overflow-hidden">
+    <ToolOverlaySurface className="fixed right-0 top-1/2 -translate-y-1/2 overflow-hidden" direction="vertical">
       <ToolButton
         active={tool === "select"}
         onClick={() => onToolChange("select")}

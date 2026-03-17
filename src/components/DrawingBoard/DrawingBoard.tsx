@@ -8,7 +8,6 @@ import Toolbar from "./components/Toolbar/Toolbar";
 import RemoteCursors from "./components/RemoteCursors";
 // import ZoomNav from "./components/ZoomNav";
 // import ActiveUsers from "./components/ActiveUsers";
-import ObjectLockButton from "./components/ObjectLockButton";
 import ColorPopover from "./components/ColorPopover";
 import { useGifLoop } from "./hooks/useGifLoop";
 import { useBoardSync } from "./hooks/useBoardSync";
@@ -466,6 +465,13 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
           onOpenStrokeColor={() => openColorPopover("toolbar-stroke")}
           onOpenTextColor={() => openColorPopover("text")}
           onCloseColor={closeColorPopover}
+          locked={selectedIsLocked}
+          onToggleLock={() => {
+            const next = !selectedIsLocked;
+            setSelectedIsLocked(next);
+            lockSelected(next);
+          }}
+          onDelete={() => deleteFnRef.current?.()}
         />
       )}
       <Toolbar
@@ -491,19 +497,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
           <ActiveUsers />
         </div>
       )} */}
-      {/* Lock/unlock button floats above the selected object — self-positions via RAF */}
-      {hasSelection && (
-        <ObjectLockButton
-          fabricRef={fabricRef}
-          locked={selectedIsLocked}
-          onToggle={() => {
-            const next = !selectedIsLocked;
-            setSelectedIsLocked(next);
-            lockSelected(next);
-          }}
-          onDelete={() => deleteFnRef.current?.()}
-        />
-      )}
+
       <CapacityWall />
 
       {/* ── Shared singleton color popover — renders at the top, next to navigation ── */}

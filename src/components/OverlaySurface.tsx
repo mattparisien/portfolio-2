@@ -4,6 +4,7 @@ import classNames from "classnames";
 interface FloatingPanelProps {
     children: React.ReactNode;
     className?: string;
+    direction?: "horizontal" | "vertical";
     boxShadow?: boolean;
     borderTop?: boolean;
     borderLeft?: boolean;
@@ -19,10 +20,12 @@ interface FloatingPanelProps {
 }
 
 const OverlaySurface = forwardRef<HTMLDivElement, FloatingPanelProps>(
-    ({ children, className, boxShadow = false, borderTop = false, borderLeft = false, borderRight = false, borderBottom = false, rounded = false, roundedTopLeft = false, roundedTopRight = false, roundedBottomLeft = false, roundedBottomRight = false, style, onPointerOver }, ref) => (
+    ({ children, className, direction, boxShadow = false, borderTop = false, borderLeft = false, borderRight = false, borderBottom = false, rounded = false, roundedTopLeft = false, roundedTopRight = false, roundedBottomLeft = false, roundedBottomRight = false, style, onPointerOver }, ref) => (
         <div
             ref={ref}
             className={classNames("drawing-ui-overlay z-[300] bg-overlay-bg", className, {
+                "flex flex-row items-center": direction === "horizontal",
+                "flex flex-col": direction === "vertical",
                 "border-t border-neutral-200": borderTop,
                 "border-l border-neutral-200": borderLeft,
                 "border-r border-neutral-200": borderRight,
