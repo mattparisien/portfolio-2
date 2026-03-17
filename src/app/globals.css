@@ -18,6 +18,7 @@
   --shadow-inner: none;
   --inset-shadow-sm: none;
   --inset-shadow: none;
+  --font-heading: 'Pantasia', serif;
 }
 
 /* *:not(:focus-visible) {
@@ -27,9 +28,9 @@
 /* ── Active fonts (used in rendered UI) ─────────────────────────────────── */
 
 @font-face {
-  font-family: "Waldeck";
-  src: url("/assets/fonts/Waldeck-trial-Black.otf") format("opentype");
-  font-weight: 900;
+  font-family: "Pantasia";
+  src: url("/assets/fonts/PantasiaNTXT-Regular.woff2") format("woff2");
+  font-weight: 300;
   font-style: normal;
   font-display: swap;
 }
