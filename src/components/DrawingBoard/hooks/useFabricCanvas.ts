@@ -66,6 +66,7 @@ interface UseFabricCanvasOptions {
   setSelectedIsPath: (v: boolean) => void;
   setSelectedIsLine: (v: boolean) => void;
   setSelectedIsImage: (v: boolean) => void;
+  setSelectedImageBgRemoved: (v: boolean) => void;
   setSelectedIsLocked: (v: boolean) => void;
   setShapeStrokeColor: (c: string) => void;
   setColor: (c: string) => void;
@@ -104,6 +105,7 @@ export function useFabricCanvas({
   setSelectedIsPath,
   setSelectedIsLine,
   setSelectedIsImage,
+  setSelectedImageBgRemoved,
   setSelectedIsLocked,
   setShapeStrokeColor,
   setColor,
@@ -785,6 +787,7 @@ export function useFabricCanvas({
         setSelectedIsPath(isPath);
         setSelectedIsLine(isLine);
         setSelectedIsImage(isImage);
+        if (isImage) setSelectedImageBgRemoved(!!(obj as unknown as Record<string, unknown>)._bgRemoved);
         if (isText) setTextProps(extractTextProps(obj as IText));
         if (isPath) {
           const pathObj = obj as unknown as { stroke?: string; strokeWidth?: number; opacity?: number };
@@ -826,6 +829,7 @@ export function useFabricCanvas({
         setSelectedIsPath(false);
         setSelectedIsLine(false);
         setSelectedIsImage(false);
+        setSelectedImageBgRemoved(false);
         setSelectedIsLocked(false);
         if (!pendingMultiSave) return;
         const objs = pendingMultiSave;

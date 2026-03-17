@@ -96,6 +96,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
   const [selectedIsPath, setSelectedIsPath]     = useState(false);
   const [selectedIsLine, setSelectedIsLine]     = useState(false);
   const [selectedIsImage, setSelectedIsImage]   = useState(false);
+  const [selectedImageBgRemoved, setSelectedImageBgRemoved] = useState(false);
   const [selectedIsLocked, setSelectedIsLocked] = useState(false);
   const [shapeStrokeColor, setShapeStrokeColor] = useState("#000000");
   const [opacity, setOpacity]                   = useState(1);
@@ -208,6 +209,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
     setSelectedIsPath,
     setSelectedIsLine,
     setSelectedIsImage,
+    setSelectedImageBgRemoved,
     setSelectedIsLocked,
     setShapeStrokeColor,
     setColor,
@@ -268,6 +270,8 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
       const { dataUrl } = await res.json();
       // Fabric v7: setSrc returns a Promise, no callback
       await obj.setSrc(dataUrl, { crossOrigin: "anonymous" });
+      (obj as unknown as Record<string, unknown>)._bgRemoved = true;
+      setSelectedImageBgRemoved(true);
       obj.dirty = true;
       obj.setCoords();
       fc.requestRenderAll();
@@ -513,6 +517,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
           }}
           onDelete={() => deleteFnRef.current?.()}
           isRemovingBg={isRemovingBg}
+          bgAlreadyRemoved={selectedImageBgRemoved}
           onRemoveBg={removeImageBg}
         />
       )}

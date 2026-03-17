@@ -54,6 +54,7 @@ export interface PropertyToolbarProps {
   onToggleLock?: () => void;
   onDelete?: () => void;
   isRemovingBg?: boolean;
+  bgAlreadyRemoved?: boolean;
   onRemoveBg?: () => void;
 }
 
@@ -216,6 +217,7 @@ export default function PropertyToolbar({
   onToggleLock,
   onDelete,
   isRemovingBg,
+  bgAlreadyRemoved,
   onRemoveBg,
 }: PropertyToolbarProps) {
   const {
@@ -423,10 +425,10 @@ export default function PropertyToolbar({
               <button
                 title="Remove background"
                 onClick={onRemoveBg}
-                disabled={isRemovingBg}
-                className="flex-shrink-0 text-[11px] font-medium px-2.5 py-1 rounded-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-black/[0.06] hover:bg-black/[0.12] text-gray-700"
+                disabled={isRemovingBg || bgAlreadyRemoved}
+                className={`flex-shrink-0 text-[11px] font-medium px-2.5 py-1 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${bgAlreadyRemoved ? "bg-black/[0.04] text-black/30 cursor-default" : "cursor-pointer bg-black/[0.06] hover:bg-black/[0.12] text-gray-700"}`}
               >
-                {isRemovingBg ? "Removing…" : "Remove BG"}
+                {isRemovingBg ? "Removing…" : bgAlreadyRemoved ? "BG Removed" : "Remove BG"}
               </button>
             </>
           )}
