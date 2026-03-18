@@ -10,8 +10,8 @@
   --color-overlay-bg: white;
   --color-overlay-fg: var(--color-neutral-800);
   --color-overlay-hover-bg: var(--color-neutral-200);
-  --color-overlay-active-bg: var(--color-neutral-400);
-  --color-overlay-active-fg: white;
+  --color-overlay-active-bg: var(--color-pink-100);
+  --color-overlay-active-fg: var(--color-black);
   --transition-overlay-hover: background-color 0.2s ease;
 
 

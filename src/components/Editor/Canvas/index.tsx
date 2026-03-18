@@ -555,7 +555,7 @@ function CanvasInner({ initialObjects }: { initialObjects: { fabricJSON: string 
           onColorChange={(c) => { setFillGradient(null); setColor(c); if (hasSelection) recolorSelected(c); }}
           onGradientChange={(g) => { setFillGradient(g); if (hasSelection) applyFillGradient(g); }}
           onClose={closeColorPopover}
-          anchorStyle={{ top: 120, right: 228, bottom: "auto", left: "auto" }}
+          anchorStyle={{ top: 68, left: "50%", transform: "translateX(-50%)", right: "auto", bottom: "auto" }}
         />
       )}
       {colorPopoverSlot === "toolbar-stroke" && (
@@ -564,7 +564,7 @@ function CanvasInner({ initialObjects }: { initialObjects: { fabricJSON: string 
           fabricRef={fabricRef}
           onColorChange={(c) => { setShapeStrokeColor(c); restrokeSelected(c); }}
           onClose={closeColorPopover}
-          anchorStyle={{ top: 200, right: 228, bottom: "auto", left: "auto" }}
+          anchorStyle={{ top: 68, left: "50%", transform: "translateX(-50%)", right: "auto", bottom: "auto" }}
         />
       )}
       {colorPopoverSlot === "text" && (
@@ -575,7 +575,7 @@ function CanvasInner({ initialObjects }: { initialObjects: { fabricJSON: string 
           onColorChange={(c) => { setColor(c); recolorSelected(c); }}
           onGradientChange={(g) => applyTextProp({ gradient: g })}
           onClose={closeColorPopover}
-          anchorStyle={{ top: 120, right: 228, bottom: "auto", left: "auto" }}
+          anchorStyle={{ top: 68, left: "50%", transform: "translateX(-50%)", right: "auto", bottom: "auto" }}
         />
       )}
 

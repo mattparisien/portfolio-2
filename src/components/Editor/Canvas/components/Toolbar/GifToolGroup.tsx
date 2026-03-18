@@ -50,18 +50,18 @@ export function GifToolGroup({ onAddGif, isOpen, onOpen, onClose }: GifToolGroup
   const handleToggle = () => {
     if (isOpen) { onClose(); return; }
     onOpen();
-    // Compute popover position in wrapper-local coords to avoid the
-    // fixed-inside-transformed-ancestor bug (toolbar has translateX(-50%))
+    // Toolbar is a right-side vertical rail with a translateY transform, so
+    // `fixed` positioning is broken inside it. Use `absolute` coords relative
+    // to the wrapper instead, placing the popover to the LEFT of the toolbar.
     if (buttonRef.current && wrapRef.current) {
       const btnRect = buttonRef.current.getBoundingClientRect();
       const wrapRect = wrapRef.current.getBoundingClientRect();
       const POPOVER_W = Math.min(420, window.innerWidth - 16);
-      let leftRel = btnRect.left + btnRect.width / 2 - wrapRect.left - POPOVER_W / 2;
-      leftRel = Math.max(
-        8 - wrapRect.left,
-        Math.min(leftRel, window.innerWidth - POPOVER_W - 8 - wrapRect.left)
-      );
-      setGifPopoverStyle({ position: "absolute", left: leftRel, bottom: "calc(100% + 8px)", width: POPOVER_W });
+      const POPOVER_H = 460; // approx rendered height of GifPicker
+      // Center popover vertically on the button, clamped to viewport
+      let topRel = btnRect.top + btnRect.height / 2 - wrapRect.top - POPOVER_H / 2;
+      topRel = Math.max(8 - wrapRect.top, Math.min(topRel, window.innerHeight - POPOVER_H - 8 - wrapRect.top));
+      setGifPopoverStyle({ position: "absolute", right: "calc(100% + 8px)", top: topRel, width: POPOVER_W });
     }
   };
 
