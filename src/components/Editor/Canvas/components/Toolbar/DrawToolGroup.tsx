@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import type { Tool } from "../../types";
 import ToolPopover from "./ToolPopover";
 import { ArrowButton, ToolButton } from "./ToolButton";
-import { ICON_FILL_CLASS, ICON_SIZE, makeIcons } from "./toolConfig";
+import { ICON_FILL_CLASS, ICON_SIZE_CLASS, makeIcons } from "./toolConfig";
 import { PenIcon } from "../Icons";
 
 interface DrawToolGroupProps {
@@ -33,10 +33,10 @@ export function DrawToolGroup({ tool, onToolChange, isOpen, onOpen, onClose }: D
 
   const isDrawActive = tool === "pencil" || tool === "brush" || tool === "line" || tool === "eraser";
   const drawIcon =
-    tool === "brush" && isDrawActive ? <PenIcon width={ICON_SIZE} height={ICON_SIZE} pathClassName={ICON_FILL_CLASS} /> :
-    tool === "eraser" && isDrawActive ? makeIcons(ICON_SIZE, true).find(x => x.type === "eraser")?.icon :
-    tool === "line" && isDrawActive ? makeIcons(ICON_SIZE, true).find(x => x.type === "line")?.icon :
-    makeIcons(ICON_SIZE, isDrawActive).find(x => x.type === "pencil")?.icon;
+    tool === "brush" && isDrawActive ? <PenIcon svgClassName={`${ICON_SIZE_CLASS} ${ICON_FILL_CLASS}`} pathClassName={ICON_FILL_CLASS} /> :
+    tool === "eraser" && isDrawActive ? makeIcons(ICON_SIZE_CLASS, true).find(x => x.type === "eraser")?.icon :
+    tool === "line" && isDrawActive ? makeIcons(ICON_SIZE_CLASS, true).find(x => x.type === "line")?.icon :
+    makeIcons(ICON_SIZE_CLASS, isDrawActive).find(x => x.type === "pencil")?.icon;
 
   const drawLabel =
     tool === "brush" ? "Pen" :
@@ -71,7 +71,7 @@ export function DrawToolGroup({ tool, onToolChange, isOpen, onOpen, onClose }: D
             key: t,
             label,
             active: isDrawActive ? tool === t : t === "pencil",
-            icon: makeIcons(13).find(i => i.type === t)?.icon,
+            icon: makeIcons("size-[13px]").find(i => i.type === t)?.icon,
             onClick: () => { onToolChange(t); onClose(); },
           }))}
         />

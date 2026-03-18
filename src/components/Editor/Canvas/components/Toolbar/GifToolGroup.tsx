@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import GifPicker from "../GifPicker";
 import { ToolButton } from "./ToolButton";
-import { ICON_SIZE, POPOVER_STYLE, makeIcons } from "./toolConfig";
+import { ICON_SIZE_CLASS, POPOVER_STYLE, makeIcons } from "./toolConfig";
 
 interface GifToolGroupProps {
   onAddGif: (id: string, url: string) => void;
@@ -75,7 +75,7 @@ export function GifToolGroup({ onAddGif, isOpen, onOpen, onClose }: GifToolGroup
         ariaExpanded={isOpen}
         activeClass="bg-black/[0.07] text-[#111]"
       >
-        {makeIcons(ICON_SIZE, isOpen).find(x => x.type === "tv")?.icon}
+        {makeIcons(ICON_SIZE_CLASS, isOpen).find(x => x.type === "tv")?.icon}
       </ToolButton>
       {isOpen && (
         <div

@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { IoTriangleSharp } from "react-icons/io5";
 import type { ShapeType, Tool } from "../../types";
 import ToolPopover from "./ToolPopover";
-import { ArrowButton, ToolButton } from "./ToolButton";
-import { ICON_SIZE, SHAPES_TYPES, makeIcons } from "./toolConfig";
+import { ToolButton } from "./ToolButton";
+import { ICON_SIZE_CLASS, SHAPES_TYPES, makeIcons } from "./toolConfig";
 
 interface ShapeToolGroupProps {
   tool: Tool;
@@ -46,7 +46,7 @@ export function ShapeToolGroup({
   }, [isOpen, onClose]);
 
   const lastShapeIcon =
-    makeIcons(ICON_SIZE, tool === "shape").find(s => s.type === lastShape)?.icon ?? (
+    makeIcons(ICON_SIZE_CLASS, tool === "shape").find(s => s.type === lastShape)?.icon ?? (
       <IoTriangleSharp className="w-5 h-5" />
     );
 
@@ -68,7 +68,7 @@ export function ShapeToolGroup({
         <ToolPopover
           popoverRef={popoverRef}
           style={{ minWidth: 100 }}
-          items={makeIcons(13)
+          items={makeIcons("size-[13px]")
             .filter(i => SHAPES_TYPES.includes(i.type))
             .map(s => ({
               key: s.type,

@@ -16,7 +16,9 @@ import {
   UploadIcon,
 } from "../Icons";
 
-export const ICON_SIZE = 25;
+export const ICON_SIZE_CLASS = "size-[25px]";
+/** Padding should stay proportional — update both when changing icon size. 25px icon → p-2 (8px each side) */
+export const ICON_BTN_PADDING_CLASS = "p-2";
 export const ICON_PATH_CLASS = "stroke-neutral-800 stroke-[0.7]";
 export const ICON_FILL_CLASS = "fill-neutral-800";
 
@@ -28,21 +30,21 @@ export const POPOVER_STYLE: CSSProperties = {
   border: "1px solid rgba(0,0,0,0.08)",
 };
 
-export function makeIcons(size: number = ICON_SIZE, active = false): { type: ShapeType; label: string; icon: ReactNode }[] {
+export function makeIcons(sizeClass: string = ICON_SIZE_CLASS, active = false): { type: ShapeType; label: string; icon: ReactNode }[] {
   const strokeClass = active ? ICON_FILL_CLASS : ICON_PATH_CLASS;
   return [
-    { type: "select", label: "Select", icon: <CursorArrowIcon width={size} height={size} pathClassName={ICON_FILL_CLASS} /> },
-    { type: "text", label: "Text", icon: <TextIcon width={size} height={size} pathClassName={strokeClass} /> },
-    { type: "rect", label: "Rectangle", icon: <SquareIcon width={size} height={size} pathClassName={strokeClass} /> },
-    { type: "circle", label: "Circle", icon: <CircleIcon width={size} height={size} pathClassName={strokeClass} /> },
-    { type: "triangle", label: "Triangle", icon: <TriangleIcon width={size} height={size} pathClassName={strokeClass} /> },
-    { type: "star", label: "Star", icon: <StarIcon width={size} height={size} pathClassName={strokeClass} /> },
-    { type: "heart", label: "Heart", icon: <HeartIcon width={size} height={size} pathClassName={strokeClass} /> },
-    { type: "pencil", label: "Pencil", icon: <PencilIcon width={size} height={size} pathClassName={strokeClass} /> },
-    { type: "brush", label: "Pen", icon: <PenIcon width={size} height={size} pathClassName={ICON_FILL_CLASS} /> },
-    { type: "line", label: "Line", icon: <LineIcon width={size} height={size} pathClassName={strokeClass} /> },
-    { type: "eraser", label: "Eraser", icon: <EraserIcon width={size} height={size} pathClassName={strokeClass} /> },
-    { type: "upload", label: "Upload", icon: <UploadIcon width={size} height={size} pathClassName={strokeClass} /> },
-    { type: "tv", label: "GIFS", icon: <TVIcon width={size} height={size} pathClassName={strokeClass} /> },
+    { type: "select", label: "Select", icon: <CursorArrowIcon svgClassName={`${sizeClass} ${ICON_FILL_CLASS}`} pathClassName={ICON_FILL_CLASS} /> },
+    { type: "text", label: "Text", icon: <TextIcon svgClassName={sizeClass} pathClassName={strokeClass} /> },
+    { type: "rect", label: "Rectangle", icon: <SquareIcon svgClassName={sizeClass} pathClassName={strokeClass} /> },
+    { type: "circle", label: "Circle", icon: <CircleIcon svgClassName={sizeClass} pathClassName={strokeClass} /> },
+    { type: "triangle", label: "Triangle", icon: <TriangleIcon svgClassName={sizeClass} pathClassName={strokeClass} /> },
+    { type: "star", label: "Star", icon: <StarIcon svgClassName={sizeClass} pathClassName={strokeClass} /> },
+    { type: "heart", label: "Heart", icon: <HeartIcon svgClassName={sizeClass} pathClassName={strokeClass} /> },
+    { type: "pencil", label: "Pencil", icon: <PencilIcon svgClassName={sizeClass} pathClassName={strokeClass} /> },
+    { type: "brush", label: "Pen", icon: <PenIcon svgClassName={`${sizeClass} ${ICON_FILL_CLASS}`} pathClassName={ICON_FILL_CLASS} /> },
+    { type: "line", label: "Line", icon: <LineIcon svgClassName={sizeClass} pathClassName={strokeClass} /> },
+    { type: "eraser", label: "Eraser", icon: <EraserIcon svgClassName={sizeClass} pathClassName={strokeClass} /> },
+    { type: "upload", label: "Upload", icon: <UploadIcon svgClassName={sizeClass} pathClassName={strokeClass} /> },
+    { type: "tv", label: "GIFS", icon: <TVIcon svgClassName={sizeClass} pathClassName={strokeClass} /> },
   ];
 }

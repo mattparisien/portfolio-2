@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import type { ShapeType, Tool } from "../../types";
-import ToolOverlaySurface from "../ToolOverlaySurface";
+import ToolbarContainer from "../ToolbarContainer";
 import { DrawToolGroup } from "./DrawToolGroup";
 import { GifToolGroup } from "./GifToolGroup";
 import { ShapeToolGroup } from "./ShapeToolGroup";
 import { ToolButton } from "./ToolButton";
 import { UploadButton } from "./UploadButton";
-import { ICON_SIZE, makeIcons } from "./toolConfig";
+import { ICON_SIZE_CLASS, makeIcons } from "./toolConfig";
 
 interface ToolbarProps {
   tool: Tool;
@@ -62,13 +62,17 @@ export default function Toolbar({
   });
 
   return (
-    <ToolOverlaySurface className="fixed right-0 top-1/2 -translate-y-1/2 overflow-hidden" direction="vertical">
+    <ToolbarContainer
+      shape="edge"
+      direction="vertical"
+      className="fixed right-0 top-1/2 -translate-y-1/2 overflow-hidden"
+    >
       <ToolButton
         active={tool === "select"}
         onClick={() => onToolChange("select")}
         title="Select"
       >
-        {makeIcons(ICON_SIZE, tool === "select").find(x => x.type === "select")?.icon}
+        {makeIcons(ICON_SIZE_CLASS, tool === "select").find(x => x.type === "select")?.icon}
       </ToolButton>
 
       <ToolButton
@@ -76,7 +80,7 @@ export default function Toolbar({
         onClick={() => onAddText()}
         title="Text"
       >
-        {makeIcons(ICON_SIZE, tool === "text").find(x => x.type === "text")?.icon}
+        {makeIcons(ICON_SIZE_CLASS, tool === "text").find(x => x.type === "text")?.icon}
       </ToolButton>
 
       <DrawToolGroup tool={tool} onToolChange={onToolChange} {...groupProps("draw")} />
@@ -91,6 +95,6 @@ export default function Toolbar({
       <GifToolGroup onAddGif={onAddGif} {...groupProps("gif")} />
 
       <UploadButton onAddImage={onAddImage} uploadSignal={uploadSignal} />
-    </ToolOverlaySurface>
+    </ToolbarContainer>
   )
 }
