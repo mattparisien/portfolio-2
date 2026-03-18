@@ -11,7 +11,7 @@ import { UploadButton } from "./UploadButton";
 import { ICON_SIZE_CLASS, makeIcons } from "./toolConfig";
 
 interface ToolbarProps {
-  tool: Tool;
+  tool: Tool; 
   color: string;
   onToolChange: (t: Tool) => void;
   onAddShape: (shape: ShapeType) => void;
