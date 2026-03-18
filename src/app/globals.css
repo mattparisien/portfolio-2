@@ -6,10 +6,15 @@
   --color-fg: var(--color-neutral-900);
   --color-bg: white;
   --color-canvas-bg: white;
+
   --color-overlay-bg: white;
   --color-overlay-fg: var(--color-neutral-800);
-  --color-overlay-hover: var(--color-neutral-200);
+  --color-overlay-hover-bg: var(--color-neutral-200);
+  --color-overlay-active-bg: var(--color-neutral-400);
+  --color-overlay-active-fg: white;
   --transition-overlay-hover: background-color 0.2s ease;
+
+
   --shadow-sm: none;
   --shadow: none;
   --shadow-md: none;

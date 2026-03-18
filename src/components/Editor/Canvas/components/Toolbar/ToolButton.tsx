@@ -26,7 +26,7 @@ export function ToolButton({
   btnRef,
   disabled,
   ariaExpanded,
-  activeClass = "bg-pink-100",
+  activeClass = "bg-overlay-active-bg text-overlay-active-fg",
   extraClass,
   paddingClass = ICON_BTN_PADDING_CLASS,
 }: ToolButtonProps) {
@@ -42,7 +42,7 @@ export function ToolButton({
         "flex items-center justify-center transition-colors cursor-pointer", 
         {
           [activeClass]: active,
-          "text-[#111] hover:bg-neutral-200": !active,
+          "hover:bg-overlay-hover-bg": !active,
           "disabled:opacity-50 disabled:cursor-not-allowed": disabled,
           [extraClass ?? ""]: !!extraClass,
           [paddingClass]: !!paddingClass,

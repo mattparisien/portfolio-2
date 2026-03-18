@@ -19,8 +19,8 @@ import {
 export const ICON_SIZE_CLASS = "size-[25px]";
 /** Padding should stay proportional — update both when changing icon size. 25px icon → p-2 (8px each side) */
 export const ICON_BTN_PADDING_CLASS = "p-2";
-export const ICON_PATH_CLASS = "stroke-neutral-800 stroke-[0.7]";
-export const ICON_FILL_CLASS = "fill-neutral-800";
+export const ICON_PATH_CLASS = "stroke-overlay-fg stroke-[0.7]";
+export const ICON_FILL_CLASS = "fill-overlay-active-fg";
 
 export const SHAPES_TYPES = ["rect", "circle", "triangle", "star", "heart"];
 

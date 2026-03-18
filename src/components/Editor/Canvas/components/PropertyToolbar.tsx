@@ -11,7 +11,7 @@ import {
   MdFormatAlignRight,
 } from "react-icons/md";
 import OverlaySurface from "@/components/OverlaySurface";
-import { LockClosedIcon, LockOpenIcon, TrashIcon, StrokeWeightIcon } from "./Icons";
+import { LockClosedIcon, LockOpenIcon, TrashIcon, StrokeWeightIcon, TransparencyIcon } from "./Icons";
 
 const FONT_FAMILIES = [
   "sans-serif",
@@ -144,13 +144,79 @@ function StepBtn({
   );
 }
 
-function strokeWeightPopoverPos(btn: HTMLButtonElement | null): React.CSSProperties {
+function popoverPos(btn: HTMLButtonElement | null): React.CSSProperties {
   if (!btn) return {};
   const r = btn.getBoundingClientRect();
   return {
     top: r.bottom + 8,
     left: Math.max(8, r.left + r.width / 2 - 100),
   };
+}
+
+function OpacityButton({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const pct = Math.round(value * 100);
+  return (
+    <div className="relative flex-shrink-0">
+      <button
+        ref={btnRef}
+        title={`Opacity: ${pct}%`}
+        onClick={() => setOpen((o) => !o)}
+        className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors cursor-pointer flex-shrink-0 ${
+          open ? "bg-black text-white" : "hover:bg-black/[0.07] text-gray-700"
+        }`}
+      >
+        <TransparencyIcon width={16} height={16} />
+      </button>
+      {open && createPortal(
+        <>
+          <div className="fixed inset-0 z-[360]" onClick={() => setOpen(false)} />
+          <div
+            className="fixed z-[370] px-4 pt-3.5 pb-4 rounded-2xl"
+            style={{
+              background: "rgba(255,255,255,0.98)",
+              backdropFilter: "blur(18px)",
+              WebkitBackdropFilter: "blur(18px)",
+              width: 200,
+              border: "1px solid rgba(0,0,0,0.07)",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+              ...popoverPos(btnRef.current),
+            }}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400 select-none">Opacity</span>
+              <span className="text-sm font-semibold text-gray-800 tabular-nums">{pct}%</span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={1}
+              value={pct}
+              onChange={(e) => onChange(Number(e.target.value) / 100)}
+              className="w-full cursor-pointer"
+              style={{
+                accentColor: "#111",
+                background: `linear-gradient(to right, #111 ${pct}%, #e0e0e0 ${pct}%)`,
+              }}
+            />
+          </div>
+        </>,
+        document.body,
+      )}
+    </div>
+  );
+}
+
+function strokeWeightPopoverPos(btn: HTMLButtonElement | null): React.CSSProperties {
+  return popoverPos(btn);
 }
 
 function StrokeWeightButton({
@@ -447,18 +513,7 @@ export default function PropertyToolbar({
           <VDivider />
 
           {/* Opacity */}
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <span className="text-[10px] text-black/40 select-none">Op</span>
-            <NumberInput
-              title="Opacity"
-              value={Math.round(opacity * 100)}
-              min={0}
-              max={100}
-              suffix="%"
-              onChange={(v) => onOpacityChange(v / 100)}
-              width={52}
-            />
-          </div>
+          <OpacityButton value={opacity} onChange={onOpacityChange} />
 
           {/* Lock / Delete — only when an object is actually selected */}
           {hasSelection && onToggleLock && (
@@ -485,18 +540,7 @@ export default function PropertyToolbar({
         /* ══════════════ IMAGE ══════════════ */
         <>
           {/* Opacity */}
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <span className="text-[10px] text-black/40 select-none">Op</span>
-            <NumberInput
-              title="Opacity"
-              value={Math.round(opacity * 100)}
-              min={0}
-              max={100}
-              suffix="%"
-              onChange={(v) => onOpacityChange(v / 100)}
-              width={52}
-            />
-          </div>
+          <OpacityButton value={opacity} onChange={onOpacityChange} />
 
           {/* Remove background */}
           {onRemoveBg && (
@@ -571,18 +615,7 @@ export default function PropertyToolbar({
           <VDivider />
 
           {/* Opacity */}
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <span className="text-[10px] text-black/40 select-none">Op</span>
-            <NumberInput
-              title="Opacity"
-              value={Math.round(opacity * 100)}
-              min={0}
-              max={100}
-              suffix="%"
-              onChange={(v) => onOpacityChange(v / 100)}
-              width={52}
-            />
-          </div>
+          <OpacityButton value={opacity} onChange={onOpacityChange} />
 
           {/* Lock / Delete — only when an object is actually selected */}
           {hasSelection && onToggleLock && (
