@@ -39,7 +39,7 @@ export function GifToolGroup({ onAddGif, isOpen, onOpen, onClose }: GifToolGroup
     const stop = (e: Event) => e.stopPropagation();
     el.addEventListener("wheel", stop, { passive: false });
     el.addEventListener("touchstart", stop, { passive: false });
-    el.addEventListener("touchmove", stop, { passive: false });
+    el.addEventListener("touchmove", stop, { passive: false }); 
     return () => {
       el.removeEventListener("wheel", stop);
       el.removeEventListener("touchstart", stop);
