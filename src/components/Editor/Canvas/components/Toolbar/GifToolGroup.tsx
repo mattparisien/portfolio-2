@@ -11,7 +11,7 @@ interface GifToolGroupProps {
   isOpen: boolean;
   onOpen: () => void;
   onClose: () => void;
-}
+} 
 
 export function GifToolGroup({ onAddGif, isOpen, onOpen, onClose }: GifToolGroupProps) {
   const [gifPopoverStyle, setGifPopoverStyle] = useState<CSSProperties>({});
