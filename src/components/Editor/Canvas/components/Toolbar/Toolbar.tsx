@@ -8,6 +8,7 @@ import { GifToolGroup } from "./GifToolGroup";
 import { ShapeToolGroup } from "./ShapeToolGroup";
 import { ToolButton } from "./ToolButton";
 import { UploadButton } from "./UploadButton";
+import { RecordButton } from "./RecordButton";
 import { ICON_SIZE_CLASS, makeIcons } from "./toolConfig";
 
 interface ToolbarProps {
@@ -97,6 +98,7 @@ export default function Toolbar({
       <GifToolGroup onAddGif={onAddGif} {...groupProps("gif")} />
 
       <UploadButton onAddImage={onAddImage} onAddVideo={onAddVideo} uploadSignal={uploadSignal} />
+      <RecordButton />
     </ToolbarContainer>
   )
 }
