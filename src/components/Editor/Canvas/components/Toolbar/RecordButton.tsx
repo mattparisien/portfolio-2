@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { ToolButton } from "./ToolButton";
 
-type RecordState = "idle" | "selecting" | "recording";
+type RecordState = "idle" | "selecting" | "acquiring" | "recording";
 
 interface SelectionRect { x: number; y: number; w: number; h: number }
 interface DragPoint     { x: number; y: number }
@@ -24,7 +24,6 @@ interface DragPoint     { x: number; y: number }
 
 export function RecordButton() {
   const [recordState, setRecordState] = useState<RecordState>("idle");
-  const [loading, setLoading]         = useState(false);
   const [elapsed, setElapsed]         = useState(0);
   const [dragVis, setDragVis]         = useState<{ start: DragPoint; cur: DragPoint } | null>(null);
 
@@ -47,9 +46,9 @@ export function RecordButton() {
 
   useEffect(() => () => cleanupRef.current(), []);
 
-  // ── Escape key — cancel during selection ───────────────────────────────
+  // ── Escape key — cancel during selection or acquiring ─────────────────────
   useEffect(() => {
-    if (recordState !== "selecting") return;
+    if (recordState !== "selecting" && recordState !== "acquiring") return;
     const onKeyDown = (e: KeyboardEvent) => { if (e.key === "Escape") cancelAll(); };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -61,7 +60,6 @@ export function RecordButton() {
     cleanupRef.current();
     dragStartRef.current = null;
     setDragVis(null);
-    setLoading(false);
     setRecordState("idle");
   };
 
@@ -69,53 +67,63 @@ export function RecordButton() {
   const stopRecording = () => {
     if (timerRef.current !== null) { clearInterval(timerRef.current); timerRef.current = null; }
     if (rafRef.current   !== null) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
-    recorderRef.current?.stop();
+    const rec = recorderRef.current;
     recorderRef.current = null;
+    if (rec && rec.state !== "inactive") {
+      try { rec.requestData(); } catch { /* flush last chunk if supported */ }
+      rec.stop();
+    }
   };
 
-  // ── Step 1 — acquire display stream on initial button click (user gesture) ─
-  const startStreamRef = useRef<() => Promise<void>>(async () => {});
-  startStreamRef.current = async () => {
-    setLoading(true);
-    try {
-      const stream = await (navigator.mediaDevices as unknown as {
-        getDisplayMedia(c: unknown): Promise<MediaStream>;
-      }).getDisplayMedia({
+  // ── Step 1 — button click immediately shows the selecting overlay ────────────
+  // getDisplayMedia is NOT called here. It's called on mouseup from the overlay
+  // (a real React div event), which is also a valid trusted user gesture.
+  // This means the browser's \"Stop sharing\" bar only appears AFTER the user has
+  // already dragged their region — the correct order.
+
+  // ── Step 2 — called from overlay onMouseUp after region is drawn ──────────
+  // React's onMouseUp on a real div IS a trusted activation context for getDisplayMedia.
+  const handleRegionSelectedRef = useRef<(sel: SelectionRect) => void>(() => {});
+  handleRegionSelectedRef.current = (sel: SelectionRect) => {
+    if (sel.w < 10 || sel.h < 10) return; // too small — keep selecting
+    setRecordState("acquiring");
+
+    (navigator.mediaDevices as unknown as { getDisplayMedia(c: unknown): Promise<MediaStream> })
+      .getDisplayMedia({
         video: { frameRate: { ideal: 30 }, cursor: "always" },
         audio: false,
         preferCurrentTab: true,
         selfBrowserSurface: "include",
-      });
-      streamRef.current = stream;
+      })
+      .then(stream => {
+        streamRef.current = stream;
 
-      const vid     = document.createElement("video");
-      vid.srcObject = stream;
-      vid.muted     = true;
-      // Use addEventListener+once so we never miss the event if it fires early
-      await new Promise<void>((resolve, reject) => {
-        const t = setTimeout(() => reject(new Error("timeout")), 8000);
-        if (vid.readyState >= 1) {
-          clearTimeout(t); vid.play().then(() => resolve()).catch(() => resolve());
-        } else {
-          vid.addEventListener("loadedmetadata", () => {
-            clearTimeout(t); vid.play().then(() => resolve()).catch(() => resolve());
-          }, { once: true });
-        }
-      });
-      vidRef.current = vid;
+        const vid = document.createElement("video");
+        vid.srcObject = stream;
+        vid.muted = true;
+        vidRef.current = vid;
 
-      stream.getVideoTracks()[0].addEventListener("ended", () => {
-        if (recorderRef.current?.state === "recording") { recorderRef.current.stop(); recorderRef.current = null; }
-        else { cancelAll(); }
-      });
+        stream.getVideoTracks()[0].addEventListener("ended", () => {
+          if (timerRef.current !== null) { clearInterval(timerRef.current); timerRef.current = null; }
+          if (rafRef.current   !== null) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+          const rec = recorderRef.current;
+          recorderRef.current = null;
+          if (rec && rec.state !== "inactive") {
+            try { rec.requestData(); } catch { /* flush */ }
+            rec.stop();
+          } else {
+            setRecordState("idle"); setElapsed(0);
+          }
+        });
 
-      setLoading(false);
-      setRecordState("selecting");
-    } catch {
-      cleanupRef.current();
-      setLoading(false);
-      setRecordState("idle");
-    }
+        const proceed = () => startRecordingFromStreamRef.current(sel);
+        if (vid.readyState >= 1) { vid.play().catch(() => undefined); proceed(); }
+        else { vid.addEventListener("loadedmetadata", () => { vid.play().catch(() => undefined); proceed(); }, { once: true }); setTimeout(proceed, 3000); }
+      })
+      .catch(() => {
+        cleanupRef.current();
+        setRecordState("idle");
+      });
   };
 
   // ── Step 2 — start MediaRecorder once region is drawn (no getDisplayMedia) ─
@@ -160,13 +168,21 @@ export function RecordButton() {
         recorder = new MediaRecorder(canvas.captureStream(30));
       }
 
-      const actualMime = recorder.mimeType || mimeType;
-      const ext        = actualMime.startsWith("video/mp4") ? "mp4" : "webm";
-
       chunksRef.current = [];
       recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+
+      recorderRef.current = recorder;
+      recorder.start(100);
+      // Capture mimeType after start() — some browsers only populate recorder.mimeType then
+      const actualMime = recorder.mimeType || mimeType || "video/webm";
+      const ext        = actualMime.startsWith("video/mp4") ? "mp4" : "webm";
+
       recorder.onstop = () => {
         cleanupRef.current();
+        if (chunksRef.current.length === 0) {
+          console.warn("[RecordButton] onstop fired with no chunks — nothing to download");
+          setRecordState("idle"); setElapsed(0); return;
+        }
         const blob = new Blob(chunksRef.current, { type: actualMime });
         const url  = URL.createObjectURL(blob);
         const a    = Object.assign(document.createElement("a"), { href: url, download: `recording-${Date.now()}.${ext}` });
@@ -178,8 +194,6 @@ export function RecordButton() {
         setElapsed(0);
       };
 
-      recorderRef.current = recorder;
-      recorder.start(100);
       setRecordState("recording");
       timerRef.current = setInterval(() => setElapsed(s => s + 1), 1000);
     } catch (err) {
@@ -197,7 +211,7 @@ export function RecordButton() {
 
   const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
-  const isSelecting = recordState === "selecting";
+  const isSelecting = recordState === "selecting" || recordState === "acquiring";
 
   // ── Single unified return — ToolButton always present in toolbar ──────────
   return (
@@ -214,14 +228,14 @@ export function RecordButton() {
         <ToolButton
           active={isSelecting}
           onClick={() => {
-            if (loading) return;
+            if (recordState === "acquiring") return;
             if (isSelecting) { cancelAll(); return; }
-            startStreamRef.current();
+            setRecordState("selecting"); // instant — no async, no dialog
           }}
-          title={loading ? "Opening screen share…" : isSelecting ? "Cancel (Esc)" : "Record screen region"}
+          title={recordState === "acquiring" ? "Starting…" : isSelecting ? "Cancel (Esc)" : "Record screen region"}
           activeClass="text-red-500"
         >
-          {loading ? (
+          {recordState === "acquiring" ? (
             <svg className="animate-spin" width="16" height="16" viewBox="0 0 16 16" fill="none">
               <circle cx="8" cy="8" r="6" stroke="currentColor" strokeOpacity="0.3" strokeWidth="2" />
               <path d="M8 2a6 6 0 0 1 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -244,27 +258,29 @@ export function RecordButton() {
         <div
           className="fixed inset-0 z-[9900] cursor-crosshair select-none"
           onMouseDown={(e) => {
-            // Let [data-record-cancel] buttons pass through
             if ((e.target as HTMLElement).closest("[data-record-cancel]")) return;
             e.preventDefault();
+            e.nativeEvent.stopImmediatePropagation();
             const pt = { x: e.clientX, y: e.clientY };
             dragStartRef.current = pt;
             setDragVis({ start: pt, cur: pt });
           }}
           onMouseMove={(e) => {
             if (!dragStartRef.current) return;
+            e.nativeEvent.stopImmediatePropagation();
             setDragVis(prev => prev ? { ...prev, cur: { x: e.clientX, y: e.clientY } } : null);
           }}
           onMouseUp={(e) => {
             const start = dragStartRef.current;
             if (!start) return;
+            e.nativeEvent.stopImmediatePropagation();
             const sel: SelectionRect = {
               x: Math.min(start.x, e.clientX), y: Math.min(start.y, e.clientY),
               w: Math.abs(e.clientX - start.x), h: Math.abs(e.clientY - start.y),
             };
             dragStartRef.current = null;
             setDragVis(null);
-            startRecordingFromStreamRef.current(sel);
+            handleRegionSelectedRef.current(sel);
           }}
         >
           {dragVis ? (
