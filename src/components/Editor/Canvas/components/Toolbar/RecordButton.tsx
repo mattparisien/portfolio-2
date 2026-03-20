@@ -9,27 +9,22 @@ interface SelectionRect { x: number; y: number; w: number; h: number }
 interface DragPoint     { x: number; y: number }
 
 /**
- * Self-contained screen-region recorder.
+ * WHY getDisplayMedia is called on the initial button click (not on mouseup):
  *
- * Flow:
- *  1. Click button → "selecting" — crosshair + dim overlay
- *  2. Drag to pick area → "confirming" — frozen region preview + action bar
- *  3. Click "Record" → getDisplayMedia → "recording"
- *  4. Click stop → .mp4 download
+ * Browsers require getDisplayMedia() to be called inside a "transient user
+ * activation" — essentially a direct user gesture.  A mouseup that fires after
+ * a canvas drag (intercepted via capture-phase window listeners with
+ * stopImmediatePropagation) is NOT recognised as a user gesture in Chrome /
+ * Safari, so the call throws NotAllowedError silently and recording never starts.
  *
- * Event strategy:
- *  Fabric.js moves mousemove+mouseup to *document* on any canvas drag, which
- *  would hijack our overlay.  We use window capture-phase listeners +
- *  stopImmediatePropagation() to intercept before Fabric's handlers run.
- *
- *  The overlays use pointer-events:none so the toolbar button remains
- *  clickable through them (the drag still works — it's handled by the
- *  capture-phase window listeners, not by the overlay div).
- *  The cursor is applied to document.body so it shows even with
- *  pointer-events:none on the overlay.
+ * Fix: acquire the MediaStream on the button onClick (guaranteed gesture),
+ * store it in streamRef, then when the region drag completes just start
+ * MediaRecorder on the already-open stream — no second permission call needed.
  */
+
 export function RecordButton() {
   const [recordState, setRecordState] = useState<RecordState>("idle");
+  const [loading, setLoading]         = useState(false);
   const [elapsed, setElapsed]         = useState(0);
   const [dragVis, setDragVis]         = useState<{ start: DragPoint; cur: DragPoint } | null>(null);
 
@@ -39,6 +34,7 @@ export function RecordButton() {
   const rafRef       = useRef<number | null>(null);
   const timerRef     = useRef<ReturnType<typeof setInterval> | null>(null);
   const streamRef    = useRef<MediaStream | null>(null);
+  const vidRef       = useRef<HTMLVideoElement | null>(null);
 
   const cleanupRef = useRef<() => void>(() => {});
   cleanupRef.current = () => {
@@ -46,22 +42,26 @@ export function RecordButton() {
     if (rafRef.current   !== null) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
     streamRef.current?.getTracks().forEach(t => t.stop());
     streamRef.current = null;
+    vidRef.current    = null;
   };
 
   useEffect(() => () => cleanupRef.current(), []);
 
-  // ── Apply crosshair cursor to body while selecting ────────────────────────
+  // ── Escape key — cancel during selection ───────────────────────────────
   useEffect(() => {
-    if (recordState === "selecting") {
-      document.body.style.cursor = "crosshair";
-      return () => { document.body.style.cursor = ""; };
-    }
+    if (recordState !== "selecting") return;
+    const onKeyDown = (e: KeyboardEvent) => { if (e.key === "Escape") cancelAll(); };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordState]);
 
-  // ── Reset helper (shared by cancel buttons + ESC) ─────────────────────────
+  // ── Reset helper ──────────────────────────────────────────────────────────
   const cancelAll = () => {
+    cleanupRef.current();
     dragStartRef.current = null;
     setDragVis(null);
+    setLoading(false);
     setRecordState("idle");
   };
 
@@ -73,10 +73,10 @@ export function RecordButton() {
     recorderRef.current = null;
   };
 
-  // ── Start recording — stored in ref so it's never stale in event handlers ─
-  const startRecordingRef = useRef<(sel: SelectionRect) => Promise<void>>(async () => {});
-  startRecordingRef.current = async (sel: SelectionRect) => {
-    if (sel.w < 10 || sel.h < 10) { setRecordState("idle"); return; }
+  // ── Step 1 — acquire display stream on initial button click (user gesture) ─
+  const startStreamRef = useRef<() => Promise<void>>(async () => {});
+  startStreamRef.current = async () => {
+    setLoading(true);
     try {
       const stream = await (navigator.mediaDevices as unknown as {
         getDisplayMedia(c: unknown): Promise<MediaStream>;
@@ -88,24 +88,59 @@ export function RecordButton() {
       });
       streamRef.current = stream;
 
-      const canvas  = document.createElement("canvas");
-      canvas.width  = Math.round(sel.w);
-      canvas.height = Math.round(sel.h);
-      const ctx     = canvas.getContext("2d")!;
       const vid     = document.createElement("video");
       vid.srcObject = stream;
       vid.muted     = true;
-
+      // Use addEventListener+once so we never miss the event if it fires early
       await new Promise<void>((resolve, reject) => {
         const t = setTimeout(() => reject(new Error("timeout")), 8000);
-        vid.onloadedmetadata = () => { clearTimeout(t); vid.play().then(resolve).catch(resolve); };
+        if (vid.readyState >= 1) {
+          clearTimeout(t); vid.play().then(() => resolve()).catch(() => resolve());
+        } else {
+          vid.addEventListener("loadedmetadata", () => {
+            clearTimeout(t); vid.play().then(() => resolve()).catch(() => resolve());
+          }, { once: true });
+        }
+      });
+      vidRef.current = vid;
+
+      stream.getVideoTracks()[0].addEventListener("ended", () => {
+        if (recorderRef.current?.state === "recording") { recorderRef.current.stop(); recorderRef.current = null; }
+        else { cancelAll(); }
       });
 
-      const scaleX = vid.videoWidth  / window.innerWidth;
-      const scaleY = vid.videoHeight / window.innerHeight;
+      setLoading(false);
+      setRecordState("selecting");
+    } catch {
+      cleanupRef.current();
+      setLoading(false);
+      setRecordState("idle");
+    }
+  };
+
+  // ── Step 2 — start MediaRecorder once region is drawn (no getDisplayMedia) ─
+  // Stored in a ref so the closure inside onMouseUp is never stale.
+  const startRecordingFromStreamRef = useRef<(sel: SelectionRect) => void>(() => {});
+  startRecordingFromStreamRef.current = (sel: SelectionRect) => {
+    try {
+      const vid = vidRef.current;
+      if (!vid) { cancelAll(); return; }
+      if (sel.w < 10 || sel.h < 10) { cancelAll(); return; }
+
+      const canvas  = document.createElement("canvas");
+      canvas.width  = Math.round(sel.w);
+      canvas.height = Math.round(sel.h);
+      const ctx     = canvas.getContext("2d");
+      if (!ctx) { cancelAll(); return; }
+
+      // videoWidth may still be 0 on the first frame — guard against divide-by-zero
+      const scaleX  = vid.videoWidth  ? vid.videoWidth  / window.innerWidth  : 1;
+      const scaleY  = vid.videoHeight ? vid.videoHeight / window.innerHeight : 1;
       const drawFrame = () => {
-        ctx.drawImage(vid, sel.x * scaleX, sel.y * scaleY, sel.w * scaleX, sel.h * scaleY,
-                          0, 0, canvas.width, canvas.height);
+        try {
+          ctx.drawImage(vid, sel.x * scaleX, sel.y * scaleY, sel.w * scaleX, sel.h * scaleY,
+                            0, 0, canvas.width, canvas.height);
+        } catch { /* video not ready yet — skip frame */ }
         rafRef.current = requestAnimationFrame(drawFrame);
       };
       drawFrame();
@@ -113,15 +148,26 @@ export function RecordButton() {
       const mimeType =
         ["video/mp4;codecs=avc1", "video/mp4;codecs=avc1.42E01E", "video/mp4",
          "video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"]
-          .find(m => MediaRecorder.isTypeSupported(m)) ?? "video/webm";
-      const ext = mimeType.startsWith("video/mp4") ? "mp4" : "webm";
+          .find(m => MediaRecorder.isTypeSupported(m)) ?? "";
 
-      const recorder = new MediaRecorder(canvas.captureStream(30), { mimeType });
+      // Try with preferred mimeType first, then let the browser choose
+      let recorder: MediaRecorder;
+      try {
+        recorder = mimeType
+          ? new MediaRecorder(canvas.captureStream(30), { mimeType })
+          : new MediaRecorder(canvas.captureStream(30));
+      } catch {
+        recorder = new MediaRecorder(canvas.captureStream(30));
+      }
+
+      const actualMime = recorder.mimeType || mimeType;
+      const ext        = actualMime.startsWith("video/mp4") ? "mp4" : "webm";
+
       chunksRef.current = [];
       recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
       recorder.onstop = () => {
         cleanupRef.current();
-        const blob = new Blob(chunksRef.current, { type: mimeType });
+        const blob = new Blob(chunksRef.current, { type: actualMime });
         const url  = URL.createObjectURL(blob);
         const a    = Object.assign(document.createElement("a"), { href: url, download: `recording-${Date.now()}.${ext}` });
         document.body.appendChild(a);
@@ -131,71 +177,27 @@ export function RecordButton() {
         setRecordState("idle");
         setElapsed(0);
       };
-      stream.getVideoTracks()[0].addEventListener("ended", () => {
-        if (recorderRef.current?.state === "recording") { recorderRef.current.stop(); recorderRef.current = null; }
-      });
 
       recorderRef.current = recorder;
       recorder.start(100);
       setRecordState("recording");
       timerRef.current = setInterval(() => setElapsed(s => s + 1), 1000);
-    } catch {
-      cleanupRef.current();
-      setRecordState("idle");
+    } catch (err) {
+      console.error("[RecordButton] failed to start recording:", err);
+      if (rafRef.current !== null) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+      // Stay in "selecting" so the user can try dragging again
+      dragStartRef.current = null;
+      setDragVis(null);
     }
   };
 
-  // ── Window capture-phase listeners — only active while "selecting" ─────────
-  useEffect(() => {
-    if (recordState !== "selecting") return;
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") cancelAll();
-    };
-    const onMouseDown = (e: MouseEvent) => {
-      if ((e.target as HTMLElement).closest("button")) return;
-      e.stopImmediatePropagation();
-      e.preventDefault();
-      const pt = { x: e.clientX, y: e.clientY };
-      dragStartRef.current = pt;
-      setDragVis({ start: pt, cur: pt });
-    };
-    const onMouseMove = (e: MouseEvent) => {
-      if (!dragStartRef.current) return;
-      e.stopImmediatePropagation();
-      setDragVis(prev => prev ? { ...prev, cur: { x: e.clientX, y: e.clientY } } : null);
-    };
-    const onMouseUp = (e: MouseEvent) => {
-      const start = dragStartRef.current;
-      if (!start) return;
-      e.stopImmediatePropagation();
-      const sel: SelectionRect = {
-        x: Math.min(start.x, e.clientX), y: Math.min(start.y, e.clientY),
-        w: Math.abs(e.clientX - start.x), h: Math.abs(e.clientY - start.y),
-      };
-      dragStartRef.current = null;
-      setDragVis(null);
-      if (sel.w < 10 || sel.h < 10) return;
-      // Fire immediately from this mouseup — it counts as a user gesture
-      startRecordingRef.current(sel);
-    };
-
-    window.addEventListener("keydown",   onKeyDown,   { capture: true });
-    window.addEventListener("mousedown", onMouseDown, { capture: true });
-    window.addEventListener("mousemove", onMouseMove, { capture: true });
-    window.addEventListener("mouseup",   onMouseUp,   { capture: true });
-    return () => {
-      window.removeEventListener("keydown",   onKeyDown,   { capture: true });
-      window.removeEventListener("mousedown", onMouseDown, { capture: true });
-      window.removeEventListener("mousemove", onMouseMove, { capture: true });
-      window.removeEventListener("mouseup",   onMouseUp,   { capture: true });
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [recordState]);
+  // ── Window capture-phase listeners removed — handled by overlay div instead ─
+  // (The full-screen overlay has pointer-events:auto and React onMouse* handlers,
+  //  which is more reliable than capture-phase tricks + pointer-events:none.)
 
   const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
-  const isActive = recordState === "selecting";
+  const isSelecting = recordState === "selecting";
 
   // ── Single unified return — ToolButton always present in toolbar ──────────
   return (
@@ -210,27 +212,63 @@ export function RecordButton() {
         </ToolButton>
       ) : (
         <ToolButton
-          active={isActive}
-          onClick={() => isActive ? cancelAll() : setRecordState("selecting")}
-          title={isActive ? "Cancel (Esc)" : "Record screen region"}
+          active={isSelecting}
+          onClick={() => {
+            if (loading) return;
+            if (isSelecting) { cancelAll(); return; }
+            startStreamRef.current();
+          }}
+          title={loading ? "Opening screen share…" : isSelecting ? "Cancel (Esc)" : "Record screen region"}
           activeClass="text-red-500"
         >
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-            <circle cx="11" cy="11" r="8.5" strokeWidth="0.7"
-              className={isActive ? "stroke-red-500" : "stroke-overlay-fg"} />
-            <circle cx="11" cy="11" r="4.5"
-              className={isActive ? "fill-red-500" : "fill-overlay-fg"} />
-          </svg>
+          {loading ? (
+            <svg className="animate-spin" width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="6" stroke="currentColor" strokeOpacity="0.3" strokeWidth="2" />
+              <path d="M8 2a6 6 0 0 1 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          ) : (
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <circle cx="11" cy="11" r="8.5" strokeWidth="0.7"
+                className={isSelecting ? "stroke-red-500" : "stroke-overlay-fg"} />
+              <circle cx="11" cy="11" r="4.5"
+                className={isSelecting ? "fill-red-500" : "fill-overlay-fg"} />
+            </svg>
+          )}
         </ToolButton>
       )}
 
-      {/* ── Selecting overlay — pointer-events:none so toolbar stays clickable.
-              The drag is captured by the window capture listeners, so
-              pointer-events on this div doesn't affect drag tracking. */}
+      {/* ── Selecting overlay — pointer-events:auto so React events fire directly
+              on this div. No capture-phase tricks needed; the overlay sits on top
+              of everything (z-9900) so Fabric never sees these mouse events. */}
       {recordState === "selecting" && (
-        <div className="fixed inset-0 z-[9900] pointer-events-none">
+        <div
+          className="fixed inset-0 z-[9900] cursor-crosshair select-none"
+          onMouseDown={(e) => {
+            // Let [data-record-cancel] buttons pass through
+            if ((e.target as HTMLElement).closest("[data-record-cancel]")) return;
+            e.preventDefault();
+            const pt = { x: e.clientX, y: e.clientY };
+            dragStartRef.current = pt;
+            setDragVis({ start: pt, cur: pt });
+          }}
+          onMouseMove={(e) => {
+            if (!dragStartRef.current) return;
+            setDragVis(prev => prev ? { ...prev, cur: { x: e.clientX, y: e.clientY } } : null);
+          }}
+          onMouseUp={(e) => {
+            const start = dragStartRef.current;
+            if (!start) return;
+            const sel: SelectionRect = {
+              x: Math.min(start.x, e.clientX), y: Math.min(start.y, e.clientY),
+              w: Math.abs(e.clientX - start.x), h: Math.abs(e.clientY - start.y),
+            };
+            dragStartRef.current = null;
+            setDragVis(null);
+            startRecordingFromStreamRef.current(sel);
+          }}
+        >
           {dragVis ? (
-            <svg className="absolute inset-0 w-full h-full">
+            <svg className="absolute inset-0 w-full h-full pointer-events-none">
               <defs>
                 <mask id="rec-sel-mask">
                   <rect width="100%" height="100%" fill="white" />
@@ -260,13 +298,21 @@ export function RecordButton() {
               </text>
             </svg>
           ) : (
-            <div className="absolute inset-0 bg-black/30" />
+            <div className="absolute inset-0 bg-black/30 pointer-events-none" />
           )}
           <div
-            className="absolute top-5 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-sm font-medium text-white select-none"
+            className="absolute top-5 left-1/2 -translate-x-1/2 flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-medium text-white"
             style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", whiteSpace: "nowrap" }}
           >
-            Drag to select a region · <kbd className="font-mono">Esc</kbd> to cancel
+            <span className="select-none">Drag to select a region</span>
+            <button
+              data-record-cancel
+              onClick={cancelAll}
+              className="text-[11px] font-normal opacity-60 hover:opacity-100 transition-opacity px-2 py-0.5 rounded border border-white/30 hover:border-white/60 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <span className="opacity-40 text-[11px] select-none"><kbd className="font-mono">Esc</kbd></span>
           </div>
         </div>
       )}

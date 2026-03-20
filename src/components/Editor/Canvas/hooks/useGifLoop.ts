@@ -16,11 +16,6 @@ export function useGifLoop(fabricRef: MutableRefObject<Canvas | null>) {
     const loop = (timestamp: number) => {
       const fc = fabricRef.current;
       if (fc) {
-        // Check if Fabric is actively transforming (dragging/scaling/rotating).
-        // If so, skip requestRenderAll — Fabric drives rendering itself during
-        // transforms and our extra call disrupts its pointer-tracking state.
-        const isTransforming = !!(fc as unknown as Record<string, unknown>)._currentTransform;
-
         fc.getObjects().forEach((obj) => {
           const o = obj as unknown as Record<string, unknown>;
 
@@ -60,10 +55,9 @@ export function useGifLoop(fabricRef: MutableRefObject<Canvas | null>) {
           }
         });
 
-        // Only drive rendering from here when Fabric isn't already doing it
-        if (!isTransforming) {
-          fc.requestRenderAll();
-        }
+        // Always drive rendering so video/GIF frames stay live even when
+        // the user is mid-drag with the mouse momentarily still.
+        fc.requestRenderAll();
       }
       gifRafRef.current = requestAnimationFrame(loop);
     };

@@ -68,6 +68,8 @@ interface UseFabricCanvasOptions {
   setSelectedIsPath: (v: boolean) => void;
   setSelectedIsLine: (v: boolean) => void;
   setSelectedIsImage: (v: boolean) => void;
+  setSelectedIsVideo: (v: boolean) => void;
+  setVideoMode: (m: "loop" | "bounce") => void;
   setSelectedImageBgRemoved: (v: boolean) => void;
   setSelectedIsLocked: (v: boolean) => void;
   setShapeStrokeColor: (c: string) => void;
@@ -109,6 +111,8 @@ export function useFabricCanvas({
   setSelectedIsPath,
   setSelectedIsLine,
   setSelectedIsImage,
+  setSelectedIsVideo,
+  setVideoMode,
   setSelectedImageBgRemoved,
   setSelectedIsLocked,
   setShapeStrokeColor,
@@ -873,6 +877,7 @@ export function useFabricCanvas({
         const isPath  = !!obj && (obj as { type?: string }).type === "path" && !(obj as { giphyId?: string }).giphyId;
         const isLine  = !!obj && (obj as { type?: string }).type === "line";
         const isImage = !!obj && (obj as { type?: string }).type === "image" && !(obj as { giphyId?: string }).giphyId;
+        const isVideo = isImage && !!(obj as unknown as Record<string, unknown>)._videoUrl;
         // Any non-text, non-gif, non-path, non-line object is a shape (rect, circle, etc.)
         const isShape = !!obj && !isText && !isGif && !isPath && !isLine && !isImage;
         setSelectedIsText(isText);
@@ -880,6 +885,11 @@ export function useFabricCanvas({
         setSelectedIsPath(isPath);
         setSelectedIsLine(isLine);
         setSelectedIsImage(isImage);
+        setSelectedIsVideo(isVideo);
+        if (isVideo) {
+          const mode = ((obj as unknown as Record<string, unknown>)._videoMode as "loop" | "bounce" | undefined) ?? "loop";
+          setVideoMode(mode);
+        }
         if (isImage) setSelectedImageBgRemoved(!!(obj as unknown as Record<string, unknown>)._bgRemoved);
         if (isText) setTextProps(extractTextProps(obj as IText));
         if (isPath) {
@@ -922,6 +932,7 @@ export function useFabricCanvas({
         setSelectedIsPath(false);
         setSelectedIsLine(false);
         setSelectedIsImage(false);
+        setSelectedIsVideo(false);
         setSelectedImageBgRemoved(false);
         setSelectedIsLocked(false);
         if (!pendingMultiSave) return;

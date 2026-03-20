@@ -95,6 +95,8 @@ function CanvasInner({ initialObjects }: { initialObjects: { fabricJSON: string 
   const [selectedIsPath, setSelectedIsPath]     = useState(false);
   const [selectedIsLine, setSelectedIsLine]     = useState(false);
   const [selectedIsImage, setSelectedIsImage]   = useState(false);
+  const [selectedIsVideo, setSelectedIsVideo]   = useState(false);
+  const [videoMode, setVideoMode]               = useState<"loop" | "bounce">("loop");
   const [selectedImageBgRemoved, setSelectedImageBgRemoved] = useState(false);
   const [selectedIsLocked, setSelectedIsLocked] = useState(false);
   const [shapeStrokeColor, setShapeStrokeColor] = useState("#000000");
@@ -210,6 +212,8 @@ function CanvasInner({ initialObjects }: { initialObjects: { fabricJSON: string 
     setSelectedIsPath,
     setSelectedIsLine,
     setSelectedIsImage,
+    setSelectedIsVideo,
+    setVideoMode,
     setSelectedImageBgRemoved,
     setSelectedIsLocked,
     setShapeStrokeColor,
@@ -495,6 +499,48 @@ function CanvasInner({ initialObjects }: { initialObjects: { fabricJSON: string 
           selectedIsShape={selectedIsShape}
           selectedIsLine={selectedIsLine}
           selectedIsImage={selectedIsImage}
+          selectedIsVideo={selectedIsVideo}
+          videoMode={videoMode}
+          onVideoModeChange={(mode) => {
+            setVideoMode(mode);
+            const fc = fabricRef.current;
+            if (!fc) return;
+            const obj = fc.getActiveObject() as unknown as Record<string, unknown>;
+            if (!obj || !obj._videoUrl) return;
+            const vid = obj._videoEl as HTMLVideoElement | undefined;
+            if (!vid) return;
+
+            // Tear down previous bounce listeners if any
+            const cancelBounce = obj._bounceCancelFn as (() => void) | undefined;
+            if (cancelBounce) { cancelBounce(); delete obj._bounceCancelFn; }
+
+            obj._videoMode = mode;
+
+            if (mode === "loop") {
+              vid.loop = true;
+              vid.playbackRate = 1;
+            } else {
+              // Bounce (ping-pong): on ended → play in reverse; near start → play forward
+              vid.loop = false;
+              vid.playbackRate = 1;
+              const onEnded = () => {
+                vid.playbackRate = -1;
+                vid.play().catch(() => undefined);
+              };
+              const onTimeUpdate = () => {
+                if (vid.playbackRate < 0 && vid.currentTime <= 0.05) {
+                  vid.playbackRate = 1;
+                  vid.play().catch(() => undefined);
+                }
+              };
+              vid.addEventListener("ended", onEnded);
+              vid.addEventListener("timeupdate", onTimeUpdate);
+              obj._bounceCancelFn = () => {
+                vid.removeEventListener("ended", onEnded);
+                vid.removeEventListener("timeupdate", onTimeUpdate);
+              };
+            }
+          }}
           color={color}
           fillGradient={fillGradient}
           strokeColor={selectedIsShape ? shapeStrokeColor : undefined}

@@ -35,6 +35,9 @@ export interface PropertyToolbarProps {
   selectedIsShape: boolean;
   selectedIsLine: boolean;
   selectedIsImage: boolean;
+  selectedIsVideo?: boolean;
+  videoMode?: "loop" | "bounce";
+  onVideoModeChange?: (mode: "loop" | "bounce") => void;
   color: string;
   fillGradient?: TextGradient | null;
   strokeColor?: string;
@@ -343,6 +346,9 @@ export default function PropertyToolbar({
   selectedIsShape,
   selectedIsLine,
   selectedIsImage,
+  selectedIsVideo,
+  videoMode,
+  onVideoModeChange,
   color,
   fillGradient,
   strokeColor,
@@ -542,8 +548,8 @@ export default function PropertyToolbar({
           {/* Opacity */}
           <OpacityButton value={opacity} onChange={onOpacityChange} />
 
-          {/* Remove background */}
-          {onRemoveBg && (
+          {/* Remove background - only for non-video images */}
+          {onRemoveBg && !selectedIsVideo && (
             <>
               <VDivider />
               <button
@@ -554,6 +560,37 @@ export default function PropertyToolbar({
               >
                 {isRemovingBg ? "Removing…" : bgAlreadyRemoved ? "BG Removed" : "Remove BG"}
               </button>
+            </>
+          )}
+
+          {/* Playback mode — only for video objects */}
+          {selectedIsVideo && onVideoModeChange && (
+            <>
+              <VDivider />
+              <div className="flex items-center gap-0.5 flex-shrink-0 rounded-md bg-black/[0.04] p-0.5">
+                <button
+                  title="Loop"
+                  onClick={() => onVideoModeChange("loop")}
+                  className={`text-[10px] font-semibold px-2 py-1 rounded-[5px] transition-colors cursor-pointer ${
+                    videoMode === "loop"
+                      ? "bg-white text-black shadow-sm"
+                      : "text-black/40 hover:text-black/70"
+                  }`}
+                >
+                  Loop
+                </button>
+                <button
+                  title="Bounce (ping-pong)"
+                  onClick={() => onVideoModeChange("bounce")}
+                  className={`text-[10px] font-semibold px-2 py-1 rounded-[5px] transition-colors cursor-pointer ${
+                    videoMode === "bounce"
+                      ? "bg-white text-black shadow-sm"
+                      : "text-black/40 hover:text-black/70"
+                  }`}
+                >
+                  Bounce
+                </button>
+              </div>
             </>
           )}
 
