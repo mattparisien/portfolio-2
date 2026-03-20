@@ -57,6 +57,8 @@ interface UseFabricCanvasOptions {
   startGifLoop: () => void;
   stopGifLoop: () => void;
   gifCountRef: React.MutableRefObject<number>;
+  videoCountRef: React.MutableRefObject<number>;
+  isDraggingRef: React.MutableRefObject<boolean>;
   setTool: (t: Tool) => void;
   setZoom: (z: number) => void;
   setVpt: (vpt: number[]) => void;
@@ -96,6 +98,8 @@ export function useFabricCanvas({
   startGifLoop,
   stopGifLoop,
   gifCountRef,
+  videoCountRef,
+  isDraggingRef,
   setTool,
   setZoom,
   setVpt,
@@ -506,6 +510,10 @@ export function useFabricCanvas({
           gifCountRef.current = Math.max(0, gifCountRef.current - 1);
           if (gifCountRef.current === 0) stopGifLoop();
         }
+        if ((obj as unknown as Record<string, unknown>)._videoUrl) {
+          videoCountRef.current = Math.max(0, videoCountRef.current - 1);
+          if (videoCountRef.current === 0 && gifCountRef.current === 0) stopGifLoop();
+        }
       });
       fc.requestRenderAll();
     };
@@ -653,9 +661,10 @@ export function useFabricCanvas({
           parsed.sort((a, b) => ((a.zIndex as number) ?? 0) - ((b.zIndex as number) ?? 0));
           parsed.forEach((o) => { if (o.type === "IText" || o.type === "i-text" || o.type === "Textbox" || o.type === "textbox") o.editable = false; });
 
-          // Separate GIFs (require async re-decode) from regular objects
-          const regularParsed = parsed.filter(o => !(o.giphyId && o._gifUrl));
+          // Separate GIFs (require async re-decode), videos (require video element), and regular objects
+          const regularParsed = parsed.filter(o => !(o.giphyId && o._gifUrl) && !o._videoUrl);
           const gifParsed     = parsed.filter(o =>   o.giphyId && o._gifUrl);
+          const videoParsed   = parsed.filter(o =>   o._videoUrl && !(o.giphyId && o._gifUrl));
 
           // Enliven and add regular objects in batches of 10 for progressive rendering
           const BATCH = 10;
@@ -719,6 +728,84 @@ export function useFabricCanvas({
             });
             Promise.allSettled(gifRestorePromises).then(() => startGifLoop());
           }
+
+          // Video objects — re-create the <video> element and attach it
+          if (videoParsed.length > 0) {
+            const BLANK_PX = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+            // Replace src with a blank pixel so enlivenObjects doesn't try to
+            // fetch the video URL as an image
+            const videoSerialised = videoParsed.map(o => ({ ...o, src: BLANK_PX }));
+            const enlivenedVideos = await util.enlivenObjects(videoSerialised);
+            const videoRestorePromises: Promise<void>[] = [];
+            (enlivenedVideos as unknown[]).forEach((obj, i) => {
+              const src = videoParsed[i];
+              if (src.boardObjectId) (obj as Record<string, unknown>).boardObjectId = src.boardObjectId;
+              if (src.zIndex !== undefined) (obj as Record<string, unknown>).zIndex = src.zIndex;
+              fc.add(obj as Parameters<typeof fc.add>[0]);
+
+              const videoUrl = src._videoUrl as string;
+              const promise = (async () => {
+                const videoEl = document.createElement("video");
+                videoEl.src = videoUrl;
+                videoEl.loop = true;
+                videoEl.muted = true;
+                videoEl.playsInline = true;
+                await new Promise<void>((resolve) => {
+                  videoEl.onloadedmetadata = () => resolve();
+                  videoEl.onerror = () => resolve(); // best-effort
+                  videoEl.load();
+                });
+                await videoEl.play().catch(() => {});
+                const w = videoEl.videoWidth  || (src.width as number | undefined)  || 640;
+                const h = videoEl.videoHeight || (src.height as number | undefined) || 360;
+
+                // Offscreen canvas \u2014 Fabric renders this; the RAF loop blits video frames onto it
+                const offscreen = document.createElement("canvas");
+                offscreen.width  = w;
+                offscreen.height = h;
+                const ctx2d = offscreen.getContext("2d");
+                if (ctx2d) ctx2d.drawImage(videoEl, 0, 0, w, h);
+
+                // Replace the Fabric element with our offscreen canvas
+                (obj as unknown as { setElement: (el: HTMLCanvasElement) => void })
+                  .setElement(offscreen);
+                (obj as unknown as { set: (p: Record<string, unknown>) => void }).set({
+                  width: w,
+                  height: h,
+                  objectCaching: false,
+                });
+                const o = obj as unknown as Record<string, unknown>;
+                o._videoUrl    = videoUrl;
+                o._videoEl     = videoEl;
+                o._videoCanvas = offscreen;
+                // Drawing cross-origin video taints the offscreen canvas.
+                // Override getSrc() so Fabric never calls toDataURL() on it.
+                (obj as unknown as Record<string, unknown>).getSrc = () => BLANK_PX;
+                // Restore toObject override
+                const _orig = (obj as unknown as { toObject: (p?: string[]) => object }).toObject.bind(obj);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (obj as unknown as Record<string, unknown>).toObject = (props?: any) => {
+                  try {
+                    return { ..._orig(props), src: BLANK_PX, _videoUrl: videoUrl };
+                  } catch {
+                    // Fallback if _orig throws (e.g. tainted canvas SecurityError)
+                    const f = obj as unknown as { left?: number; top?: number; width?: number; height?: number; scaleX?: number; scaleY?: number; angle?: number; originX?: string; originY?: string; opacity?: number; flipX?: boolean; flipY?: boolean; visible?: boolean };
+                    return { type: "image", src: BLANK_PX, _videoUrl: videoUrl,
+                      left: f.left, top: f.top, width: f.width, height: f.height,
+                      scaleX: f.scaleX, scaleY: f.scaleY, angle: f.angle,
+                      originX: f.originX, originY: f.originY, opacity: f.opacity,
+                      flipX: f.flipX, flipY: f.flipY, visible: f.visible,
+                      objectCaching: false, filters: [] };
+                  }
+                };
+                (obj as unknown as { dirty: boolean }).dirty = true;
+                fc.requestRenderAll();
+                videoCountRef.current += 1;
+              })().catch((e) => console.error("[Video] reload failed:", e));
+              videoRestorePromises.push(promise);
+            });
+            Promise.allSettled(videoRestorePromises).then(() => startGifLoop());
+          }
       })().catch((e) => console.error("Failed to load board objects", e))
         .finally(() => { fc.renderAll(); });
 
@@ -771,6 +858,12 @@ export function useFabricCanvas({
         const o = target as unknown as { toObject(): object };
         beforeTransformRef.current = o.toObject();
       });
+
+      // Pause video blitting during drag/transform so Fabric's pointer tracking isn't disrupted
+      fc.on("object:moving",   () => { isDraggingRef.current = true; });
+      fc.on("object:rotating", () => { isDraggingRef.current = true; });
+      fc.on("object:scaling",  () => { isDraggingRef.current = true; });
+      fc.on("mouse:up",        () => { isDraggingRef.current = false; });
 
       const handleSelectionChange = () => {
         setHasSelection(true);

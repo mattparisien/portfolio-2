@@ -37,6 +37,7 @@ interface UseCanvasActionsOptions {
   startGifLoop: () => void;
   stopGifLoop: () => void;
   gifCountRef: React.MutableRefObject<number>;
+  videoCountRef: React.MutableRefObject<number>;
   setTool: (t: Tool) => void;
   setZoom: (z: number) => void;
   setVpt: (vpt: number[]) => void;
@@ -59,6 +60,7 @@ export function useCanvasActions({
   startGifLoop,
   stopGifLoop,
   gifCountRef,
+  videoCountRef,
   setTool,
   setZoom,
   setVpt,
@@ -318,6 +320,93 @@ export function useCanvasActions({
       .catch((e) => console.error("[GIF] failed to load:", e));
   }, [fabricRef, modsRef, saveObject, startGifLoop, gifCountRef, setTool]);
 
+  // ── Add Video from URL ────────────────────────────────────────────────
+  const addVideo = useCallback(async (url: string) => {
+    const fc = fabricRef.current;
+    const mods = modsRef.current;
+    if (!fc || !mods) return;
+
+    const videoEl = document.createElement("video");
+    videoEl.src = url;
+    videoEl.loop = true;
+    videoEl.muted = true;
+    videoEl.playsInline = true;
+
+    await new Promise<void>((resolve, reject) => {
+      videoEl.onloadedmetadata = () => resolve();
+      videoEl.onerror = () => reject(new Error("Video failed to load"));
+      videoEl.load();
+    });
+
+    await videoEl.play().catch(() => {/* autoplay may be blocked; will play on interact */});
+
+    const vpt = fc.viewportTransform as number[];
+    const cx = (window.innerWidth  / 2 - vpt[4]) / vpt[0];
+    const cy = (window.innerHeight / 2 - vpt[5]) / vpt[3];
+    const maxDim = 400;
+    const w = videoEl.videoWidth  || 640;
+    const h = videoEl.videoHeight || 360;
+    const scale = Math.min(1, maxDim / Math.max(w, h));
+
+    // Use an offscreen canvas as the Fabric element — FabricImage renders
+    // canvas elements reliably. We blit video frames onto it in the RAF loop.
+    const offscreen = document.createElement("canvas");
+    offscreen.width  = w;
+    offscreen.height = h;
+    const ctx2d = offscreen.getContext("2d");
+    if (ctx2d) ctx2d.drawImage(videoEl, 0, 0, w, h); // first frame
+
+    const img = new mods.FabricImage(offscreen as unknown as HTMLImageElement, {
+      left: cx,
+      top:  cy,
+      originX: "center",
+      originY: "center",
+      width: w,
+      height: h,
+      scaleX: scale,
+      scaleY: scale,
+      objectCaching: false,
+      selectable: true,
+      hasControls: true,
+    });
+
+    const o = img as unknown as Record<string, unknown>;
+    o._videoUrl    = url;
+    o._videoEl     = videoEl;
+    o._videoCanvas = offscreen;
+
+    const BLANK_PX = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+    // Drawing cross-origin video onto the offscreen canvas taints it, causing
+    // canvas.toDataURL() to throw a SecurityError. Override getSrc() so Fabric
+    // never calls toDataURL() on this object — it returns BLANK_PX directly.
+    (img as unknown as Record<string, unknown>).getSrc = () => BLANK_PX;
+    // Override toObject: persist _videoUrl for reload, but use a blank pixel
+    // as src so Fabric never tries to load the video URL as an image.
+    const _orig = img.toObject.bind(img);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (img as unknown as Record<string, unknown>).toObject = (props?: any) => {
+      try {
+        return { ..._orig(props), src: BLANK_PX, _videoUrl: url };
+      } catch {
+        // Fallback if _orig throws (e.g. tainted canvas SecurityError)
+        return { type: "image", src: BLANK_PX, _videoUrl: url,
+          left: img.left, top: img.top, width: img.width, height: img.height,
+          scaleX: img.scaleX, scaleY: img.scaleY, angle: img.angle,
+          originX: img.originX, originY: img.originY, opacity: img.opacity,
+          flipX: img.flipX, flipY: img.flipY, visible: img.visible,
+          objectCaching: false, filters: [] };
+      }
+    };
+
+    fc.add(img);
+    fc.setActiveObject(img);
+    fc.requestRenderAll();
+    saveObject(img);
+    videoCountRef.current += 1;
+    startGifLoop(); // the RAF loop drives both GIF and video redraws
+    setTool("select");
+  }, [fabricRef, modsRef, saveObject, startGifLoop, videoCountRef, setTool]);
+
   // ── Recolor selected object (solid color) ────────────────────────────────
   const recolorSelected = useCallback((c: string) => {
     const fc = fabricRef.current;
@@ -523,5 +612,5 @@ export function useCanvasActions({
     fc.requestRenderAll();
   }, [fabricRef, saveObject]);
 
-  return { addText, addShape, addGif, addImage, recolorSelected, applyFillGradient, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, clearCanvas, applyTextProp };
+  return { addText, addShape, addGif, addImage, addVideo, recolorSelected, applyFillGradient, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, clearCanvas, applyTextProp };
 }

@@ -18,6 +18,7 @@ interface ToolbarProps {
   onAddText: () => void;
   onAddGif: (id: string, url: string) => void;
   onAddImage?: (url: string) => void;
+  onAddVideo?: (url: string) => void;
   /** The shape type currently active in the parent (set by keyboard shortcut) */
   activeShapeType?: ShapeType;
   /** Incremented by the parent whenever another component opens a popover */
@@ -38,6 +39,7 @@ export default function Toolbar({
   onAddText,
   onAddGif,
   onAddImage,
+  onAddVideo,
   closeSignal,
   uploadSignal,
   activeShapeType,
@@ -65,7 +67,7 @@ export default function Toolbar({
     <ToolbarContainer
       shape="edge"
       direction="vertical"
-      className="fixed right-0 top-1/2 -translate-y-1/2 overflow-hidden"
+      className="fixed right-0 top-1/2 -translate-y-1/2"
     >
       <ToolButton
         active={tool === "select"}
@@ -94,7 +96,7 @@ export default function Toolbar({
 
       <GifToolGroup onAddGif={onAddGif} {...groupProps("gif")} />
 
-      <UploadButton onAddImage={onAddImage} uploadSignal={uploadSignal} />
+      <UploadButton onAddImage={onAddImage} onAddVideo={onAddVideo} uploadSignal={uploadSignal} />
     </ToolbarContainer>
   )
 }

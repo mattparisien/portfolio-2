@@ -185,7 +185,7 @@ function CanvasInner({ initialObjects }: { initialObjects: { fabricJSON: string 
     updateMyPresence({ color });
   }, [self?.connectionId, updateMyPresence]);
 
-  const { gifCountRef, startGifLoop, stopGifLoop } = useGifLoop(fabricRef);
+  const { gifCountRef, videoCountRef, isDraggingRef, startGifLoop, stopGifLoop } = useGifLoop(fabricRef);
 
   const { saveObject } = useBoardSync({ broadcast: broadcastEvent });
 
@@ -199,6 +199,8 @@ function CanvasInner({ initialObjects }: { initialObjects: { fabricJSON: string 
     startGifLoop,
     stopGifLoop,
     gifCountRef,
+    videoCountRef,
+    isDraggingRef,
     setTool,
     setZoom,
     setVpt,
@@ -226,7 +228,7 @@ function CanvasInner({ initialObjects }: { initialObjects: { fabricJSON: string 
     initialObjects,
   });
 
-  const { addText, addGif, addImage, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, applyTextProp, applyFillGradient, clearCanvas } =
+  const { addText, addGif, addImage, addVideo, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, applyTextProp, applyFillGradient, clearCanvas } =
     useCanvasActions({
       fabricRef,
       modsRef,
@@ -239,6 +241,7 @@ function CanvasInner({ initialObjects }: { initialObjects: { fabricJSON: string 
       startGifLoop,
       stopGifLoop,
       gifCountRef,
+      videoCountRef,
       setTool,
       setZoom,
       setVpt,
@@ -351,7 +354,8 @@ function CanvasInner({ initialObjects }: { initialObjects: { fabricJSON: string 
       fc.clear();
       fc.backgroundColor = getCanvasBgColor();
       fc.renderAll();
-      gifCountRef.current = 0;
+      gifCountRef.current   = 0;
+      videoCountRef.current = 0;
       stopGifLoop();
       return;
     }
@@ -378,10 +382,9 @@ function CanvasInner({ initialObjects }: { initialObjects: { fabricJSON: string 
     if (event.type === "OBJECT_UPSERTED") {
       let parsed: Record<string, unknown>;
       try { parsed = JSON.parse(event.fabricJSON); } catch { return; }
-      // Skip GIF placeholders — they can't be re-instantiated without the buffer
+      // Skip GIF/video placeholders and multi-selection groups
       const BLANK_GIF = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
-      // Never persist temporary Fabric multi-selection groups to other canvases
-      if (parsed.giphyId || parsed.src === BLANK_GIF || parsed.type === "activeselection") return;
+      if (parsed.giphyId || parsed.src === BLANK_GIF || parsed._videoUrl || parsed.type === "activeselection") return;
 
       mods.util.enlivenObjects([parsed])
         .then((objects) => {
@@ -528,6 +531,7 @@ function CanvasInner({ initialObjects }: { initialObjects: { fabricJSON: string 
         onAddText={addText}
         onAddGif={addGif}
         onAddImage={addImage}
+        onAddVideo={addVideo}
         closeSignal={drawingToolsClose}
         uploadSignal={uploadSignal}
         activeShapeType={shapeType}

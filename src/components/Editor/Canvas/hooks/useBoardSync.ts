@@ -8,6 +8,7 @@ export type SaveableObj = {
   boardObjectId?: string;
   giphyId?: string;
   _gifUrl?: string;
+  _videoUrl?: string;
   zIndex?: number;
 };
 
@@ -28,6 +29,7 @@ export function useBoardSync({ broadcast }: UseBoardSyncOptions = {}) {
       boardObjectId: objectId,
       ...(obj.giphyId             ? { giphyId:          obj.giphyId         } : {}),
       ...(obj._gifUrl             ? { _gifUrl:           obj._gifUrl         } : {}),
+      ...(obj._videoUrl           ? { _videoUrl:         obj._videoUrl       } : {}),
       ...(obj.zIndex !== undefined ? { zIndex:            obj.zIndex          } : {}),
     });
     fetch("/api/board-objects", {
