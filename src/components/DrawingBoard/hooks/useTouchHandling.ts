@@ -40,7 +40,6 @@ export function useTouchHandling({
     let lastPinchDist: number | null = null;
     let tapStart:      { x: number; y: number } | null = null;
     let tapMoved       = false;
-    let pointerDownFired = false;
 
     const pinchDist = (t1: Touch, t2: Touch) => {
       const dx = t1.clientX - t2.clientX;
@@ -51,14 +50,6 @@ export function useTouchHandling({
     const onTouchStart = (e: TouchEvent) => {
       if (e.touches.length >= 2) {
         e.preventDefault();
-        if (pointerDownFired) {
-          const t = e.changedTouches[0];
-          upperEl.dispatchEvent(new PointerEvent("pointercancel", {
-            clientX: t.clientX, clientY: t.clientY,
-            bubbles: true, cancelable: true, pointerId: 1, isPrimary: true,
-          }));
-          pointerDownFired = false;
-        }
         lastMid = {
           x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
           y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
@@ -70,11 +61,6 @@ export function useTouchHandling({
         const t = e.touches[0];
         tapStart = { x: t.clientX, y: t.clientY };
         tapMoved = false;
-        pointerDownFired = true;
-        upperEl.dispatchEvent(new PointerEvent("pointerdown", {
-          clientX: t.clientX, clientY: t.clientY,
-          bubbles: true, cancelable: true, pointerId: 1, isPrimary: true, button: 0,
-        }));
       }
     };
 
@@ -107,13 +93,6 @@ export function useTouchHandling({
         const dy = ty - tapStart.y;
         if (!tapMoved && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) {
           tapMoved = true;
-          if (pointerDownFired) {
-            upperEl.dispatchEvent(new PointerEvent("pointercancel", {
-              clientX: tx, clientY: ty,
-              bubbles: true, cancelable: true, pointerId: 1, isPrimary: true,
-            }));
-            pointerDownFired = false;
-          }
         }
         if (tapMoved) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -127,6 +106,11 @@ export function useTouchHandling({
     const onTouchEnd = (e: TouchEvent) => {
       if (isTouchDevice && e.changedTouches.length === 1 && tapStart && !tapMoved) {
         const t = e.changedTouches[0];
+        // Fire the full down→up sequence only on a confirmed tap (not a drag)
+        upperEl.dispatchEvent(new PointerEvent("pointerdown", {
+          clientX: t.clientX, clientY: t.clientY,
+          bubbles: true, cancelable: true, pointerId: 1, isPrimary: true, button: 0,
+        }));
         upperEl.dispatchEvent(new PointerEvent("pointerup", {
           clientX: t.clientX, clientY: t.clientY,
           bubbles: true, cancelable: true, pointerId: 1, isPrimary: true, button: 0,
@@ -136,7 +120,6 @@ export function useTouchHandling({
           bubbles: true, cancelable: true, button: 0,
         }));
       }
-      pointerDownFired = false;
       if (e.touches.length === 0) {
         lastMid = null; lastPinchDist = null; tapStart = null; tapMoved = false;
       } else if (e.touches.length === 1) {

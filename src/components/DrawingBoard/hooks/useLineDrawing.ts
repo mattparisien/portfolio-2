@@ -62,11 +62,7 @@ export function useLineDrawing({
     };
 
     const onMouseMove = (e: { e: Event }) => {
-      if (toolRef.current !== "line") {
-        // Keep crosshair even when not drawing
-        fc.setCursor("crosshair");
-        return;
-      }
+      if (toolRef.current !== "line") return;
       // Force crosshair so Fabric's internal cursor logic doesn't override it.
       fc.setCursor("crosshair");
       if (!isDrawing) return;
