@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { Canvas, IText } from "fabric";
 import type { Tool, ShapeType, FabricMods, TextProps, TextGradient } from "../types";
@@ -255,6 +255,80 @@ export function useCanvasActions({
       console.error("[addImage] failed to load:", e);
     }
   }, [fabricRef, modsRef, saveObject, setTool]);
+
+  // ── Remove Background from selected image ────────────────────────────
+  const [isRemovingBg, setIsRemovingBg] = useState(false);
+
+  const removeBg = useCallback(async () => {
+    const fc = fabricRef.current;
+    const mods = modsRef.current;
+    if (!fc || !mods) return;
+
+    const active = fc.getActiveObject();
+    if (!active) return;
+
+    // Get the image src from the Fabric object
+    const src = (active as unknown as { toObject(): { src?: string } }).toObject().src;
+    if (!src || src.startsWith("data:") || src === "") return;
+
+    setIsRemovingBg(true);
+    try {
+      const res = await fetch("/api/remove-bg", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ imageUrl: src }),
+      });
+      if (!res.ok) throw new Error(`remove-bg ${res.status}`);
+      const { url: newUrl } = (await res.json()) as { url: string };
+
+      // Load the new PNG via an HTMLImageElement so no crossOrigin complications
+      const el = new Image();
+      el.src = newUrl;
+      await new Promise<void>((resolve, reject) => {
+        el.onload  = () => resolve();
+        el.onerror = () => reject(new Error("Failed to load remove-bg result"));
+      });
+
+      // Capture the old object's transform
+      const old = active as unknown as {
+        left: number; top: number; scaleX: number; scaleY: number;
+        angle: number; opacity: number;
+        originX: "left" | "center" | "right";
+        originY: "top"  | "center" | "bottom";
+        flipX: boolean; flipY: boolean;
+        boardObjectId?: string; zIndex?: number;
+      };
+
+      const imgObj = new mods.FabricImage(el, {
+        left:    old.left,
+        top:     old.top,
+        scaleX:  old.scaleX,
+        scaleY:  old.scaleY,
+        angle:   old.angle,
+        opacity: old.opacity,
+        originX: old.originX,
+        originY: old.originY,
+        flipX:   old.flipX,
+        flipY:   old.flipY,
+        selectable:  true,
+        hasControls: true,
+      });
+
+      // Preserve identity on the canvas
+      if (old.boardObjectId) (imgObj as unknown as Record<string, unknown>).boardObjectId = old.boardObjectId;
+      if (old.zIndex !== undefined) (imgObj as unknown as Record<string, unknown>).zIndex = old.zIndex;
+
+      fc.remove(active);
+      fc.add(imgObj);
+      fc.setActiveObject(imgObj);
+      fc.requestRenderAll();
+      saveObject(imgObj);
+    } catch (e) {
+      console.error("[removeBg]", e);
+    } finally {
+      setIsRemovingBg(false);
+    }
+  }, [fabricRef, modsRef, saveObject]);
 
   // ── Add Video (R2 URL → looping canvas object) ────────────────────────
   const addVideo = useCallback(async (url: string) => {
@@ -606,5 +680,5 @@ export function useCanvasActions({
     fc.requestRenderAll();
   }, [fabricRef, saveObject]);
 
-  return { addText, addShape, addGif, addImage, addVideo, recolorSelected, applyFillGradient, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, clearCanvas, applyTextProp };
+  return { addText, addShape, addGif, addImage, addVideo, removeBg, isRemovingBg, recolorSelected, applyFillGradient, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, clearCanvas, applyTextProp };
 }

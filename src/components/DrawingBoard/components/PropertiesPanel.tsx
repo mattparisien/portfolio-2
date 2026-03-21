@@ -8,6 +8,7 @@ import {
   MdFormatAlignLeft,
   MdFormatAlignCenter,
   MdFormatAlignRight,
+  MdAutoFixHigh,
 } from "react-icons/md";
 import OverlaySurface from "@/components/OverlaySurface";
 
@@ -30,6 +31,7 @@ export interface PropertiesPanelProps {
   tool: Tool;
   hasSelection: boolean;
   selectedIsText: boolean;
+  selectedIsImage?: boolean;
   selectedIsShape: boolean;
   selectedIsLine: boolean;
   /** Fill / drawing color */
@@ -56,6 +58,8 @@ export interface PropertiesPanelProps {
   onFillColorChange: (hex: string) => void;
   onStrokeColorChange?: (hex: string) => void;
   onTextColorChange: (hex: string) => void;
+  onRemoveBg?: () => void;
+  isRemovingBg?: boolean;
 }
 
 // ── Primitives ───────────────────────────────────────────────────────────────
@@ -224,6 +228,7 @@ function StepBtn({
 export default function PropertiesPanel({
   tool,
   selectedIsText,
+  selectedIsImage,
   selectedIsShape,
   selectedIsLine,
   color,
@@ -245,6 +250,8 @@ export default function PropertiesPanel({
   onFillColorChange,
   onStrokeColorChange,
   onTextColorChange,
+  onRemoveBg,
+  isRemovingBg,
 }: PropertiesPanelProps) {
   const {
     fontFamily,
@@ -408,6 +415,43 @@ export default function PropertiesPanel({
                 onChange={(v) => onApplyText({ charSpacing: v })}
               />
             </div>
+          </div>
+        </>
+      ) : selectedIsImage ? (
+        /* ═════════════════════ IMAGE VIEW ═════════════════════ */
+        <>
+          {/* ── Remove Background ── */}
+          <div className="px-4 pt-3 pb-3">
+            <SectionLabel>Image</SectionLabel>
+            <button
+              title="Remove background"
+              disabled={isRemovingBg}
+              onClick={onRemoveBg}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-[12px] font-semibold transition-all duration-150 cursor-pointer"
+              style={{
+                background: isRemovingBg ? "rgba(0,0,0,0.04)" : "rgba(0,0,0,0.07)",
+                color: isRemovingBg ? "#999" : "#222",
+                opacity: isRemovingBg ? 0.6 : 1,
+              }}
+            >
+              <MdAutoFixHigh size={14} />
+              {isRemovingBg ? "Removing…" : "Remove Background"}
+            </button>
+          </div>
+
+          <Rule />
+
+          {/* ── Opacity ── */}
+          <div className="px-4 pt-3 pb-3">
+            <SectionLabel>Properties</SectionLabel>
+            <InlineSlider
+              label="Opacity"
+              value={Math.round(opacity * 100)}
+              displayValue={`${Math.round(opacity * 100)}%`}
+              min={0}
+              max={100}
+              onChange={(v) => onOpacityChange(v / 100)}
+            />
           </div>
         </>
       ) : (

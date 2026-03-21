@@ -64,6 +64,7 @@ interface UseFabricCanvasOptions {
   setHasSelection: (v: boolean) => void;
   setSelectedIsText: (v: boolean) => void;
   setSelectedIsGif: (v: boolean) => void;
+  setSelectedIsImage?: (v: boolean) => void;
   setSelectedIsPath: (v: boolean) => void;
   setSelectedIsLine: (v: boolean) => void;
   setSelectedIsLocked: (v: boolean) => void;
@@ -102,6 +103,7 @@ export function useFabricCanvas({
   setHasSelection,
   setSelectedIsText,
   setSelectedIsGif,
+  setSelectedIsImage,
   setSelectedIsPath,
   setSelectedIsLine,
   setSelectedIsLocked,
@@ -856,13 +858,16 @@ export function useFabricCanvas({
         setHasSelection(true);
         const obj = fc.getActiveObject();
         const isText = !!obj && ((obj as { type?: string }).type === "i-text" || (obj as { type?: string }).type === "textbox");
-        const isGif  = !!obj && !!(obj as { giphyId?: string }).giphyId;
+        const isGif   = !!obj && !!(obj as { giphyId?: string }).giphyId;
+        const isVideo = !!obj && !!(obj as Record<string, unknown>)._isVideo;
+        const isImage = !!obj && (obj as { type?: string }).type === "image" && !isGif && !isVideo;
         const isPath  = !!obj && (obj as { type?: string }).type === "path" && !(obj as { giphyId?: string }).giphyId;
         const isLine  = !!obj && (obj as { type?: string }).type === "line";
-        // Any non-text, non-gif, non-path, non-line object is a shape (rect, circle, etc.)
-        const isShape = !!obj && !isText && !isGif && !isPath && !isLine;
+        // Any non-text, non-gif, non-image, non-path, non-line object is a shape (rect, circle, etc.)
+        const isShape = !!obj && !isText && !isGif && !isImage && !isPath && !isLine;
         setSelectedIsText(isText);
         setSelectedIsGif(isGif);
+        setSelectedIsImage?.(isImage);
         setSelectedIsPath(isPath);
         setSelectedIsLine(isLine);
         if (isText) setTextProps(extractTextProps(obj as IText));
@@ -903,6 +908,7 @@ export function useFabricCanvas({
         setHasSelection(false);
         setSelectedIsText(false);
         setSelectedIsGif(false);
+        setSelectedIsImage?.(false);
         setSelectedIsPath(false);
         setSelectedIsLine(false);
         setSelectedIsLocked(false);
@@ -1257,7 +1263,7 @@ export function useFabricCanvas({
       fabricRef.current = null;
       modsRef.current   = null;
     };
-  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, opacityRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setVpt, setHasSelection, setSelectedIsText, setSelectedIsGif, setSelectedIsPath, setSelectedIsLine, setSelectedIsLocked, setShapeStrokeColor, setColor, setBrushSize, setOpacity, setTextProps, setIsSyncing, broadcast, shapeTypeRef, fillGradientRef, setIsOverHandle]);
+  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, opacityRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setVpt, setHasSelection, setSelectedIsText, setSelectedIsGif, setSelectedIsImage, setSelectedIsPath, setSelectedIsLine, setSelectedIsLocked, setShapeStrokeColor, setColor, setBrushSize, setOpacity, setTextProps, setIsSyncing, broadcast, shapeTypeRef, fillGradientRef, setIsOverHandle]);
 
   return { modsRef, undoFnRef, redoFnRef, deleteFnRef };
 }

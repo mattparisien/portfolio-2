@@ -94,6 +94,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
   const [hasSelection, setHasSelection]         = useState(false);
   const [selectedIsText, setSelectedIsText]     = useState(false);
   const [selectedIsGif, setSelectedIsGif]       = useState(false);
+  const [selectedIsImage, setSelectedIsImage]   = useState(false);
   const [selectedIsPath, setSelectedIsPath]     = useState(false);
   const [selectedIsLine, setSelectedIsLine]     = useState(false);
   const [selectedIsLocked, setSelectedIsLocked] = useState(false);
@@ -146,7 +147,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
     }
   }, []);
 
-  const selectedIsShape = hasSelection && !selectedIsText && !selectedIsGif && !selectedIsPath && !selectedIsLine;
+  const selectedIsShape = hasSelection && !selectedIsText && !selectedIsGif && !selectedIsImage && !selectedIsPath && !selectedIsLine;
   const panelVisible    = selectedIsText || (!selectedIsGif && (tool === "pencil" || tool === "brush" || hasSelection));
 
   // Mobile detection
@@ -206,6 +207,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
     setHasSelection,
     setSelectedIsText,
     setSelectedIsGif,
+    setSelectedIsImage,
     setSelectedIsPath,
     setSelectedIsLine,
     setSelectedIsLocked,
@@ -225,7 +227,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
     initialObjects,
   });
 
-  const { addText, addGif, addImage, addVideo, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, applyTextProp, applyFillGradient, clearCanvas } =
+  const { addText, addGif, addImage, addVideo, removeBg, isRemovingBg, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, applyTextProp, applyFillGradient, clearCanvas } =
     useCanvasActions({
       fabricRef,
       modsRef,
@@ -450,6 +452,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
           tool={tool}
           hasSelection={hasSelection}
           selectedIsText={selectedIsText}
+          selectedIsImage={selectedIsImage}
           selectedIsShape={selectedIsShape}
           selectedIsLine={selectedIsLine}
           color={color}
@@ -471,6 +474,8 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
           onFillColorChange={(c) => { setFillGradient(null); setColor(c); if (hasSelection) recolorSelected(c); }}
           onStrokeColorChange={(c) => { setShapeStrokeColor(c); restrokeSelected(c); }}
           onTextColorChange={(c) => { setColor(c); recolorSelected(c); }}
+          onRemoveBg={removeBg}
+          isRemovingBg={isRemovingBg}
         />
       )}
       <DrawingTools
