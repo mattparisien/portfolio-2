@@ -37,6 +37,7 @@ interface UseCanvasActionsOptions {
   startGifLoop: () => void;
   stopGifLoop: () => void;
   gifCountRef: React.MutableRefObject<number>;
+  videoCountRef?: React.MutableRefObject<number>;
   setTool: (t: Tool) => void;
   setZoom: (z: number) => void;
   setVpt: (vpt: number[]) => void;
@@ -59,6 +60,7 @@ export function useCanvasActions({
   startGifLoop,
   stopGifLoop,
   gifCountRef,
+  videoCountRef,
   setTool,
   setZoom,
   setVpt,
@@ -254,6 +256,86 @@ export function useCanvasActions({
     }
   }, [fabricRef, modsRef, saveObject, setTool]);
 
+  // ── Add Video (R2 URL → looping canvas object) ────────────────────────
+  const addVideo = useCallback(async (url: string) => {
+    const fc = fabricRef.current;
+    const mods = modsRef.current;
+    if (!fc || !mods) return;
+
+    try {
+      const video = document.createElement("video");
+      // Do NOT set crossOrigin — R2 public URLs may lack CORS headers, and we
+      // only need to render frames onto canvas (no pixel read-back required).
+      video.muted       = true;
+      video.loop        = true;
+      video.playsInline = true;
+      video.src         = url;
+
+      await new Promise<void>((resolve, reject) => {
+        video.onloadedmetadata = () => resolve();
+        video.onerror = (ev) => {
+          const err = (ev as ErrorEvent).message ?? "unknown error";
+          reject(new Error(`Video failed to load: ${err}`));
+        };
+        video.load();
+      });
+
+      video.play().catch(() => {});
+
+      const vpt = fc.viewportTransform as number[];
+      const cx = (window.innerWidth  / 2 - vpt[4]) / vpt[0];
+      const cy = (window.innerHeight / 2 - vpt[5]) / vpt[3];
+      const w = video.videoWidth  || 640;
+      const h = video.videoHeight || 360;
+      const scale = Math.min(1, 400 / Math.max(w, h));
+
+      // Set DOM size so the browser paints the correct frame dimensions
+      video.width  = w;
+      video.height = h;
+
+      const imgObj = new mods.FabricImage(video as unknown as HTMLImageElement, {
+        left:          cx,
+        top:           cy,
+        originX:       "center",
+        originY:       "center",
+        width:         w,
+        height:        h,
+        scaleX:        scale,
+        scaleY:        scale,
+        objectCaching: false,
+        selectable:    true,
+        hasControls:   true,
+      });
+
+      const o = imgObj as unknown as Record<string, unknown>;
+      o._isVideo  = true;
+      o._videoUrl = url;
+      o._videoEl  = video;
+
+      // Override toObject so Fabric doesn't try to serialize the video element.
+      // We store _isVideo + _videoUrl so the data can be identified later.
+      const _origToObject = imgObj.toObject.bind(imgObj);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (imgObj as unknown as Record<string, unknown>).toObject = (props?: any) => ({
+        ..._origToObject(props),
+        src: "data:,",
+        _isVideo:  true,
+        _videoUrl: url,
+      });
+
+      fc.add(imgObj);
+      fc.setActiveObject(imgObj);
+      fc.requestRenderAll();
+      saveObject(imgObj);
+
+      if (videoCountRef) videoCountRef.current += 1;
+      startGifLoop(); // the same RAF loop renders video frames each tick
+      setTool("select");
+    } catch (e) {
+      console.error("[addVideo] failed to load:", e);
+    }
+  }, [fabricRef, modsRef, saveObject, startGifLoop, videoCountRef, setTool]);
+
   // ── Add GIF ────────────────────────────────────────────────────────────
   const addGif = useCallback((giphyId: string, url: string) => {
     const fc = fabricRef.current;
@@ -440,6 +522,7 @@ export function useCanvasActions({
     fc.backgroundColor = getCanvasBgColor();
     fc.renderAll();
     gifCountRef.current = 0;
+    if (videoCountRef) videoCountRef.current = 0;
     stopGifLoop();
     fetch(`/api/board-objects?boardId=${BOARD_ID}`, { method: "DELETE" })
       .then(() => broadcast?.({ type: "CANVAS_CLEARED" }))
@@ -523,5 +606,5 @@ export function useCanvasActions({
     fc.requestRenderAll();
   }, [fabricRef, saveObject]);
 
-  return { addText, addShape, addGif, addImage, recolorSelected, applyFillGradient, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, clearCanvas, applyTextProp };
+  return { addText, addShape, addGif, addImage, addVideo, recolorSelected, applyFillGradient, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, clearCanvas, applyTextProp };
 }

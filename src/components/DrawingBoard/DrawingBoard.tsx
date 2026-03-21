@@ -185,7 +185,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
     updateMyPresence({ color });
   }, [self?.connectionId, updateMyPresence]);
 
-  const { gifCountRef, startGifLoop, stopGifLoop } = useGifLoop(fabricRef);
+  const { gifCountRef, videoCountRef, startGifLoop, stopGifLoop } = useGifLoop(fabricRef);
 
   const { saveObject } = useBoardSync({ broadcast: broadcastEvent });
 
@@ -199,6 +199,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
     startGifLoop,
     stopGifLoop,
     gifCountRef,
+    videoCountRef,
     setTool,
     setZoom,
     setVpt,
@@ -224,7 +225,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
     initialObjects,
   });
 
-  const { addText, addGif, addImage, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, applyTextProp, applyFillGradient, clearCanvas } =
+  const { addText, addGif, addImage, addVideo, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, applyTextProp, applyFillGradient, clearCanvas } =
     useCanvasActions({
       fabricRef,
       modsRef,
@@ -237,6 +238,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
       startGifLoop,
       stopGifLoop,
       gifCountRef,
+      videoCountRef,
       setTool,
       setZoom,
       setVpt,
@@ -479,6 +481,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
         onAddText={addText}
         onAddGif={addGif}
         onAddImage={addImage}
+        onAddVideo={addVideo}
         closeSignal={drawingToolsClose}
         uploadSignal={uploadSignal}
         activeShapeType={shapeType}

@@ -3,10 +3,11 @@ import type { MutableRefObject } from "react";
 import type { Canvas, FabricObject } from "fabric";
 
 /** Runs a requestAnimationFrame loop that keeps calling requestRenderAll()
- *  so fabric repaints animated GIF frames each tick. */
+ *  so fabric repaints animated GIF frames and video frames each tick. */
 export function useGifLoop(fabricRef: MutableRefObject<Canvas | null>) {
-  const gifCountRef = useRef(0);
-  const gifRafRef   = useRef<number | null>(null);
+  const gifCountRef   = useRef(0);
+  const videoCountRef = useRef(0);
+  const gifRafRef     = useRef<number | null>(null);
 
   const startGifLoop = useCallback(() => {
     if (gifRafRef.current !== null) return;
@@ -45,11 +46,13 @@ export function useGifLoop(fabricRef: MutableRefObject<Canvas | null>) {
   }, [fabricRef]);
 
   const stopGifLoop = useCallback(() => {
+    // Only cancel the loop when both GIFs and videos are gone
+    if (gifCountRef.current > 0 || videoCountRef.current > 0) return;
     if (gifRafRef.current !== null) {
       cancelAnimationFrame(gifRafRef.current);
       gifRafRef.current = null;
     }
   }, []);
 
-  return { gifCountRef, startGifLoop, stopGifLoop };
+  return { gifCountRef, videoCountRef, startGifLoop, stopGifLoop };
 }

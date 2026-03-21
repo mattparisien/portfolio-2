@@ -57,6 +57,7 @@ interface UseFabricCanvasOptions {
   startGifLoop: () => void;
   stopGifLoop: () => void;
   gifCountRef: React.MutableRefObject<number>;
+  videoCountRef?: React.MutableRefObject<number>;
   setTool: (t: Tool) => void;
   setZoom: (z: number) => void;
   setVpt: (vpt: number[]) => void;
@@ -94,6 +95,7 @@ export function useFabricCanvas({
   startGifLoop,
   stopGifLoop,
   gifCountRef,
+  videoCountRef,
   setTool,
   setZoom,
   setVpt,
@@ -129,10 +131,16 @@ export function useFabricCanvas({
   };
   const clipboardRef = useRef<{ clone: unknown; gifMeta?: GifMeta }[]>([]);
   const isPastingRef = useRef(false);
+  // Track the current effect generation so stale import callbacks can be discarded.
+  const genRef = useRef(0);
+  // Store the dispose() promise so the next mount can await it before re-initialising.
+  const disposePromiseRef = useRef<Promise<unknown>>(Promise.resolve());
 
   useEffect(() => {
     const canvasEl = canvasElRef.current;
     if (!canvasEl) return;
+
+    const gen = ++genRef.current;
 
     const pendingTextRef = { current: null as IText | Textbox | null };
     let pendingMultiSave: SaveableObj[] | null = null;
@@ -500,7 +508,13 @@ export function useFabricCanvas({
         }
         if ((obj as { giphyId?: string }).giphyId) {
           gifCountRef.current = Math.max(0, gifCountRef.current - 1);
-          if (gifCountRef.current === 0) stopGifLoop();
+          stopGifLoop();
+        }
+        if ((obj as Record<string, unknown>)._isVideo) {
+          const vid = (obj as Record<string, unknown>)._videoEl as HTMLVideoElement | undefined;
+          vid?.pause();
+          if (videoCountRef) videoCountRef.current = Math.max(0, videoCountRef.current - 1);
+          stopGifLoop();
         }
       });
       fc.requestRenderAll();
@@ -540,7 +554,12 @@ export function useFabricCanvas({
     canvasEl.addEventListener("touchend",   onTouchEnd);
 
     // ── Fabric async init ─────────────────────────────────────────────────
-    import("fabric").then(({ Canvas, PencilBrush, IText, Textbox, Point, Rect, Circle, Triangle, Path, Line, FabricImage, ActiveSelection, util, Gradient, Shadow, Pattern, FabricObject, Control }) => {
+    import("fabric").then(async ({ Canvas, PencilBrush, IText, Textbox, Point, Rect, Circle, Triangle, Path, Line, FabricImage, ActiveSelection, util, Gradient, Shadow, Pattern, FabricObject, Control }) => {
+      // Await any in-flight dispose() from a previous effect run so Fabric's
+      // internal canvas-tracking map is clean before we construct a new Canvas.
+      await disposePromiseRef.current;
+      // Bail out if this effect was superseded while we were waiting.
+      if (genRef.current !== gen) return;
       modsRef.current = { Canvas, PencilBrush, IText, Textbox, Point, Rect, Circle, Triangle, Path, Line, FabricImage, ActiveSelection, util, Gradient, Shadow, Pattern };
 
       // Make selection borders and corner handles clearly visible
@@ -649,9 +668,10 @@ export function useFabricCanvas({
           parsed.sort((a, b) => ((a.zIndex as number) ?? 0) - ((b.zIndex as number) ?? 0));
           parsed.forEach((o) => { if (o.type === "IText" || o.type === "i-text" || o.type === "Textbox" || o.type === "textbox") o.editable = false; });
 
-          // Separate GIFs (require async re-decode) from regular objects
-          const regularParsed = parsed.filter(o => !(o.giphyId && o._gifUrl));
+          // Separate GIFs and videos (both require async re-attach) from regular objects.
+          const regularParsed = parsed.filter(o => !(o.giphyId && o._gifUrl) && !o._isVideo);
           const gifParsed     = parsed.filter(o =>   o.giphyId && o._gifUrl);
+          const videoParsed   = parsed.filter(o =>   o._isVideo && o._videoUrl);
 
           // Enliven and add regular objects in batches of 10 for progressive rendering
           const BATCH = 10;
@@ -714,6 +734,73 @@ export function useFabricCanvas({
               gifRestorePromises.push(promise);
             });
             Promise.allSettled(gifRestorePromises).then(() => startGifLoop());
+          }
+
+          // Video objects — build FabricImage directly from a <video> element.
+          // We NEVER call util.enlivenObjects on these because Fabric would try to
+          // load src:"data:," as an image and throw "Error loading data:,".
+          if (videoParsed.length > 0) {
+            const videoRestorePromises = videoParsed.map(async (src) => {
+              const videoUrl = src._videoUrl as string;
+              const video = document.createElement("video");
+              video.muted = true; video.loop = true; video.playsInline = true; video.src = videoUrl;
+              await new Promise<void>((resolve) => {
+                video.onloadedmetadata = () => resolve();
+                video.onerror = () => resolve(); // don't block others on failure
+              });
+              video.play().catch(() => {});
+              const w = video.videoWidth  || (src.width  as number) || 640;
+              const h = video.videoHeight || (src.height as number) || 360;
+              video.width = w; video.height = h;
+
+              // Construct directly — no image loading involved
+              const imgObj = new FabricImage(video as unknown as HTMLImageElement, {
+                left:          (src.left   as number) ?? 0,
+                top:           (src.top    as number) ?? 0,
+                scaleX:        (src.scaleX as number) ?? 1,
+                scaleY:        (src.scaleY as number) ?? 1,
+                angle:         (src.angle  as number) ?? 0,
+                flipX:         (src.flipX  as boolean) ?? false,
+                flipY:         (src.flipY  as boolean) ?? false,
+                opacity:       (src.opacity as number) ?? 1,
+                originX:       (src.originX as "left" | "center" | "right") ?? "left",
+                originY:       (src.originY as "top"  | "center" | "bottom") ?? "top",
+                width:         w,
+                height:        h,
+                objectCaching: false,
+                selectable:    true,
+                hasControls:   true,
+                // Restore lock state if persisted
+                lockMovementX: (src.lockMovementX as boolean) ?? false,
+                lockMovementY: (src.lockMovementY as boolean) ?? false,
+                lockRotation:  (src.lockRotation  as boolean) ?? false,
+                lockScalingX:  (src.lockScalingX  as boolean) ?? false,
+                lockScalingY:  (src.lockScalingY  as boolean) ?? false,
+              });
+
+              const o = imgObj as unknown as Record<string, unknown>;
+              if (src.boardObjectId) o.boardObjectId = src.boardObjectId;
+              if (src.zIndex !== undefined) o.zIndex = src.zIndex;
+              o._isVideo  = true;
+              o._videoUrl = videoUrl;
+              o._videoEl  = video;
+
+              const _origToObject = imgObj.toObject.bind(imgObj);
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (o as Record<string, unknown>).toObject = (props?: any) => ({
+                ..._origToObject(props),
+                src: "data:,",
+                _isVideo:  true,
+                _videoUrl: videoUrl,
+              });
+
+              fc.add(imgObj);
+              if (videoCountRef) videoCountRef.current += 1;
+            });
+            Promise.allSettled(videoRestorePromises).then(() => {
+              startGifLoop();
+              fc.requestRenderAll();
+            });
           }
       })().catch((e) => console.error("Failed to load board objects", e))
         .finally(() => { fc.renderAll(); });
@@ -860,7 +947,13 @@ export function useFabricCanvas({
         }
         if (o.giphyId) {
           gifCountRef.current = Math.max(0, gifCountRef.current - 1);
-          if (gifCountRef.current === 0) stopGifLoop();
+          stopGifLoop();
+        }
+        if ((o as unknown as Record<string, unknown>)._isVideo) {
+          const vid = (o as unknown as Record<string, unknown>)._videoEl as HTMLVideoElement | undefined;
+          vid?.pause();
+          if (videoCountRef) videoCountRef.current = Math.max(0, videoCountRef.current - 1);
+          stopGifLoop();
         }
       }
 
@@ -1153,6 +1246,7 @@ export function useFabricCanvas({
     });
 
     return () => {
+      genRef.current++; // invalidate this effect's generation
       window.removeEventListener("wheel", handleWheel);
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("mousemove", trackMouse);
@@ -1161,7 +1255,8 @@ export function useFabricCanvas({
       canvasEl.removeEventListener("touchmove",  onTouchMove);
       canvasEl.removeEventListener("touchend",   onTouchEnd);
       stopGifLoop();
-      fabricRef.current?.dispose();
+      // Store the dispose promise so the next mount awaits it before re-init.
+      disposePromiseRef.current = fabricRef.current?.dispose() ?? Promise.resolve();
       fabricRef.current = null;
       modsRef.current   = null;
     };
