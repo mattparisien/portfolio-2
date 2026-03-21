@@ -633,29 +633,55 @@ export function useFabricCanvas({
         };
       }
 
-      // ── Touch pan / tap (registered on upperCanvasEl — the real event target) ──
-      // On touch devices a 1-finger drag pans the canvas instead of drawing a
-      // rubber-band marquee selection.  A 1-finger tap still selects objects.
-      // 2-finger drag always pans regardless of device type.
+      // ── Touch pan / tap / pinch-zoom (registered on upperCanvasEl — the real event target) ──
+      // 1-finger tap  → fires pointerdown on touchstart, pointerup+click on touchend (select objects)
+      // 1-finger drag → pans canvas (pointercancel sent to abort Fabric's selection tracking)
+      // 2-finger drag → pans canvas via midpoint delta
+      // 2-finger pinch → zooms to midpoint
       {
         const isTouchDevice = navigator.maxTouchPoints > 0;
         let lastMid: { x: number; y: number } | null = null;
-        let panStart: { x: number; y: number } | null = null;
-        let panMoved = false;
+        let lastPinchDist: number | null = null;
+        let tapStart: { x: number; y: number } | null = null;
+        let tapMoved = false;
+        let pointerDownFired = false;
+
+        const pinchDist = (t1: Touch, t2: Touch) => {
+          const dx = t1.clientX - t2.clientX;
+          const dy = t1.clientY - t2.clientY;
+          return Math.sqrt(dx * dx + dy * dy);
+        };
 
         const onTouchStart = (e: TouchEvent) => {
           if (e.touches.length >= 2) {
             e.preventDefault();
+            // Cancel any in-flight 1-finger pointer interaction
+            if (pointerDownFired) {
+              const t = e.changedTouches[0];
+              upperEl.dispatchEvent(new PointerEvent("pointercancel", {
+                clientX: t.clientX, clientY: t.clientY,
+                bubbles: true, cancelable: true, pointerId: 1, isPrimary: true,
+              }));
+              pointerDownFired = false;
+            }
             lastMid = {
               x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
               y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
             };
-            panStart = null;
+            lastPinchDist = pinchDist(e.touches[0], e.touches[1]);
+            tapStart = null;
           } else if (isTouchDevice && e.touches.length === 1) {
-            // Take full ownership of single-finger — prevents Fabric rubber-band marquee
+            // Take full ownership — prevents Fabric rubber-band marquee
             e.preventDefault();
-            panStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-            panMoved = false;
+            const t = e.touches[0];
+            tapStart = { x: t.clientX, y: t.clientY };
+            tapMoved = false;
+            pointerDownFired = true;
+            // Fire pointerdown immediately so Fabric registers the press (natural feel)
+            upperEl.dispatchEvent(new PointerEvent("pointerdown", {
+              clientX: t.clientX, clientY: t.clientY,
+              bubbles: true, cancelable: true, pointerId: 1, isPrimary: true, button: 0,
+            }));
           }
         };
 
@@ -664,36 +690,71 @@ export function useFabricCanvas({
             e.preventDefault();
             const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
             const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            // Pan via midpoint delta
             fc.relativePan(new Point(cx - lastMid.x, cy - lastMid.y));
+            // Pinch zoom: scale around midpoint
+            if (lastPinchDist !== null) {
+              const newDist = pinchDist(e.touches[0], e.touches[1]);
+              if (newDist > 0 && lastPinchDist > 0) {
+                const newZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, fc.getZoom() * (newDist / lastPinchDist)));
+                fc.zoomToPoint(new Point(cx, cy), newZoom);
+                setZoom(newZoom);
+                lastPinchDist = newDist;
+              }
+            }
             setVpt(fc.viewportTransform as number[]);
             lastMid = { x: cx, y: cy };
-          } else if (isTouchDevice && e.touches.length === 1 && panStart) {
+          } else if (isTouchDevice && e.touches.length === 1 && tapStart) {
             e.preventDefault();
             const tx = e.touches[0].clientX;
             const ty = e.touches[0].clientY;
-            const dx = tx - panStart.x;
-            const dy = ty - panStart.y;
-            if (!panMoved && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) panMoved = true;
-            if (panMoved) {
+            const dx = tx - tapStart.x;
+            const dy = ty - tapStart.y;
+            if (!tapMoved && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) {
+              tapMoved = true;
+              // Cancel Fabric's selection tracking now that we know this is a pan
+              if (pointerDownFired) {
+                upperEl.dispatchEvent(new PointerEvent("pointercancel", {
+                  clientX: tx, clientY: ty,
+                  bubbles: true, cancelable: true, pointerId: 1, isPrimary: true,
+                }));
+                pointerDownFired = false;
+              }
+            }
+            if (tapMoved) {
               fc.relativePan(new Point(dx, dy));
               setVpt(fc.viewportTransform as number[]);
             }
-            panStart = { x: tx, y: ty };
+            tapStart = { x: tx, y: ty };
           }
         };
 
         const onTouchEnd = (e: TouchEvent) => {
-          // Single-finger tap: fire synthetic pointer events so Fabric selects the object
-          if (isTouchDevice && e.changedTouches.length === 1 && panStart && !panMoved) {
+          if (isTouchDevice && e.changedTouches.length === 1 && tapStart && !tapMoved) {
+            // Tap completed — fire pointerup + click to finish selection
             const t = e.changedTouches[0];
-            const opts = { clientX: t.clientX, clientY: t.clientY, bubbles: true, cancelable: true, pointerId: 1, isPrimary: true, button: 0 } as const;
-            upperEl.dispatchEvent(new PointerEvent("pointerdown", opts));
-            upperEl.dispatchEvent(new PointerEvent("pointerup",   opts));
-            upperEl.dispatchEvent(new MouseEvent("click", opts));
+            upperEl.dispatchEvent(new PointerEvent("pointerup", {
+              clientX: t.clientX, clientY: t.clientY,
+              bubbles: true, cancelable: true, pointerId: 1, isPrimary: true, button: 0,
+            }));
+            upperEl.dispatchEvent(new MouseEvent("click", {
+              clientX: t.clientX, clientY: t.clientY,
+              bubbles: true, cancelable: true, button: 0,
+            }));
           }
-          lastMid   = null;
-          panStart  = null;
-          panMoved  = false;
+          pointerDownFired = false;
+          if (e.touches.length === 0) {
+            lastMid       = null;
+            lastPinchDist = null;
+            tapStart      = null;
+            tapMoved      = false;
+          } else if (e.touches.length === 1) {
+            // Transitioned from 2-finger to 1-finger
+            lastMid       = null;
+            lastPinchDist = null;
+            tapStart      = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            tapMoved      = false;
+          }
         };
 
         upperEl.addEventListener("touchstart", onTouchStart, { passive: false });
