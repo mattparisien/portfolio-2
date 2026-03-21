@@ -95,6 +95,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
   const [selectedIsText, setSelectedIsText]     = useState(false);
   const [selectedIsGif, setSelectedIsGif]       = useState(false);
   const [selectedIsImage, setSelectedIsImage]   = useState(false);
+  const [imageBlendMode, setImageBlendMode]     = useState("source-over");
   const [selectedIsPath, setSelectedIsPath]     = useState(false);
   const [selectedIsLine, setSelectedIsLine]     = useState(false);
   const [selectedIsLocked, setSelectedIsLocked] = useState(false);
@@ -188,7 +189,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
 
   const { gifCountRef, videoCountRef, startGifLoop, stopGifLoop } = useGifLoop(fabricRef);
 
-  const { saveObject } = useBoardSync({ broadcast: broadcastEvent });
+  const { saveObject } = useBoardSync({ broadcast: broadcastEvent, fabricRef });
 
   const { modsRef, undoFnRef, redoFnRef, deleteFnRef } = useFabricCanvas({
     canvasElRef,
@@ -208,6 +209,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
     setSelectedIsText,
     setSelectedIsGif,
     setSelectedIsImage,
+    setImageBlendMode,
     setSelectedIsPath,
     setSelectedIsLine,
     setSelectedIsLocked,
@@ -227,7 +229,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
     initialObjects,
   });
 
-  const { addText, addGif, addImage, addVideo, removeBg, isRemovingBg, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, applyTextProp, applyFillGradient, clearCanvas } =
+  const { addText, addGif, addImage, addVideo, removeBg, isRemovingBg, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, reBlendModeSelected, lockSelected, zoomIn, zoomOut, zoomReset, applyTextProp, applyFillGradient, clearCanvas } =
     useCanvasActions({
       fabricRef,
       modsRef,
@@ -476,6 +478,8 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
           onTextColorChange={(c) => { setColor(c); recolorSelected(c); }}
           onRemoveBg={removeBg}
           isRemovingBg={isRemovingBg}
+          imageBlendMode={imageBlendMode}
+          onBlendModeChange={(mode) => { setImageBlendMode(mode); if (hasSelection) reBlendModeSelected(mode); }}
         />
       )}
       <DrawingTools

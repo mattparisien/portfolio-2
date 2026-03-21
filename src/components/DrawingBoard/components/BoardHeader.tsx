@@ -7,9 +7,9 @@ interface BoardHeaderProps {
 export default function BoardHeader({ isSyncing: _ }: BoardHeaderProps) {
   return (
     <div
-      className="absolute top-5 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full text-sm font-mono tracking-widest uppercase flex items-center gap-2 z-[400] select-none"
+      className="absolute top-5 left-0 sm:left-1/2 sm:-translate-x-1/2 px-4 py-1.5 rounded-full text-sm font-mono tracking-widest uppercase flex items-center gap-2 z-[400] select-none"
     >
-      <svg className="w-50" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1899.17 401.79">
+      <svg className="w-35 sm:w-50" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1899.17 401.79">
         <path d="M262.71,154.53h-72.12c-27.82,0-46.36,18.54-46.36,46.36s18.54,46.36,46.36,46.36h72.12v144.23h-72.12C76.24,391.49,0,315.25,0,200.89S76.24,10.3,190.59,10.3h72.12v144.23Z" />
         <path d="M546.89,247.25h103.02v144.23h-185.44v-164.84h-20.6v164.84h-175.14V10.3h278.16c66.96,0,108.17,41.21,108.17,108.17s-41.21,108.17-108.17,108.17v20.61ZM608.7,118.48c0-37.09-24.73-61.81-61.81-61.81s-61.81,24.72-61.81,61.81,24.73,61.81,61.81,61.81,61.81-24.72,61.81-61.81Z" />
         <path d="M663.21,216.35V10.3h175.14v236.95h20.6V10.3h175.14v206.04c0,109.2-76.23,185.44-185.44,185.44s-185.44-76.24-185.44-185.44Z" />

@@ -60,6 +60,8 @@ export interface PropertiesPanelProps {
   onTextColorChange: (hex: string) => void;
   onRemoveBg?: () => void;
   isRemovingBg?: boolean;
+  imageBlendMode?: string;
+  onBlendModeChange?: (mode: string) => void;
 }
 
 // ── Primitives ───────────────────────────────────────────────────────────────
@@ -252,6 +254,8 @@ export default function PropertiesPanel({
   onTextColorChange,
   onRemoveBg,
   isRemovingBg,
+  imageBlendMode = "source-over",
+  onBlendModeChange,
 }: PropertiesPanelProps) {
   const {
     fontFamily,
@@ -452,6 +456,36 @@ export default function PropertiesPanel({
               max={100}
               onChange={(v) => onOpacityChange(v / 100)}
             />
+          </div>
+
+          <Rule />
+
+          {/* ── Blend Mode ── */}
+          <div className="px-4 pt-3 pb-3">
+            <SectionLabel>Blend Mode</SectionLabel>
+            <select
+              value={imageBlendMode}
+              onChange={(e) => onBlendModeChange?.(e.target.value)}
+              title="Blend mode"
+              className="w-full text-[12px] rounded-lg px-2.5 py-1.5 bg-black/[0.04] text-gray-700 font-medium border-0 outline-none cursor-pointer"
+            >
+              <option value="source-over">Normal</option>
+              <option value="multiply">Multiply</option>
+              <option value="screen">Screen</option>
+              <option value="overlay">Overlay</option>
+              <option value="darken">Darken</option>
+              <option value="lighten">Lighten</option>
+              <option value="color-dodge">Color Dodge</option>
+              <option value="color-burn">Color Burn</option>
+              <option value="hard-light">Hard Light</option>
+              <option value="soft-light">Soft Light</option>
+              <option value="difference">Difference</option>
+              <option value="exclusion">Exclusion</option>
+              <option value="hue">Hue</option>
+              <option value="saturation">Saturation</option>
+              <option value="color">Color</option>
+              <option value="luminosity">Luminosity</option>
+            </select>
           </div>
         </>
       ) : (

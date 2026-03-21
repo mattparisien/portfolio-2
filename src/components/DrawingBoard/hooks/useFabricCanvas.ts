@@ -65,6 +65,7 @@ interface UseFabricCanvasOptions {
   setSelectedIsText: (v: boolean) => void;
   setSelectedIsGif: (v: boolean) => void;
   setSelectedIsImage?: (v: boolean) => void;
+  setImageBlendMode?: (v: string) => void;
   setSelectedIsPath: (v: boolean) => void;
   setSelectedIsLine: (v: boolean) => void;
   setSelectedIsLocked: (v: boolean) => void;
@@ -104,6 +105,7 @@ export function useFabricCanvas({
   setSelectedIsText,
   setSelectedIsGif,
   setSelectedIsImage,
+  setImageBlendMode,
   setSelectedIsPath,
   setSelectedIsLine,
   setSelectedIsLocked,
@@ -868,6 +870,10 @@ export function useFabricCanvas({
         setSelectedIsText(isText);
         setSelectedIsGif(isGif);
         setSelectedIsImage?.(isImage);
+        if (isImage) {
+          const bm = (obj as unknown as Record<string, unknown>).globalCompositeOperation;
+          setImageBlendMode?.(typeof bm === "string" && bm ? bm : "source-over");
+        }
         setSelectedIsPath(isPath);
         setSelectedIsLine(isLine);
         if (isText) setTextProps(extractTextProps(obj as IText));
@@ -909,6 +915,7 @@ export function useFabricCanvas({
         setSelectedIsText(false);
         setSelectedIsGif(false);
         setSelectedIsImage?.(false);
+        setImageBlendMode?.("source-over");
         setSelectedIsPath(false);
         setSelectedIsLine(false);
         setSelectedIsLocked(false);
@@ -1263,7 +1270,7 @@ export function useFabricCanvas({
       fabricRef.current = null;
       modsRef.current   = null;
     };
-  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, opacityRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setVpt, setHasSelection, setSelectedIsText, setSelectedIsGif, setSelectedIsImage, setSelectedIsPath, setSelectedIsLine, setSelectedIsLocked, setShapeStrokeColor, setColor, setBrushSize, setOpacity, setTextProps, setIsSyncing, broadcast, shapeTypeRef, fillGradientRef, setIsOverHandle]);
+  }, [canvasElRef, fabricRef, colorRef, brushSizeRef, opacityRef, toolRef, saveObject, startGifLoop, stopGifLoop, gifCountRef, setTool, setZoom, setVpt, setHasSelection, setSelectedIsText, setSelectedIsGif, setSelectedIsImage, setImageBlendMode, setSelectedIsPath, setSelectedIsLine, setSelectedIsLocked, setShapeStrokeColor, setColor, setBrushSize, setOpacity, setTextProps, setIsSyncing, broadcast, shapeTypeRef, fillGradientRef, setIsOverHandle]);
 
   return { modsRef, undoFnRef, redoFnRef, deleteFnRef };
 }

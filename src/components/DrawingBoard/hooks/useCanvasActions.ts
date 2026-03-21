@@ -561,6 +561,17 @@ export function useCanvasActions({
     saveObject(obj);
   }, [fabricRef, saveObject]);
 
+  const reBlendModeSelected = useCallback((mode: string) => {
+    const fc = fabricRef.current;
+    if (!fc) return;
+    const obj = fc.getActiveObject();
+    if (!obj) return;
+    (obj as unknown as Record<string, unknown>).globalCompositeOperation = mode;
+    obj.set({ globalCompositeOperation: mode as GlobalCompositeOperation });
+    fc.requestRenderAll();
+    saveObject(obj);
+  }, [fabricRef, saveObject]);
+
   // ── Zoom ───────────────────────────────────────────────────────────────
   const zoomIn = useCallback(() => {
     const fc = fabricRef.current; const mods = modsRef.current;
@@ -680,5 +691,5 @@ export function useCanvasActions({
     fc.requestRenderAll();
   }, [fabricRef, saveObject]);
 
-  return { addText, addShape, addGif, addImage, addVideo, removeBg, isRemovingBg, recolorSelected, applyFillGradient, restrokeSelected, reweightSelected, reOpacitySelected, lockSelected, zoomIn, zoomOut, zoomReset, clearCanvas, applyTextProp };
+  return { addText, addShape, addGif, addImage, addVideo, removeBg, isRemovingBg, recolorSelected, applyFillGradient, restrokeSelected, reweightSelected, reOpacitySelected, reBlendModeSelected, lockSelected, zoomIn, zoomOut, zoomReset, clearCanvas, applyTextProp };
 }
