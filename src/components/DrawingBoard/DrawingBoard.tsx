@@ -417,7 +417,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
       <RemoteCursors vpt={vpt} />
 
       {/* Local cursor — only show custom SVG for pencil (pen tool uses native crosshair) */}
-      {cursorOnScreen && !isOverUI && !isOverHandle && tool === "pencil" && (
+      {cursorOnScreen && !isOverUI && !isOverHandle && !isMobile && tool === "pencil" && (
         <div
           className="pointer-events-none fixed z-[9999]"
           style={{ left: 0, top: 0, transform: `translate(${localCursor!.x}px, ${localCursor!.y}px)`, willChange: "transform" }}
@@ -427,7 +427,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
       )}
 
       {/* Default arrow cursor for select / unhandled tools */}
-      {cursorOnScreen && !isOverUI && !isOverHandle && tool === "select" && (
+      {cursorOnScreen && !isOverUI && !isOverHandle && !isMobile && tool === "select" && (
         <div
           className="pointer-events-none fixed z-[9999]"
           style={{ left: 0, top: 0, transform: `translate(${localCursor!.x}px, ${localCursor!.y}px)`, willChange: "transform" }}
