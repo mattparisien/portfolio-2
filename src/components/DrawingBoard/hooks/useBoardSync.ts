@@ -29,8 +29,9 @@ export function useBoardSync({ broadcast, fabricRef }: UseBoardSyncOptions = {})
     // Derive zIndex from the object's actual canvas stack position so it always
     // reflects the live order — even after bracket-key reorders or drags.
     const fc = fabricRef?.current;
-    const canvasIdx = fc
-      ? fc.getObjects().indexOf(obj as unknown as Parameters<typeof fc.getObjects>[0])
+    const objects = fc?.getObjects();
+    const canvasIdx = objects
+      ? objects.indexOf(obj as unknown as (typeof objects)[number])
       : -1;
     const zIndex = canvasIdx !== -1 ? canvasIdx : obj.zIndex;
 

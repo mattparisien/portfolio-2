@@ -910,7 +910,7 @@ export function useFabricCanvas({
         const obj = fc.getActiveObject();
         const isText = !!obj && ((obj as { type?: string }).type === "i-text" || (obj as { type?: string }).type === "textbox");
         const isGif   = !!obj && !!(obj as { giphyId?: string }).giphyId;
-        const isVideo = !!obj && !!(obj as Record<string, unknown>)._isVideo;
+        const isVideo = !!obj && !!(obj as unknown as Record<string, unknown>)._isVideo;
         const isImage = !!obj && (obj as { type?: string }).type === "image" && !isGif && !isVideo;
         const isPath  = !!obj && (obj as { type?: string }).type === "path" && !(obj as { giphyId?: string }).giphyId;
         const isLine  = !!obj && (obj as { type?: string }).type === "line";
