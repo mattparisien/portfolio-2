@@ -1,4 +1,4 @@
-import type { Tool, StrokeRecord } from "./types";
+import type { Tool, StrokeRecord, TextGradient, FabricMods } from "./types";
 
 export function getCanvasBgColor(): string {
   const el = document.createElement("div");
@@ -178,5 +178,23 @@ export function autoSimplifyPath(cmds: PathCmd[], eps = 2): PathCmd[] {
   for (let k = 1; k < kept.length; k++) out.push(buildSpanCmd(kept[k - 1], kept[k]));
   if (hasClosingZ) out.push(["Z"]);
   return out;
+}
+
+// ── Shape path constants ──────────────────────────────────────────────────
+export const STAR_PATH  = "M 50 5 L 61 35 L 95 35 L 68 57 L 79 91 L 50 70 L 21 91 L 32 57 L 5 35 L 39 35 Z";
+export const HEART_PATH = "M 50 85 C 10 60 -10 35 10 18 C 25 5 42 10 50 22 C 58 10 75 5 90 18 C 110 35 90 60 50 85 Z";
+
+// ── Fabric gradient builder ───────────────────────────────────────────────
+/** Builds a Fabric.js Gradient object from a TextGradient spec.
+ *  Requires the dynamically-imported FabricMods (specifically mods.Gradient). */
+export function buildFabricGradient(gradient: TextGradient, mods: FabricMods) {
+  const { stops, angle } = gradient;
+  const { x1, y1, x2, y2 } = gradientCoordsFromAngle(angle);
+  return new mods.Gradient({
+    type: "linear",
+    gradientUnits: "percentage",
+    coords: { x1, y1, x2, y2 },
+    colorStops: stops.map(s => ({ offset: s.offset, color: s.color })),
+  });
 }
 
