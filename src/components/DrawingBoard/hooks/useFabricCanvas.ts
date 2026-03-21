@@ -668,72 +668,69 @@ export function useFabricCanvas({
           parsed.sort((a, b) => ((a.zIndex as number) ?? 0) - ((b.zIndex as number) ?? 0));
           parsed.forEach((o) => { if (o.type === "IText" || o.type === "i-text" || o.type === "Textbox" || o.type === "textbox") o.editable = false; });
 
-          // Separate GIFs and videos (both require async re-attach) from regular objects.
-          const regularParsed = parsed.filter(o => !(o.giphyId && o._gifUrl) && !o._isVideo);
-          const gifParsed     = parsed.filter(o =>   o.giphyId && o._gifUrl);
-          const videoParsed   = parsed.filter(o =>   o._isVideo && o._videoUrl);
+          // Videos need special handling (no enlivenObjects — would try to load src:"data:,").
+          // ALL other objects (regular + GIFs) are enlivened together in one sorted pass so
+          // their zIndex order is honoured. Splitting them into separate groups then adding
+          // sequentially would always put GIFs on top regardless of their zIndex.
+          const nonVideoParsed = parsed.filter(o => !o._isVideo);
+          const videoParsed    = parsed.filter(o =>  o._isVideo && o._videoUrl);
 
-          // Enliven and add regular objects in batches of 10 for progressive rendering
-          const BATCH = 10;
-          setIsSyncing(false); // hide syncing indicator immediately — objects appear as they load
-          for (let i = 0; i < regularParsed.length; i += BATCH) {
-            const batch = regularParsed.slice(i, i + BATCH);
-            const enlivened = await util.enlivenObjects(batch);
-            (enlivened as unknown[]).forEach((obj, j) => {
-              const src = batch[j];
+          setIsSyncing(false);
+
+          if (nonVideoParsed.length > 0) {
+            const enlivened = await util.enlivenObjects(nonVideoParsed);
+            let hasGifs = false;
+            const gifDecodePromises: Promise<void>[] = [];
+
+            (enlivened as unknown[]).forEach((obj, i) => {
+              const src = nonVideoParsed[i];
               if (src.boardObjectId) (obj as Record<string, unknown>).boardObjectId = src.boardObjectId;
               if (src.zIndex !== undefined) (obj as Record<string, unknown>).zIndex = src.zIndex;
               fc.add(obj as Parameters<typeof fc.add>[0]);
+
+              if (src.giphyId && src._gifUrl) {
+                // GIF — already on canvas; replace its blank element async
+                (obj as Record<string, unknown>).giphyId = src.giphyId;
+                gifCountRef.current += 1;
+                hasGifs = true;
+
+                const gifUrl = src._gifUrl as string;
+                const promise = fetch(gifUrl)
+                  .then((r) => r.arrayBuffer())
+                  .then((buffer) => {
+                    const { spritesheet, frameWidth, frameHeight, totalFrames, delays } = decodeGif(buffer);
+                    const fabricImg = obj as unknown as {
+                      setElement: (el: HTMLCanvasElement) => void;
+                      set: (props: Record<string, unknown>) => void;
+                      dirty: boolean;
+                    };
+                    fabricImg.setElement(spritesheet);
+                    fabricImg.set({
+                      width: frameWidth,
+                      height: frameHeight,
+                      cropX: 0,
+                      cropY: 0,
+                      objectCaching: false,
+                    });
+                    const o = obj as unknown as Record<string, unknown>;
+                    o._gifUrl           = gifUrl;
+                    o._gifSpritesheet   = spritesheet;
+                    o._gifFrameWidth    = frameWidth;
+                    o._gifFrameHeight   = frameHeight;
+                    o._gifTotalFrames   = totalFrames;
+                    o._gifDelays        = delays;
+                    o._gifCurrentFrame  = 0;
+                    o._gifLastFrameTime = performance.now();
+                    fabricImg.dirty     = true;
+                    fc.requestRenderAll();
+                  })
+                  .catch((e) => console.error("[GIF] reload failed:", e));
+                gifDecodePromises.push(promise);
+              }
             });
+
             fc.requestRenderAll();
-          }
-
-          // GIF objects — re-fetch and re-decode each one
-          const gifRestorePromises: Promise<void>[] = [];
-          if (gifParsed.length > 0) {
-            const enlivenedGifs = await util.enlivenObjects(gifParsed);
-            (enlivenedGifs as unknown[]).forEach((obj, i) => {
-              const src = gifParsed[i];
-              if (src.boardObjectId) (obj as Record<string, unknown>).boardObjectId = src.boardObjectId;
-              if (src.zIndex !== undefined) (obj as Record<string, unknown>).zIndex = src.zIndex;
-              (obj as Record<string, unknown>).giphyId = src.giphyId;
-              fc.add(obj as Parameters<typeof fc.add>[0]);
-              gifCountRef.current += 1;
-
-              const gifUrl = src._gifUrl as string;
-              const promise = fetch(gifUrl)
-                .then((r) => r.arrayBuffer())
-                .then((buffer) => {
-                  const { spritesheet, frameWidth, frameHeight, totalFrames, delays } = decodeGif(buffer);
-                  const fabricImg = obj as unknown as {
-                    setElement: (el: HTMLCanvasElement) => void;
-                    set: (props: Record<string, unknown>) => void;
-                    dirty: boolean;
-                  };
-                  fabricImg.setElement(spritesheet);
-                  fabricImg.set({
-                    width: frameWidth,
-                    height: frameHeight,
-                    cropX: 0,
-                    cropY: 0,
-                    objectCaching: false,
-                  });
-                  const o = obj as unknown as Record<string, unknown>;
-                  o._gifUrl           = gifUrl;
-                  o._gifSpritesheet   = spritesheet;
-                  o._gifFrameWidth    = frameWidth;
-                  o._gifFrameHeight   = frameHeight;
-                  o._gifTotalFrames   = totalFrames;
-                  o._gifDelays        = delays;
-                  o._gifCurrentFrame  = 0;
-                  o._gifLastFrameTime = performance.now();
-                  fabricImg.dirty     = true;
-                  fc.requestRenderAll();
-                })
-                .catch((e) => console.error("[GIF] reload failed:", e));
-              gifRestorePromises.push(promise);
-            });
-            Promise.allSettled(gifRestorePromises).then(() => startGifLoop());
+            if (hasGifs) Promise.allSettled(gifDecodePromises).then(() => startGifLoop());
           }
 
           // Video objects — build FabricImage directly from a <video> element.
