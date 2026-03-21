@@ -528,34 +528,9 @@ export function useFabricCanvas({
     window.addEventListener("resize", handleResize);
     window.addEventListener("keydown", handleKeyDown);
 
-    // ── Touch pan ─────────────────────────────────────────────────────────
-    let lastTouchMid: { x: number; y: number } | null = null;
-
-    const onTouchStart = (e: TouchEvent) => {
-      if (e.touches.length >= 2) {
-        e.preventDefault();
-        lastTouchMid = {
-          x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
-          y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
-        };
-      }
-    };
-    const onTouchMove = (e: TouchEvent) => {
-      if (e.touches.length < 2 || !lastTouchMid) return;
-      e.preventDefault();
-      const fc = fabricRef.current; const mods = modsRef.current;
-      if (!fc || !mods) return;
-      const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-      const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-      fc.relativePan(new mods.Point(cx - lastTouchMid.x, cy - lastTouchMid.y));
-      setVpt(fc.viewportTransform as number[]);
-      lastTouchMid = { x: cx, y: cy };
-    };
-    const onTouchEnd = () => { lastTouchMid = null; };
-
-    canvasEl.addEventListener("touchstart", onTouchStart, { passive: false });
-    canvasEl.addEventListener("touchmove",  onTouchMove,  { passive: false });
-    canvasEl.addEventListener("touchend",   onTouchEnd);
+    // Touch handlers are set up on upperCanvasEl inside the Fabric init callback
+    // so they target the correct event-receiving element (not the lower canvas).
+    let touchCleanup: (() => void) | null = null;
 
     // ── Fabric async init ─────────────────────────────────────────────────
     import("fabric").then(async ({ Canvas, PencilBrush, IText, Textbox, Point, Rect, Circle, Triangle, Path, Line, FabricImage, ActiveSelection, util, Gradient, Shadow, Pattern, FabricObject, Control }) => {
@@ -646,8 +621,8 @@ export function useFabricCanvas({
       // CSS `cursor: none !important` set by .board-no-cursor.
       // Control-handle cursors (resize variants, grab) use setProperty
       // with 'important'; all other cursors stay hidden (custom SVG cursor takes over).
+      const upperEl = (fc as unknown as { upperCanvasEl: HTMLElement }).upperCanvasEl;
       {
-        const upperEl = (fc as unknown as { upperCanvasEl: HTMLElement }).upperCanvasEl;
         fc.setCursor = (value: string) => {
           const isPencil = toolRef.current === "pencil"; // pen (brush) shows native crosshair
           const show = value.includes("resize") || value.startsWith("url(") || value === "grabbing" || value === "not-allowed" || value === "alias"
@@ -655,6 +630,80 @@ export function useFabricCanvas({
             || value === "text";
           upperEl.style.setProperty("cursor", show ? value : "none", "important");
           setIsOverHandle?.(show);
+        };
+      }
+
+      // ── Touch pan / tap (registered on upperCanvasEl — the real event target) ──
+      // On touch devices a 1-finger drag pans the canvas instead of drawing a
+      // rubber-band marquee selection.  A 1-finger tap still selects objects.
+      // 2-finger drag always pans regardless of device type.
+      {
+        const isTouchDevice = navigator.maxTouchPoints > 0;
+        let lastMid: { x: number; y: number } | null = null;
+        let panStart: { x: number; y: number } | null = null;
+        let panMoved = false;
+
+        const onTouchStart = (e: TouchEvent) => {
+          if (e.touches.length >= 2) {
+            e.preventDefault();
+            lastMid = {
+              x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+              y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+            };
+            panStart = null;
+          } else if (isTouchDevice && e.touches.length === 1) {
+            // Take full ownership of single-finger — prevents Fabric rubber-band marquee
+            e.preventDefault();
+            panStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            panMoved = false;
+          }
+        };
+
+        const onTouchMove = (e: TouchEvent) => {
+          if (e.touches.length >= 2 && lastMid) {
+            e.preventDefault();
+            const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+            const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            fc.relativePan(new Point(cx - lastMid.x, cy - lastMid.y));
+            setVpt(fc.viewportTransform as number[]);
+            lastMid = { x: cx, y: cy };
+          } else if (isTouchDevice && e.touches.length === 1 && panStart) {
+            e.preventDefault();
+            const tx = e.touches[0].clientX;
+            const ty = e.touches[0].clientY;
+            const dx = tx - panStart.x;
+            const dy = ty - panStart.y;
+            if (!panMoved && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) panMoved = true;
+            if (panMoved) {
+              fc.relativePan(new Point(dx, dy));
+              setVpt(fc.viewportTransform as number[]);
+            }
+            panStart = { x: tx, y: ty };
+          }
+        };
+
+        const onTouchEnd = (e: TouchEvent) => {
+          // Single-finger tap: fire synthetic pointer events so Fabric selects the object
+          if (isTouchDevice && e.changedTouches.length === 1 && panStart && !panMoved) {
+            const t = e.changedTouches[0];
+            const opts = { clientX: t.clientX, clientY: t.clientY, bubbles: true, cancelable: true, pointerId: 1, isPrimary: true, button: 0 } as const;
+            upperEl.dispatchEvent(new PointerEvent("pointerdown", opts));
+            upperEl.dispatchEvent(new PointerEvent("pointerup",   opts));
+            upperEl.dispatchEvent(new MouseEvent("click", opts));
+          }
+          lastMid   = null;
+          panStart  = null;
+          panMoved  = false;
+        };
+
+        upperEl.addEventListener("touchstart", onTouchStart, { passive: false });
+        upperEl.addEventListener("touchmove",  onTouchMove,  { passive: false });
+        upperEl.addEventListener("touchend",   onTouchEnd);
+
+        touchCleanup = () => {
+          upperEl.removeEventListener("touchstart", onTouchStart);
+          upperEl.removeEventListener("touchmove",  onTouchMove);
+          upperEl.removeEventListener("touchend",   onTouchEnd);
         };
       }
 
@@ -1261,9 +1310,7 @@ export function useFabricCanvas({
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("mousemove", trackMouse);
       window.removeEventListener("keydown", handleKeyDown);
-      canvasEl.removeEventListener("touchstart", onTouchStart);
-      canvasEl.removeEventListener("touchmove",  onTouchMove);
-      canvasEl.removeEventListener("touchend",   onTouchEnd);
+      touchCleanup?.();
       stopGifLoop();
       // Store the dispose promise so the next mount awaits it before re-init.
       disposePromiseRef.current = fabricRef.current?.dispose() ?? Promise.resolve();
