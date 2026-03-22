@@ -54,6 +54,7 @@ export function useTouchHandling({
     const onTouchStart = (e: TouchEvent) => {
       if (e.touches.length >= 2) {
         e.preventDefault();
+        e.stopImmediatePropagation();
         lastMid = {
           x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
           y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
@@ -61,10 +62,43 @@ export function useTouchHandling({
         lastPinchDist = pinchDist(e.touches[0], e.touches[1]);
         tapStart = null;
       } else if (isTouchDevice && e.touches.length === 1) {
+        // Always block the touchstart from reaching Fabric. For double-tap we
+        // manually dispatch MouseEvents below (Fabric listens to mousedown, not
+        // pointer events, since enablePointerEvents is false).
         e.preventDefault();
+        e.stopImmediatePropagation();
         const t = e.touches[0];
         tapStart = { x: t.clientX, y: t.clientY };
         tapMoved = false;
+
+        const now = Date.now();
+        const isDoubleTap =
+          now - lastTapTime < DOUBLE_TAP_MS &&
+          lastTapPos !== null &&
+          Math.abs(t.clientX - lastTapPos.x) < DOUBLE_TAP_SLOP &&
+          Math.abs(t.clientY - lastTapPos.y) < DOUBLE_TAP_SLOP;
+
+        if (isDoubleTap) {
+          // Fire mouse events so Fabric selects the object
+          upperEl.dispatchEvent(new MouseEvent("mousedown", {
+            clientX: t.clientX, clientY: t.clientY,
+            bubbles: true, cancelable: true, button: 0,
+          }));
+          upperEl.dispatchEvent(new MouseEvent("mouseup", {
+            clientX: t.clientX, clientY: t.clientY,
+            bubbles: true, cancelable: true, button: 0,
+          }));
+          upperEl.dispatchEvent(new MouseEvent("click", {
+            clientX: t.clientX, clientY: t.clientY,
+            bubbles: true, cancelable: true, button: 0,
+          }));
+          lastTapTime = 0;
+          lastTapPos  = null;
+          tapStart    = null;
+        } else {
+          lastTapTime = now;
+          lastTapPos  = { x: t.clientX, y: t.clientY };
+        }
       }
     };
 
@@ -108,37 +142,6 @@ export function useTouchHandling({
     };
 
     const onTouchEnd = (e: TouchEvent) => {
-      if (isTouchDevice && e.changedTouches.length === 1 && tapStart && !tapMoved) {
-        const t = e.changedTouches[0];
-        const now = Date.now();
-        const isDoubleTap =
-          now - lastTapTime < DOUBLE_TAP_MS &&
-          lastTapPos !== null &&
-          Math.abs(t.clientX - lastTapPos.x) < DOUBLE_TAP_SLOP &&
-          Math.abs(t.clientY - lastTapPos.y) < DOUBLE_TAP_SLOP;
-
-        if (isDoubleTap) {
-          // Double-tap: select the object under the finger
-          upperEl.dispatchEvent(new PointerEvent("pointerdown", {
-            clientX: t.clientX, clientY: t.clientY,
-            bubbles: true, cancelable: true, pointerId: 1, isPrimary: true, button: 0,
-          }));
-          upperEl.dispatchEvent(new PointerEvent("pointerup", {
-            clientX: t.clientX, clientY: t.clientY,
-            bubbles: true, cancelable: true, pointerId: 1, isPrimary: true, button: 0,
-          }));
-          upperEl.dispatchEvent(new MouseEvent("click", {
-            clientX: t.clientX, clientY: t.clientY,
-            bubbles: true, cancelable: true, button: 0,
-          }));
-          lastTapTime = 0;
-          lastTapPos  = null;
-        } else {
-          // Single tap: record position/time for double-tap detection; no selection
-          lastTapTime = now;
-          lastTapPos  = { x: t.clientX, y: t.clientY };
-        }
-      }
       if (e.touches.length === 0) {
         lastMid = null; lastPinchDist = null; tapStart = null; tapMoved = false;
       } else if (e.touches.length === 1) {
@@ -148,12 +151,12 @@ export function useTouchHandling({
       }
     };
 
-    upperEl.addEventListener("touchstart", onTouchStart, { passive: false });
+    upperEl.addEventListener("touchstart", onTouchStart, { capture: true, passive: false });
     upperEl.addEventListener("touchmove",  onTouchMove,  { passive: false });
     upperEl.addEventListener("touchend",   onTouchEnd);
 
     return () => {
-      upperEl.removeEventListener("touchstart", onTouchStart);
+      upperEl.removeEventListener("touchstart", onTouchStart, { capture: true });
       upperEl.removeEventListener("touchmove",  onTouchMove);
       upperEl.removeEventListener("touchend",   onTouchEnd);
     };
