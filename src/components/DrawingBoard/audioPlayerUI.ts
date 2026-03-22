@@ -71,22 +71,15 @@ export function drawAudioPlayer(
   opts: AudioPlayerDrawOpts,
 ): void {
   const { trackName, isPlaying, progress } = opts;
-  const dpr = (typeof window !== "undefined" ? window.devicePixelRatio : 1) || 1;
   const W = PLAYER_W;
   const H = PLAYER_H;
 
-  // Scale up the backing bitmap for the device pixel ratio on first draw.
-  if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
-    canvas.width  = Math.round(W * dpr);
-    canvas.height = Math.round(H * dpr);
-    canvas.style.width  = `${W}px`;
-    canvas.style.height = `${H}px`;
-  }
+  canvas.width  = W;
+  canvas.height = H;
 
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, W, H);
 
   // ── Background ──────────────────────────────────────────────────────────

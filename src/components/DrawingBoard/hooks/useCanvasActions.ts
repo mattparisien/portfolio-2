@@ -770,6 +770,7 @@ export function useCanvasActions({
 
     const audio = document.createElement("audio");
     audio.src = url;
+    audio.loop = true;
     audio.preload = "metadata";
 
     // Draw player card onto a canvas element

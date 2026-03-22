@@ -281,6 +281,7 @@ export function useCanvasLoad({
 
           const audio = document.createElement("audio");
           audio.src     = audioUrl;
+          audio.loop    = true;
           audio.preload = "metadata";
 
           const playerCanvas = document.createElement("canvas");
