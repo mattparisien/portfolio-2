@@ -4,6 +4,8 @@ import 'locomotive-scroll/dist/locomotive-scroll.css';
 
 import "./globals.css";
 import SmoothScroller from "@/components/SmoothScroller";
+import { UploadProgressProvider } from "@/app/contexts/UploadProgress.context";
+import { UploadProgressBar } from "@/components/UploadProgressBar";
 
 export const metadata: Metadata = {
   title: "Crumb",
@@ -26,9 +28,12 @@ export default function RootLayout({
         <meta name="robots" content="noindex, nofollow"></meta>
       </head>
       <body className="antialiased" suppressHydrationWarning>
-        <SmoothScroller>
-          {children}
-        </SmoothScroller>
+        <UploadProgressProvider>
+          <UploadProgressBar />
+          <SmoothScroller>
+            {children}
+          </SmoothScroller>
+        </UploadProgressProvider>
       </body>
     </html>
   );

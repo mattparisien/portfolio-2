@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ToolButton } from "./ToolButton";
 import { ICON_COLOR, makeIcons } from "./toolConfig";
+import { useUploadProgress } from "@/app/contexts/UploadProgress.context";
 
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"];
 const VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime", "video/ogg"];
@@ -16,31 +17,56 @@ interface UploadButtonProps {
 export function UploadButton({ onAddImage, onAddVideo, uploadSignal }: UploadButtonProps) {
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const { startUpload, updateProgress, completeUpload } = useUploadProgress();
 
   useEffect(() => {
     if (!uploadSignal) return;
     fileRef.current?.click();
   }, [uploadSignal]);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
     setUploading(true);
-    try {
-      const isVideo = VIDEO_TYPES.includes(file.type);
-      const endpoint = isVideo ? "/api/upload-video" : "/api/upload-image";
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch(endpoint, { method: "POST", body: formData });
-      const json = await res.json();
-      if (res.ok && json.url) {
-        if (isVideo) onAddVideo?.(json.url);
-        else         onAddImage?.(json.url);
+    startUpload();
+
+    const isVideo = VIDEO_TYPES.includes(file.type);
+    const endpoint = isVideo ? "/api/upload-video" : "/api/upload-image";
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", endpoint);
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        updateProgress((event.loaded / event.total) * 100);
       }
-    } finally {
+    };
+
+    xhr.onload = () => {
+      completeUpload();
       setUploading(false);
-    }
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const json = JSON.parse(xhr.responseText);
+          if (json.url) {
+            if (isVideo) onAddVideo?.(json.url);
+            else onAddImage?.(json.url);
+          }
+        } catch {
+          // ignore parse error
+        }
+      }
+    };
+
+    xhr.onerror = () => {
+      completeUpload();
+      setUploading(false);
+    };
+
+    xhr.send(formData);
   };
 
   return (
@@ -70,3 +96,4 @@ export function UploadButton({ onAddImage, onAddVideo, uploadSignal }: UploadBut
     </>
   );
 }
+

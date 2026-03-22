@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useUploadProgress } from "@/app/contexts/UploadProgress.context";
 
 interface MediaItem {
   url: string;
@@ -20,6 +21,7 @@ export default function UploadsPopover({ onSelect }: UploadsPopoverProps) {
   const [error, setError] = useState<string | null>(null);
   const [loadedUrls, setLoadedUrls] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { startUpload, updateProgress, completeUpload } = useUploadProgress();
 
   const fetchImages = useCallback(async () => {
     setLoading(true);
@@ -40,7 +42,7 @@ export default function UploadsPopover({ onSelect }: UploadsPopoverProps) {
     fetchImages();
   }, [fetchImages]);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     // Reset input so the same file can be re-selected
@@ -48,22 +50,42 @@ export default function UploadsPopover({ onSelect }: UploadsPopoverProps) {
 
     setUploading(true);
     setError(null);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch("/api/upload-image", { method: "POST", body: formData });
-      const json = await res.json();
-      if (!res.ok) {
-        setError(json.error ?? "Upload failed");
-      } else {
-        // Refresh the image list
-        await fetchImages();
+    startUpload();
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/upload-image");
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        updateProgress((event.loaded / event.total) * 100);
       }
-    } catch {
-      setError("Upload failed");
-    } finally {
+    };
+
+    xhr.onload = async () => {
+      completeUpload();
       setUploading(false);
-    }
+      if (xhr.status >= 200 && xhr.status < 300) {
+        await fetchImages();
+      } else {
+        try {
+          const json = JSON.parse(xhr.responseText);
+          setError(json.error ?? "Upload failed");
+        } catch {
+          setError("Upload failed");
+        }
+      }
+    };
+
+    xhr.onerror = () => {
+      completeUpload();
+      setUploading(false);
+      setError("Upload failed");
+    };
+
+    xhr.send(formData);
   };
 
   return (
