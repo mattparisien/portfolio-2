@@ -40,6 +40,10 @@ export function useTouchHandling({
     let lastPinchDist: number | null = null;
     let tapStart:      { x: number; y: number } | null = null;
     let tapMoved       = false;
+    let lastTapTime    = 0;
+    let lastTapPos:    { x: number; y: number } | null = null;
+    const DOUBLE_TAP_MS   = 350;
+    const DOUBLE_TAP_SLOP = 32;
 
     const pinchDist = (t1: Touch, t2: Touch) => {
       const dx = t1.clientX - t2.clientX;
@@ -106,19 +110,34 @@ export function useTouchHandling({
     const onTouchEnd = (e: TouchEvent) => {
       if (isTouchDevice && e.changedTouches.length === 1 && tapStart && !tapMoved) {
         const t = e.changedTouches[0];
-        // Fire the full down→up sequence only on a confirmed tap (not a drag)
-        upperEl.dispatchEvent(new PointerEvent("pointerdown", {
-          clientX: t.clientX, clientY: t.clientY,
-          bubbles: true, cancelable: true, pointerId: 1, isPrimary: true, button: 0,
-        }));
-        upperEl.dispatchEvent(new PointerEvent("pointerup", {
-          clientX: t.clientX, clientY: t.clientY,
-          bubbles: true, cancelable: true, pointerId: 1, isPrimary: true, button: 0,
-        }));
-        upperEl.dispatchEvent(new MouseEvent("click", {
-          clientX: t.clientX, clientY: t.clientY,
-          bubbles: true, cancelable: true, button: 0,
-        }));
+        const now = Date.now();
+        const isDoubleTap =
+          now - lastTapTime < DOUBLE_TAP_MS &&
+          lastTapPos !== null &&
+          Math.abs(t.clientX - lastTapPos.x) < DOUBLE_TAP_SLOP &&
+          Math.abs(t.clientY - lastTapPos.y) < DOUBLE_TAP_SLOP;
+
+        if (isDoubleTap) {
+          // Double-tap: select the object under the finger
+          upperEl.dispatchEvent(new PointerEvent("pointerdown", {
+            clientX: t.clientX, clientY: t.clientY,
+            bubbles: true, cancelable: true, pointerId: 1, isPrimary: true, button: 0,
+          }));
+          upperEl.dispatchEvent(new PointerEvent("pointerup", {
+            clientX: t.clientX, clientY: t.clientY,
+            bubbles: true, cancelable: true, pointerId: 1, isPrimary: true, button: 0,
+          }));
+          upperEl.dispatchEvent(new MouseEvent("click", {
+            clientX: t.clientX, clientY: t.clientY,
+            bubbles: true, cancelable: true, button: 0,
+          }));
+          lastTapTime = 0;
+          lastTapPos  = null;
+        } else {
+          // Single tap: record position/time for double-tap detection; no selection
+          lastTapTime = now;
+          lastTapPos  = { x: t.clientX, y: t.clientY };
+        }
       }
       if (e.touches.length === 0) {
         lastMid = null; lastPinchDist = null; tapStart = null; tapMoved = false;

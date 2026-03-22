@@ -97,28 +97,7 @@ export function useSelectionState({
     const fc = fabricRef.current;
     if (!fc) return;
 
-    // On touch/mobile, Fabric fires selection:created on mouse:down (touch
-    // start) — before the user lifts their finger. We buffer the selection
-    // state change and only commit it on mouse:up so the properties panel
-    // doesn't pop open mid-press.
-    let isPointerDown = false;
-    let pendingSelection = false;
-
-    const handleMouseDown = () => { isPointerDown = true; };
-    const handleMouseUp   = () => {
-      isPointerDown = false;
-      if (pendingSelection) {
-        pendingSelection = false;
-        setHasSelection(true);
-      }
-    };
-
     const handleSelectionChange = () => {
-      if (isPointerDown) {
-        // Pointer still down — defer committing the visible state until mouse:up.
-        pendingSelection = true;
-        return;
-      }
       setHasSelection(true);
       const obj = fc.getActiveObject();
 
@@ -188,16 +167,12 @@ export function useSelectionState({
       objs.forEach(obj => saveRef.current(obj));
     };
 
-    fc.on("mouse:down",              handleMouseDown);
-    fc.on("mouse:up",                handleMouseUp);
     fc.on("selection:created",       handleSelectionChange);
     fc.on("selection:updated",       handleSelectionChange);
     fc.on("text:editing:entered",    handleTextEditingEntered);
     fc.on("selection:cleared",       handleSelectionCleared);
 
     return () => {
-      fc.off("mouse:down",           handleMouseDown);
-      fc.off("mouse:up",             handleMouseUp);
       fc.off("selection:created",    handleSelectionChange);
       fc.off("selection:updated",    handleSelectionChange);
       fc.off("text:editing:entered", handleTextEditingEntered);
