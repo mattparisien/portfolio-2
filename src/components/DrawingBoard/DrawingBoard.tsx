@@ -22,6 +22,7 @@ import { usePenTool } from "./hooks/usePenTool";
 import { useDragDropUpload } from "./hooks/useDragDropUpload";
 import { useWindowWidth } from "@/app/hooks/useWindowWidth";
 import { CursorArrowIcon, PencilCursorIcon } from "./components/Icons";
+import { useCookieConsentPending } from "@/components/CookieConsent";
 import {
   RoomProvider as LiveblocksRoomProvider,
   useBroadcastEvent,
@@ -126,6 +127,8 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
   const [cursorOnScreen, setCursorOnScreen] = useState(false);
   const [isOverUI, setIsOverUI]       = useState(false);
   const [isOverHandle, setIsOverHandle] = useState(false);
+
+  const cookieConsentPending = useCookieConsentPending();
 
   const [colorPopoverSlot, setColorPopoverSlot] = useState<ColorSlot | null>(null);
   const closeColorPopover = useCallback(() => setColorPopoverSlot(null), []);
@@ -436,7 +439,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
       <RemoteCursors vpt={vpt} />
 
       {/* Local cursor — only show custom SVG for pencil (pen tool uses native crosshair) */}
-      {cursorOnScreen && !isOverUI && !isOverHandle && !isMobile && tool === "pencil" && (
+      {cursorOnScreen && !isOverUI && !isOverHandle && !isMobile && !cookieConsentPending && tool === "pencil" && (
         <div
           className="pointer-events-none fixed z-[9999]"
           style={{ left: 0, top: 0, transform: `translate(${localCursor!.x}px, ${localCursor!.y}px)`, willChange: "transform" }}
@@ -446,7 +449,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
       )}
 
       {/* Default arrow cursor for select / unhandled tools */}
-      {cursorOnScreen && !isOverUI && !isOverHandle && !isMobile && tool === "select" && (
+      {cursorOnScreen && !isOverUI && !isOverHandle && !isMobile && !cookieConsentPending && tool === "select" && (
         <div
           className="pointer-events-none fixed z-[9999]"
           style={{ left: 0, top: 0, transform: `translate(${localCursor!.x}px, ${localCursor!.y}px)`, willChange: "transform" }}

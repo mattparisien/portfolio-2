@@ -1,7 +1,6 @@
 "use client";
-import { useState, use, Suspense } from "react";
-import ConsentScreen from "@/components/ConsentScreen";
 import DrawingBoard from "@/components/DrawingBoard/DrawingBoard";
+import { Suspense, use } from "react";
 
 function BoardWithData({ promise }: { promise: Promise<{ fabricJSON: string }[]> }) {
   const initialObjects = use(promise);
@@ -9,17 +8,13 @@ function BoardWithData({ promise }: { promise: Promise<{ fabricJSON: string }[]>
 }
 
 export default function HomeClient({
-  initialEntered,
-  objectsPromise,
+    objectsPromise,
 }: {
-  initialEntered: boolean;
   objectsPromise: Promise<{ fabricJSON: string }[]>;
 }) {
-  const [entered, setEntered] = useState(initialEntered);
 
   return (
     <>
-      {!entered && <ConsentScreen onEnter={() => setEntered(true)} />}
       <Suspense
         fallback={
           // Canvas-coloured blank so the layout is stable while objects stream in

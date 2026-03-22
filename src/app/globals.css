@@ -2,6 +2,9 @@
 
 /* Figma-style flat aesthetic: disable all box shadows */
 @theme {
+
+  --font-serif: 'Rhymes', serif;
+
   --color-accent: var(--color-blue-500);
   --color-fg: var(--color-neutral-900);
   --color-bg: white;
@@ -30,6 +33,14 @@
   font-family: "Waldeck";
   src: url("/assets/fonts/Waldeck-trial-Black.otf") format("opentype");
   font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Rhymes";
+  src: url("/assets/fonts/Rhymes-Text-Regular.woff2") format("woff2");
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
 }

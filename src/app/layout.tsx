@@ -6,6 +6,7 @@ import "./globals.css";
 import SmoothScroller from "@/components/SmoothScroller";
 import { UploadProgressProvider } from "@/app/contexts/UploadProgress.context";
 import { UploadProgressBar } from "@/components/UploadProgressBar";
+import { CookieConsent } from "@/components/CookieConsent";
 
 export const metadata: Metadata = {
   title: "Crumb",
@@ -30,6 +31,7 @@ export default function RootLayout({
       <body className="antialiased" suppressHydrationWarning>
         <UploadProgressProvider>
           <UploadProgressBar />
+          <CookieConsent />
           <SmoothScroller>
             {children}
           </SmoothScroller>
