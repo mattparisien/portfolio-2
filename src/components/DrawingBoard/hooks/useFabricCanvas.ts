@@ -28,6 +28,7 @@ interface UseFabricCanvasOptions {
   stopGifLoop:  () => void;
   gifCountRef:  React.MutableRefObject<number>;
   videoCountRef?: React.MutableRefObject<number>;
+  audioCountRef?: React.MutableRefObject<number>;
   setTool:      (t: Tool) => void;
   setZoom:      (z: number) => void;
   setVpt:       (vpt: number[]) => void;
@@ -58,7 +59,7 @@ interface UseFabricCanvasOptions {
 export function useFabricCanvas(opts: UseFabricCanvasOptions) {
   const {
     canvasElRef, fabricRef, colorRef, brushSizeRef, toolRef,
-    saveObject, startGifLoop, stopGifLoop, gifCountRef, videoCountRef,
+    saveObject, startGifLoop, stopGifLoop, gifCountRef, videoCountRef, audioCountRef,
     setTool, setZoom, setVpt,
     setHasSelection, setSelectedIsText, setSelectedIsGif,
     setSelectedIsImage, setImageBlendMode,
@@ -104,7 +105,7 @@ export function useFabricCanvas(opts: UseFabricCanvasOptions) {
 
   useCanvasLoad({
     fabricRef, modsRef, isReady, initialObjects,
-    setIsSyncing, startGifLoop, gifCountRef, videoCountRef,
+    setIsSyncing, startGifLoop, gifCountRef, videoCountRef, audioCountRef,
   });
 
   useSelectionState({

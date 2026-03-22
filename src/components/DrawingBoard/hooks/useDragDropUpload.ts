@@ -16,13 +16,24 @@ const VIDEO_TYPES = new Set([
   "video/quicktime",
   "video/ogg",
 ]);
+const AUDIO_TYPES = new Set([
+  "audio/mpeg",
+  "audio/mp4",
+  "audio/wav",
+  "audio/ogg",
+  "audio/aac",
+  "audio/x-m4a",
+  "audio/flac",
+]);
 
 export function useDragDropUpload({
   onAddImage,
   onAddVideo,
+  onAddAudio,
 }: {
   onAddImage: (url: string, dropPoint?: { x: number; y: number }) => void;
   onAddVideo: (url: string, dropPoint?: { x: number; y: number }) => void;
+  onAddAudio: (url: string, dropPoint?: { x: number; y: number }, trackName?: string) => void;
 }) {
   const [isDragOver, setIsDragOver] = useState(false);
   const dragCounterRef = useRef(0);
@@ -31,9 +42,10 @@ export function useDragDropUpload({
   const uploadFile = useCallback(
     (file: File, dropPoint: { x: number; y: number }) => {
       const isVideo = VIDEO_TYPES.has(file.type);
-      if (!isVideo && !IMAGE_TYPES.has(file.type)) return;
+      const isAudio = AUDIO_TYPES.has(file.type);
+      if (!isVideo && !isAudio && !IMAGE_TYPES.has(file.type)) return;
 
-      const endpoint = isVideo ? "/api/upload-video" : "/api/upload-image";
+      const endpoint = isAudio ? "/api/upload-audio" : isVideo ? "/api/upload-video" : "/api/upload-image";
       const formData = new FormData();
       formData.append("file", file);
 
@@ -54,7 +66,8 @@ export function useDragDropUpload({
           try {
             const json = JSON.parse(xhr.responseText);
             if (json.url) {
-              if (isVideo) onAddVideo(json.url, dropPoint);
+              if (isAudio) onAddAudio(json.url, dropPoint, json.trackName);
+              else if (isVideo) onAddVideo(json.url, dropPoint);
               else onAddImage(json.url, dropPoint);
             }
           } catch {
@@ -67,7 +80,7 @@ export function useDragDropUpload({
 
       xhr.send(formData);
     },
-    [startUpload, updateProgress, completeUpload, onAddImage, onAddVideo],
+    [startUpload, updateProgress, completeUpload, onAddImage, onAddVideo, onAddAudio],
   );
 
   const onDragEnter = useCallback((e: React.DragEvent) => {

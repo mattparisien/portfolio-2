@@ -11,6 +11,7 @@ import {
   MdAutoFixHigh,
 } from "react-icons/md";
 import OverlaySurface from "@/components/OverlaySurface";
+import { FontFamilyPicker } from "./FontFamilyPicker";
 
 const FONT_FAMILIES = [
   "sans-serif",
@@ -23,6 +24,9 @@ const FONT_FAMILIES = [
   "Trebuchet MS",
   "Comic Sans MS",
   "Palatino",
+  "Dear Camille",
+  "Whimsical Romance Sans",
+  "Whimsical Romance Script",
 ];
 
 const FONT_SIZES = [10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72, 96, 128];
@@ -315,19 +319,14 @@ export default function PropertiesPanel({
           <div className="px-4 pt-3 pb-3">
             <SectionLabel>Font</SectionLabel>
 
-            <select
-              value={fontFamily}
-              onChange={(e) => onApplyText({ fontFamily: e.target.value })}
-              title="Font family"
-              className="w-full text-[12px] rounded-lg px-2.5 py-1.5 bg-black/[0.04] text-gray-700 font-medium border-0 outline-none cursor-pointer mb-2.5"
-              style={{ fontFamily }}
-            >
-              {FONT_FAMILIES.map((f) => (
-                <option key={f} value={f} style={{ fontFamily: f }}>
-                  {f}
-                </option>
-              ))}
-            </select>
+            <div className="rounded-lg bg-black/[0.04] mb-2.5">
+              <FontFamilyPicker
+                value={fontFamily}
+                fonts={FONT_FAMILIES}
+                onChange={(f) => onApplyText({ fontFamily: f })}
+                variant="full"
+              />
+            </div>
 
             {/* Font size stepper */}
             <div className="flex items-center gap-1.5">

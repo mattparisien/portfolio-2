@@ -7,14 +7,16 @@ import { useUploadProgress } from "@/app/contexts/UploadProgress.context";
 
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"];
 const VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime", "video/ogg"];
+const AUDIO_TYPES = ["audio/mpeg", "audio/mp4", "audio/wav", "audio/ogg", "audio/aac", "audio/x-m4a", "audio/flac"];
 
 interface UploadButtonProps {
   onAddImage?: (url: string) => void;
   onAddVideo?: (url: string) => void;
+  onAddAudio?: (url: string, trackName?: string) => void;
   uploadSignal?: number;
 }
 
-export function UploadButton({ onAddImage, onAddVideo, uploadSignal }: UploadButtonProps) {
+export function UploadButton({ onAddImage, onAddVideo, onAddAudio, uploadSignal }: UploadButtonProps) {
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const { startUpload, updateProgress, completeUpload } = useUploadProgress();
@@ -32,7 +34,8 @@ export function UploadButton({ onAddImage, onAddVideo, uploadSignal }: UploadBut
     startUpload();
 
     const isVideo = VIDEO_TYPES.includes(file.type);
-    const endpoint = isVideo ? "/api/upload-video" : "/api/upload-image";
+    const isAudio = AUDIO_TYPES.includes(file.type);
+    const endpoint = isAudio ? "/api/upload-audio" : isVideo ? "/api/upload-video" : "/api/upload-image";
     const formData = new FormData();
     formData.append("file", file);
 
@@ -52,7 +55,8 @@ export function UploadButton({ onAddImage, onAddVideo, uploadSignal }: UploadBut
         try {
           const json = JSON.parse(xhr.responseText);
           if (json.url) {
-            if (isVideo) onAddVideo?.(json.url);
+            if (isAudio) onAddAudio?.(json.url, json.trackName);
+            else if (isVideo) onAddVideo?.(json.url);
             else onAddImage?.(json.url);
           }
         } catch {
@@ -89,7 +93,7 @@ export function UploadButton({ onAddImage, onAddVideo, uploadSignal }: UploadBut
       <input
         ref={fileRef}
         type="file"
-        accept={[...IMAGE_TYPES, ...VIDEO_TYPES].join(",")}
+        accept={[...IMAGE_TYPES, ...VIDEO_TYPES, ...AUDIO_TYPES].join(",")}
         className="hidden"
         onChange={handleFileChange}
       />

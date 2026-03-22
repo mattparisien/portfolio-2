@@ -61,6 +61,13 @@ export function useFabricInit({
       const mods = modsRef.current;
       if (!fc || !mods) return;
 
+      // Always allow scrolling inside any explicitly marked scroll container (e.g. popovers/dropdowns)
+      let t: HTMLElement | null = e.target as HTMLElement | null;
+      while (t && t !== document.documentElement) {
+        if (t.dataset?.scrollContainer) return;
+        t = t.parentElement;
+      }
+
       // Allow popovers / scroll containers inside the UI overlay to scroll normally.
       const canvasWrapper = canvasElRef.current?.parentElement;
       if (canvasWrapper && !canvasWrapper.contains(e.target as Node)) {

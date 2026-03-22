@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import type { Canvas } from "fabric";
 import type { FabricMods } from "../types";
 import { decodeGif } from "../gifDecoder";
+import { drawAudioPlayer, PLAYER_W, PLAYER_H } from "../audioPlayerUI";
 
 interface UseCanvasLoadOptions {
   fabricRef:    React.MutableRefObject<Canvas | null>;
@@ -12,6 +13,72 @@ interface UseCanvasLoadOptions {
   startGifLoop: () => void;
   gifCountRef:  React.MutableRefObject<number>;
   videoCountRef?: React.MutableRefObject<number>;
+  audioCountRef?: React.MutableRefObject<number>;
+}
+
+/** Registers Fabric click handlers for audio player objects (idempotent). */
+function registerAudioHandlers(
+  fc: Canvas,
+  audioCountRef?: React.MutableRefObject<number>,
+) {
+  const fca = fc as unknown as Record<string, unknown>;
+  if (fca._audioHandlersRegistered) return;
+  fca._audioHandlersRegistered = true;
+
+  let downPos: { x: number; y: number } | null = null;
+
+  fc.on("mouse:down", (opt) => {
+    const o = opt.target as unknown as Record<string, unknown>;
+    const e = opt.e as MouseEvent;
+    if (o?._isAudio) downPos = { x: e.clientX, y: e.clientY };
+  });
+
+  fc.on("mouse:up", (opt) => {
+    if (!downPos) return;
+    const o = opt.target as unknown as Record<string, unknown>;
+    if (!o?._isAudio) { downPos = null; return; }
+    const e = opt.e as MouseEvent;
+    const dx = e.clientX - downPos.x;
+    const dy = e.clientY - downPos.y;
+    downPos = null;
+    if (Math.sqrt(dx * dx + dy * dy) > 5) return;
+
+    const br = (opt.target as import("fabric").FabricObject).getBoundingRect();
+    const relPct = (e.clientX - br.left) / br.width;
+    const audio = o._audioEl as HTMLAudioElement;
+    const playerCanvas = o._playerCanvas as HTMLCanvasElement;
+
+    if (relPct < 0.22) {
+      audio.currentTime = 0;
+      drawAudioPlayer(playerCanvas, {
+        trackName: o._trackName as string,
+        isPlaying: (o._isPlaying as boolean) ?? false,
+        progress: 0,
+      });
+    } else if (relPct > 0.78) {
+      if (o._isPlaying) {
+        audio.pause();
+        o._isPlaying = false;
+      } else {
+        audio.play().catch(() => {});
+        o._isPlaying = true;
+      }
+      drawAudioPlayer(playerCanvas, {
+        trackName: o._trackName as string,
+        isPlaying: o._isPlaying as boolean,
+        progress: audio.duration > 0 ? audio.currentTime / audio.duration : 0,
+      });
+    }
+    fc.requestRenderAll();
+  });
+
+  fc.on("object:removed", (opt) => {
+    const o = opt.target as unknown as Record<string, unknown>;
+    if (o?._isAudio && o._audioEl) {
+      (o._audioEl as HTMLAudioElement).pause();
+      if (audioCountRef) audioCountRef.current = Math.max(0, audioCountRef.current - 1);
+    }
+  });
 }
 
 /**
@@ -27,6 +94,7 @@ export function useCanvasLoad({
   startGifLoop,
   gifCountRef,
   videoCountRef,
+  audioCountRef,
 }: UseCanvasLoadOptions): void {
   // Keep a stable ref to initialObjects so the effect only fires on isReady change.
   const objectsRef = useRef(initialObjects);
@@ -55,8 +123,9 @@ export function useCanvasLoad({
         }
       });
 
-      const nonVideoParsed = parsed.filter(o => !o._isVideo);
+      const nonVideoParsed = parsed.filter(o => !o._isVideo && !o._isAudio);
       const videoParsed    = parsed.filter(o =>  o._isVideo && o._videoUrl);
+      const audioParsed    = parsed.filter(o =>  o._isAudio && o._audioUrl);
 
       setIsSyncing(false);
 
@@ -195,6 +264,79 @@ export function useCanvasLoad({
               }
             });
 
+          startGifLoop();
+          fc.requestRenderAll();
+        });
+      }
+      // ── Restore audio player objects ──────────────────────────────
+      if (audioParsed.length > 0) {
+        const { FabricImage } = mods;
+        registerAudioHandlers(fc, audioCountRef);
+
+        const audioRestorePromises = audioParsed.map(async (src) => {
+          const audioUrl  = src._audioUrl as string;
+          const trackName = (src._trackName as string) ??
+            decodeURIComponent(audioUrl.split("/").pop() ?? "Audio")
+              .replace(/\.(mp3|m4a|wav|ogg|aac|flac)$/i, "");
+
+          const audio = document.createElement("audio");
+          audio.src     = audioUrl;
+          audio.preload = "metadata";
+
+          const playerCanvas = document.createElement("canvas");
+          playerCanvas.width  = PLAYER_W;
+          playerCanvas.height = PLAYER_H;
+          drawAudioPlayer(playerCanvas, { trackName, isPlaying: false, progress: 0 });
+
+          const imgObj = new FabricImage(playerCanvas as unknown as HTMLImageElement, {
+            left:          (src.left   as number) ?? 0,
+            top:           (src.top    as number) ?? 0,
+            scaleX:        (src.scaleX as number) ?? 1,
+            scaleY:        (src.scaleY as number) ?? 1,
+            angle:         (src.angle  as number) ?? 0,
+            flipX:         (src.flipX  as boolean) ?? false,
+            flipY:         (src.flipY  as boolean) ?? false,
+            opacity:       (src.opacity as number) ?? 1,
+            originX:       (src.originX as "left" | "center" | "right") ?? "left",
+            originY:       (src.originY as "top"  | "center" | "bottom") ?? "top",
+            width:         PLAYER_W,
+            height:        PLAYER_H,
+            objectCaching: false,
+            selectable:    true,
+            hasControls:   true,
+            lockMovementX: (src.lockMovementX as boolean) ?? false,
+            lockMovementY: (src.lockMovementY as boolean) ?? false,
+            lockRotation:  (src.lockRotation  as boolean) ?? false,
+            lockScalingX:  (src.lockScalingX  as boolean) ?? false,
+            lockScalingY:  (src.lockScalingY  as boolean) ?? false,
+          });
+
+          const o = imgObj as unknown as Record<string, unknown>;
+          if (src.boardObjectId) o.boardObjectId = src.boardObjectId;
+          if (src.zIndex !== undefined) o.zIndex  = src.zIndex;
+          o._isAudio      = true;
+          o._audioUrl     = audioUrl;
+          o._audioEl      = audio;
+          o._playerCanvas = playerCanvas;
+          o._trackName    = trackName;
+          o._isPlaying    = false;
+
+          const _origToObject = imgObj.toObject.bind(imgObj);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (o as Record<string, unknown>).toObject = (props?: any) => ({
+            ..._origToObject(props),
+            src:        "data:,",
+            _isAudio:   true,
+            _audioUrl:  audioUrl,
+            _trackName: trackName,
+          });
+
+          fc.add(imgObj);
+          if (audioCountRef) audioCountRef.current += 1;
+          return { imgObj, src };
+        });
+
+        Promise.allSettled(audioRestorePromises).then(() => {
           startGifLoop();
           fc.requestRenderAll();
         });

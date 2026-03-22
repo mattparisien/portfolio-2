@@ -191,7 +191,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
     updateMyPresence({ color });
   }, [self?.connectionId, updateMyPresence]);
 
-  const { gifCountRef, videoCountRef, startGifLoop, stopGifLoop } = useGifLoop(fabricRef);
+  const { gifCountRef, videoCountRef, audioCountRef, startGifLoop, stopGifLoop } = useGifLoop(fabricRef);
 
   const { saveObject } = useBoardSync({ broadcast: broadcastEvent, fabricRef });
 
@@ -206,6 +206,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
     stopGifLoop,
     gifCountRef,
     videoCountRef,
+    audioCountRef,
     setTool,
     setZoom,
     setVpt,
@@ -233,7 +234,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
     initialObjects,
   });
 
-  const { addText, addGif, addImage, addVideo, removeBg, isRemovingBg, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, reBlendModeSelected, lockSelected, zoomIn, zoomOut, zoomReset, applyTextProp, applyFillGradient, clearCanvas } =
+  const { addText, addGif, addImage, addVideo, addAudio, removeBg, isRemovingBg, recolorSelected, restrokeSelected, reweightSelected, reOpacitySelected, reBlendModeSelected, lockSelected, zoomIn, zoomOut, zoomReset, applyTextProp, applyFillGradient, clearCanvas } =
     useCanvasActions({
       fabricRef,
       modsRef,
@@ -247,6 +248,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
       stopGifLoop,
       gifCountRef,
       videoCountRef,
+      audioCountRef,
       setTool,
       setZoom,
       setVpt,
@@ -269,7 +271,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
   });
 
   const { isDragOver, onDragEnter, onDragOver, onDragLeave, onDrop } =
-    useDragDropUpload({ onAddImage: addImage, onAddVideo: addVideo });
+    useDragDropUpload({ onAddImage: addImage, onAddVideo: addVideo, onAddAudio: addAudio });
 
   const activateShapeTool = useCallback((st: ShapeType) => {
     setShapeType(st);
@@ -513,6 +515,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
         onAddGif={addGif}
         onAddImage={addImage}
         onAddVideo={addVideo}
+        onAddAudio={(url, trackName) => addAudio(url, undefined, trackName)}
         closeSignal={drawingToolsClose}
         uploadSignal={uploadSignal}
         activeShapeType={shapeType}

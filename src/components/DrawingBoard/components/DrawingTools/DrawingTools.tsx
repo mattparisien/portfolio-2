@@ -20,6 +20,7 @@ interface DrawingToolsProps {
   onAddGif: (id: string, url: string) => void;
   onAddImage?: (url: string) => void;
   onAddVideo?: (url: string) => void;
+  onAddAudio?: (url: string, trackName?: string) => void;
   /** The shape type currently active in the parent (set by keyboard shortcut) */
   activeShapeType?: ShapeType;
   /** Incremented by the parent whenever another component opens a popover */
@@ -41,6 +42,7 @@ export default function DrawingTools({
   onAddGif,
   onAddImage,
   onAddVideo,
+  onAddAudio,
   closeSignal,
   uploadSignal,
   activeShapeType,
@@ -93,7 +95,7 @@ export default function DrawingTools({
 
       <GifToolGroup onAddGif={onAddGif} {...groupProps("gif")} />
 
-      <UploadButton onAddImage={onAddImage} onAddVideo={onAddVideo} uploadSignal={uploadSignal} />
+      <UploadButton onAddImage={onAddImage} onAddVideo={onAddVideo} onAddAudio={onAddAudio} uploadSignal={uploadSignal} />
     </ToolOverlaySurface>
   )
 }

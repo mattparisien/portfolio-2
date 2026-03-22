@@ -12,6 +12,7 @@ import {
   MdFormatLineSpacing,
   MdSpaceBar,
 } from "react-icons/md";
+import { FontFamilyPicker } from "./FontFamilyPicker";
 
 const FONT_FAMILIES = [
   "sans-serif",
@@ -24,6 +25,9 @@ const FONT_FAMILIES = [
   "Trebuchet MS",
   "Comic Sans MS",
   "Palatino",
+  "Dear Camille",
+  "Whimsical Romance Sans",
+  "Whimsical Romance Script",
 ];
 
 const FONT_SIZES = [10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72, 96, 128];
@@ -226,20 +230,12 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
       </div>
 
       {/* ── Font family ── */}
-      <div className="flex items-center flex-shrink-0">
-        <select
+      <div className="flex items-center flex-shrink-0" style={{ minWidth: 100, maxWidth: 130 }}>
+        <FontFamilyPicker
           value={fontFamily}
-          onChange={(e) => onApply({ fontFamily: e.target.value })}
-          title="Font family"
-          className="text-xs rounded-lg px-2 py-1.5 bg-transparent cursor-pointer outline-none transition-colors hover:bg-black/[0.05] text-gray-700 font-medium border-0"
-          style={{ fontFamily, minWidth: 100, maxWidth: 116 }}
-        >
-          {FONT_FAMILIES.map((f) => (
-            <option key={f} value={f} style={{ fontFamily: f }}>
-              {f}
-            </option>
-          ))}
-        </select>
+          fonts={FONT_FAMILIES}
+          onChange={(f) => onApply({ fontFamily: f })}
+        />
       </div>
 
       <Divider />

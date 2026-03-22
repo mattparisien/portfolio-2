@@ -1,12 +1,14 @@
 import { useRef, useCallback } from "react";
 import type { MutableRefObject } from "react";
 import type { Canvas, FabricObject } from "fabric";
+import { drawAudioPlayer } from "../audioPlayerUI";
 
 /** Runs a requestAnimationFrame loop that keeps calling requestRenderAll()
  *  so fabric repaints animated GIF frames and video frames each tick. */
 export function useGifLoop(fabricRef: MutableRefObject<Canvas | null>) {
   const gifCountRef   = useRef(0);
   const videoCountRef = useRef(0);
+  const audioCountRef = useRef(0);
   const gifRafRef     = useRef<number | null>(null);
 
   const startGifLoop = useCallback(() => {
@@ -37,6 +39,20 @@ export function useGifLoop(fabricRef: MutableRefObject<Canvas | null>) {
             (obj as unknown as { dirty: boolean }).dirty = true;
           }
         });
+
+        // ── Redraw audio player UI each frame ─────────────────────────────
+        fc.getObjects().forEach((obj) => {
+          const o = obj as unknown as Record<string, unknown>;
+          if (!o._isAudio || !o._playerCanvas || !o._audioEl) return;
+          const audio = o._audioEl as HTMLAudioElement;
+          const progress = audio.duration > 0 ? audio.currentTime / audio.duration : 0;
+          drawAudioPlayer(o._playerCanvas as HTMLCanvasElement, {
+            trackName:  o._trackName  as string ?? "",
+            isPlaying:  o._isPlaying  as boolean ?? false,
+            progress,
+          });
+          (obj as unknown as { dirty: boolean }).dirty = true;
+        });
         fc.requestRenderAll();
       }
       gifRafRef.current = requestAnimationFrame(loop);
@@ -46,13 +62,13 @@ export function useGifLoop(fabricRef: MutableRefObject<Canvas | null>) {
   }, [fabricRef]);
 
   const stopGifLoop = useCallback(() => {
-    // Only cancel the loop when both GIFs and videos are gone
-    if (gifCountRef.current > 0 || videoCountRef.current > 0) return;
+    // Only cancel the loop when GIFs, videos, and audio are all gone
+    if (gifCountRef.current > 0 || videoCountRef.current > 0 || audioCountRef.current > 0) return;
     if (gifRafRef.current !== null) {
       cancelAnimationFrame(gifRafRef.current);
       gifRafRef.current = null;
     }
   }, []);
 
-  return { gifCountRef, videoCountRef, startGifLoop, stopGifLoop };
+  return { gifCountRef, videoCountRef, audioCountRef, startGifLoop, stopGifLoop };
 }

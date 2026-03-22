@@ -69,6 +69,30 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Dear Camille';
+  src: url('/assets/fonts/DearCamille Vector.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Whimsical Romance Sans';
+  src: url('/assets/fonts/WhimsicalRomanceSans-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Whimsical Romance Script';
+  src: url('/assets/fonts/WhimsicalRomanceScript-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 
 :root {
   --background: #ffffff;

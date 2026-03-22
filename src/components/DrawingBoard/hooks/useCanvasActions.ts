@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from "react";
+import { useEffect, useCallback, useState, useRef } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { Canvas, IText } from "fabric";
 import type { Tool, ShapeType, FabricMods, TextProps, TextGradient } from "../types";
@@ -7,6 +7,7 @@ import type { RoomEvent } from "@/liveblocks.config";
 import { BOARD_ID } from "../constants";
 import { getCanvasBgColor, gradientCoordsFromAngle } from "../canvasUtils";
 import { decodeGif } from "../gifDecoder";
+import { drawAudioPlayer, PLAYER_W, PLAYER_H } from "../audioPlayerUI";
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 3;
@@ -38,6 +39,7 @@ interface UseCanvasActionsOptions {
   stopGifLoop: () => void;
   gifCountRef: React.MutableRefObject<number>;
   videoCountRef?: React.MutableRefObject<number>;
+  audioCountRef?: React.MutableRefObject<number>;
   setTool: (t: Tool) => void;
   setZoom: (z: number) => void;
   setVpt: (vpt: number[]) => void;
@@ -61,6 +63,7 @@ export function useCanvasActions({
   stopGifLoop,
   gifCountRef,
   videoCountRef,
+  audioCountRef,
   setTool,
   setZoom,
   setVpt,
@@ -691,5 +694,133 @@ export function useCanvasActions({
     fc.requestRenderAll();
   }, [fabricRef, saveObject]);
 
-  return { addText, addShape, addGif, addImage, addVideo, removeBg, isRemovingBg, recolorSelected, applyFillGradient, restrokeSelected, reweightSelected, reOpacitySelected, reBlendModeSelected, lockSelected, zoomIn, zoomOut, zoomReset, clearCanvas, applyTextProp };
+  // ── Add Audio (R2 URL → canvas-drawn player card) ─────────────────────
+  const addAudio = useCallback(async (url: string, dropPoint?: { x: number; y: number }, trackName?: string) => {
+    const fc = fabricRef.current;
+    const mods = modsRef.current;
+    if (!fc || !mods) return;
+
+    // Register Fabric mouse handlers the first time any audio object is added.
+    // Uses a canvas property as the guard so useCanvasLoad and addAudio share state.
+    const fca = fc as unknown as Record<string, unknown>;
+    if (!fca._audioHandlersRegistered) {
+      fca._audioHandlersRegistered = true;
+
+      let downPos: { x: number; y: number } | null = null;
+
+      fc.on("mouse:down", (opt) => {
+        const o = opt.target as unknown as Record<string, unknown>;
+        if (o?._isAudio) downPos = { x: opt.e.clientX, y: opt.e.clientY };
+      });
+
+      fc.on("mouse:up", (opt) => {
+        if (!downPos) return;
+        const o = opt.target as unknown as Record<string, unknown>;
+        if (!o?._isAudio) { downPos = null; return; }
+
+        const dx = opt.e.clientX - downPos.x;
+        const dy = opt.e.clientY - downPos.y;
+        downPos = null;
+        if (Math.sqrt(dx * dx + dy * dy) > 5) return; // was a drag
+
+        const br = (opt.target as import("fabric").FabricObject).getBoundingRect();
+        const relPct = (opt.e.clientX - br.left) / br.width;
+        const audio = o._audioEl as HTMLAudioElement;
+        const playerCanvas = o._playerCanvas as HTMLCanvasElement;
+
+        if (relPct < 0.22) {
+          // Rewind
+          audio.currentTime = 0;
+          drawAudioPlayer(playerCanvas, {
+            trackName: o._trackName as string,
+            isPlaying: o._isPlaying as boolean ?? false,
+            progress: 0,
+          });
+        } else if (relPct > 0.78) {
+          // Play / pause
+          if (o._isPlaying) {
+            audio.pause();
+            o._isPlaying = false;
+          } else {
+            audio.play().catch(() => {});
+            o._isPlaying = true;
+          }
+          drawAudioPlayer(playerCanvas, {
+            trackName: o._trackName as string,
+            isPlaying: o._isPlaying as boolean,
+            progress: audio.duration > 0 ? audio.currentTime / audio.duration : 0,
+          });
+        }
+
+        fc.requestRenderAll();
+      });
+
+      // Pause audio when object is removed from canvas
+      fc.on("object:removed", (opt) => {
+        const o = opt.target as unknown as Record<string, unknown>;
+        if (o?._isAudio && o._audioEl) {
+          (o._audioEl as HTMLAudioElement).pause();
+          if (audioCountRef) audioCountRef.current = Math.max(0, audioCountRef.current - 1);
+        }
+      });
+    }
+
+    const resolvedTrackName = trackName ??
+      decodeURIComponent(url.split("/").pop() ?? "Audio").replace(/\.(mp3|m4a|wav|ogg|aac|flac)$/i, "");
+
+    const audio = document.createElement("audio");
+    audio.src = url;
+    audio.preload = "metadata";
+
+    // Draw player card onto a canvas element
+    const playerCanvas = document.createElement("canvas");
+    playerCanvas.width  = PLAYER_W;
+    playerCanvas.height = PLAYER_H;
+    drawAudioPlayer(playerCanvas, { trackName: resolvedTrackName, isPlaying: false, progress: 0 });
+
+    const vpt = fc.viewportTransform as number[];
+    const cx = dropPoint ? (dropPoint.x - vpt[4]) / vpt[0] : (window.innerWidth  / 2 - vpt[4]) / vpt[0];
+    const cy = dropPoint ? (dropPoint.y - vpt[5]) / vpt[3] : (window.innerHeight / 2 - vpt[5]) / vpt[3];
+
+    const imgObj = new mods.FabricImage(playerCanvas as unknown as HTMLImageElement, {
+      left:          cx,
+      top:           cy,
+      originX:       "center",
+      originY:       "center",
+      width:         PLAYER_W,
+      height:        PLAYER_H,
+      objectCaching: false,
+      selectable:    true,
+      hasControls:   true,
+    });
+
+    const o = imgObj as unknown as Record<string, unknown>;
+    o._isAudio     = true;
+    o._audioUrl    = url;
+    o._audioEl     = audio;
+    o._playerCanvas = playerCanvas;
+    o._trackName   = resolvedTrackName;
+    o._isPlaying   = false;
+
+    const _origToObject = imgObj.toObject.bind(imgObj);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (imgObj as unknown as Record<string, unknown>).toObject = (props?: any) => ({
+      ..._origToObject(props),
+      src:       "data:,",
+      _isAudio:  true,
+      _audioUrl: url,
+      _trackName: resolvedTrackName,
+    });
+
+    fc.add(imgObj);
+    fc.setActiveObject(imgObj);
+    fc.requestRenderAll();
+    saveObject(imgObj);
+
+    if (audioCountRef) audioCountRef.current += 1;
+    startGifLoop();
+    setTool("select");
+  }, [fabricRef, modsRef, saveObject, startGifLoop, audioCountRef, setTool]);
+
+  return { addText, addShape, addGif, addImage, addVideo, addAudio, removeBg, isRemovingBg, recolorSelected, applyFillGradient, restrokeSelected, reweightSelected, reOpacitySelected, reBlendModeSelected, lockSelected, zoomIn, zoomOut, zoomReset, clearCanvas, applyTextProp };
 }
