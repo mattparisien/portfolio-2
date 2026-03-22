@@ -168,9 +168,33 @@ export function useCanvasLoad({
 
           fc.add(imgObj);
           if (videoCountRef) videoCountRef.current += 1;
+          // Return {imgObj, src} — canvas insertion is done after allSettled so
+          // we can place each video at its correct z-order position.
+          return { imgObj, src };
         });
 
-        Promise.allSettled(restorePromises).then(() => {
+        Promise.allSettled(restorePromises).then(results => {
+          // Sort fulfilled results by stored zIndex, then insert in that order
+          // so each moveObjectTo call doesn't shift already-placed objects.
+          type VideoResult = { imgObj: InstanceType<typeof FabricImage>; src: Record<string, unknown> };
+          (results as PromiseSettledResult<VideoResult>[])
+            .filter((r): r is PromiseFulfilledResult<VideoResult> => r.status === "fulfilled")
+            .map(r => r.value)
+            .sort((a, b) => ((a.src.zIndex as number) ?? 0) - ((b.src.zIndex as number) ?? 0))
+            .forEach(({ imgObj, src }) => {
+              // The object's index in the pre-sorted `parsed` array is its
+              // intended absolute canvas position.
+              const targetIdx = parsed.findIndex(p => p.boardObjectId === src.boardObjectId);
+              const clamp = Math.min(
+                targetIdx >= 0 ? targetIdx : fc.getObjects().length - 1,
+                fc.getObjects().length - 1,
+              );
+              if (clamp < fc.getObjects().length - 1) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (fc as any).moveObjectTo(imgObj, clamp);
+              }
+            });
+
           startGifLoop();
           fc.requestRenderAll();
         });
