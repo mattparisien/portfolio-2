@@ -19,6 +19,7 @@ import { DEFAULT_TEXT_PROPS } from "./types";
 import { getOrCreateUser, CURSOR_COLORS } from "./constants";
 import { getCanvasBgColor } from "./canvasUtils";
 import { usePenTool } from "./hooks/usePenTool";
+import { useDragDropUpload } from "./hooks/useDragDropUpload";
 import { useWindowWidth } from "@/app/hooks/useWindowWidth";
 import { CursorArrowIcon, PencilCursorIcon } from "./components/Icons";
 import {
@@ -264,6 +265,9 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
     setTool,
   });
 
+  const { isDragOver, onDragEnter, onDragOver, onDragLeave, onDrop } =
+    useDragDropUpload({ onAddImage: addImage, onAddVideo: addVideo });
+
   const activateShapeTool = useCallback((st: ShapeType) => {
     setShapeType(st);
     setTool("shape");
@@ -398,17 +402,32 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
       className={`fixed inset-0 overflow-hidden ${tool === "pencil" || tool === "select" ? "board-no-cursor" : ""}`}
       style={{
         overscrollBehavior: "none",
-        cursor: tool === "eraser" ? "crosshair"
-          : tool === "text" ? "text"
-          : tool === "line" || tool === "shape" ? "crosshair"
-          : undefined,
       }}
-      onPointerOver={(e) => {
-        // Show arrow cursor when over any UI overlay (not the canvas itself)
-        const target = e.target as HTMLElement;
-        setIsOverUI(!!(target.closest(".drawing-ui-overlay") || target.closest("button") || target.closest("[role=dialog]")));
-      }}
+      onDragEnter={onDragEnter}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
     >
+      {/* Drag-and-drop outline */}
+      {isDragOver && (
+        <div
+          className="fixed inset-0 z-[9998] pointer-events-none"
+          style={{ outline: "3px dashed var(--color-accent)", outlineOffset: "-3px" }}
+        />
+      )}
+      <div
+        style={{
+          cursor: tool === "eraser" ? "crosshair"
+            : tool === "text" ? "text"
+            : tool === "line" || tool === "shape" ? "crosshair"
+            : undefined,
+        }}
+        onPointerOver={(e) => {
+          // Show arrow cursor when over any UI overlay (not the canvas itself)
+          const target = e.target as HTMLElement;
+          setIsOverUI(!!(target.closest(".drawing-ui-overlay") || target.closest("button") || target.closest("[role=dialog]")));
+        }}
+      >
       <canvas ref={canvasElRef} className="absolute inset-0 touch-none" />
       {/* Pen tool overlay — renders anchor points and bezier preview */}
       <canvas ref={penOverlayRef} className="absolute inset-0 pointer-events-none" />
@@ -620,6 +639,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
           </button>
         </div>
       )}
+      </div>
     </div>
   );
 }

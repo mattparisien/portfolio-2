@@ -220,7 +220,7 @@ export function useCanvasActions({
   }, [fabricRef, modsRef, colorRef, fillGradientRef, saveObject, setTool]);
 
   // ── Add Image from URL ────────────────────────────────────────────────
-  const addImage = useCallback(async (url: string) => {
+  const addImage = useCallback(async (url: string, dropPoint?: { x: number; y: number }) => {
     const fc = fabricRef.current;
     const mods = modsRef.current;
     if (!fc || !mods) return;
@@ -228,8 +228,8 @@ export function useCanvasActions({
     try {
       const img = await mods.FabricImage.fromURL(url, { crossOrigin: "anonymous" });
       const vpt = fc.viewportTransform as number[];
-      const cx = (window.innerWidth  / 2 - vpt[4]) / vpt[0];
-      const cy = (window.innerHeight / 2 - vpt[5]) / vpt[3];
+      const cx = dropPoint ? (dropPoint.x - vpt[4]) / vpt[0] : (window.innerWidth  / 2 - vpt[4]) / vpt[0];
+      const cy = dropPoint ? (dropPoint.y - vpt[5]) / vpt[3] : (window.innerHeight / 2 - vpt[5]) / vpt[3];
       const maxDim = 400;
       const w = img.width;
       const h = img.height;
@@ -331,7 +331,7 @@ export function useCanvasActions({
   }, [fabricRef, modsRef, saveObject]);
 
   // ── Add Video (R2 URL → looping canvas object) ────────────────────────
-  const addVideo = useCallback(async (url: string) => {
+  const addVideo = useCallback(async (url: string, dropPoint?: { x: number; y: number }) => {
     const fc = fabricRef.current;
     const mods = modsRef.current;
     if (!fc || !mods) return;
@@ -357,8 +357,8 @@ export function useCanvasActions({
       video.play().catch(() => {});
 
       const vpt = fc.viewportTransform as number[];
-      const cx = (window.innerWidth  / 2 - vpt[4]) / vpt[0];
-      const cy = (window.innerHeight / 2 - vpt[5]) / vpt[3];
+      const cx = dropPoint ? (dropPoint.x - vpt[4]) / vpt[0] : (window.innerWidth  / 2 - vpt[4]) / vpt[0];
+      const cy = dropPoint ? (dropPoint.y - vpt[5]) / vpt[3] : (window.innerHeight / 2 - vpt[5]) / vpt[3];
       const w = video.videoWidth  || 640;
       const h = video.videoHeight || 360;
       const scale = Math.min(1, 400 / Math.max(w, h));
