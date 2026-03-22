@@ -710,21 +710,22 @@ export function useCanvasActions({
 
       fc.on("mouse:down", (opt) => {
         const o = opt.target as unknown as Record<string, unknown>;
-        if (o?._isAudio) downPos = { x: opt.e.clientX, y: opt.e.clientY };
+        const e = opt.e as MouseEvent;
+        if (o?._isAudio) downPos = { x: e.clientX, y: e.clientY };
       });
 
       fc.on("mouse:up", (opt) => {
         if (!downPos) return;
         const o = opt.target as unknown as Record<string, unknown>;
         if (!o?._isAudio) { downPos = null; return; }
-
-        const dx = opt.e.clientX - downPos.x;
-        const dy = opt.e.clientY - downPos.y;
+        const e = opt.e as MouseEvent;
+        const dx = e.clientX - downPos.x;
+        const dy = e.clientY - downPos.y;
         downPos = null;
         if (Math.sqrt(dx * dx + dy * dy) > 5) return; // was a drag
 
         const br = (opt.target as import("fabric").FabricObject).getBoundingRect();
-        const relPct = (opt.e.clientX - br.left) / br.width;
+        const relPct = (e.clientX - br.left) / br.width;
         const audio = o._audioEl as HTMLAudioElement;
         const playerCanvas = o._playerCanvas as HTMLCanvasElement;
 
