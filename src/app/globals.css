@@ -4,6 +4,7 @@
 @theme {
 
   --font-serif: 'Rhymes', serif;
+  --font-heading: 'Pantasia', serif;
 
   --color-accent: var(--color-blue-500);
   --color-fg: var(--color-neutral-900);
@@ -40,6 +41,14 @@
 @font-face {
   font-family: "Rhymes";
   src: url("/assets/fonts/Rhymes-Text-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Pantasia";
+  src: url("/assets/fonts/PantasiaNTXT-Regular.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
