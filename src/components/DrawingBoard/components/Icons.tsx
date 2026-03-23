@@ -167,13 +167,13 @@ export const CheckmarkIcon = ({ width = 22, height = 22, strokeWidth = 2, stroke
 
 /** Cursor icons — used for the local and remote custom cursors */
 
-export const CursorArrowIcon = ({ width = 15, height = 15, fill = "#1a1a1a", style }: { width?: number; height?: number; fill?: string; style?: React.CSSProperties }) => (
+export const CursorArrowIcon = ({ width = 15, height = 15, fill = "#1a1a1a", withStroke = true, style }: { width?: number; height?: number; fill?: string; withStroke?: boolean; style?: React.CSSProperties }) => (
     <svg width={width} height={height} viewBox="0 0 317 354" fill="none" xmlns="http://www.w3.org/2000/svg" style={style}>
         <path
             d="M0.222591 12C-1.53354 3.60665 7.45159 -2.92141 14.8914 1.34245L311.358 171.251C318.902 175.574 317.649 186.816 309.339 189.372L165.447 233.635C163.219 234.321 161.303 235.767 160.033 237.723L88.0181 348.658C83.1885 356.097 71.7717 353.964 69.9552 345.282L0.222591 12Z"
             fill={fill}
-            stroke="white"
-            strokeWidth="30px"
+            stroke={withStroke ? "white" : "none"}
+            strokeWidth={withStroke ? "30px" : "0"}
             style={{ filter: "drop-shadow(0 0 4px rgba(15, 15, 15, 1))",transform: 'rotate(-7deg)' }}
         />
     </svg>

@@ -32,7 +32,7 @@ function Cursor({ x, y, name, color }: { x: number; y: number; name: string; col
       }}
     >
       {/* Custom cursor arrow */}
-      <CursorArrowIcon fill={color} style={{ display: "block" }} />
+      <CursorArrowIcon fill={color} withStroke={false} style={{ display: "block" }} />
 
       {/* Name label */}
       <div
