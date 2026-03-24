@@ -231,6 +231,35 @@ export function useFabricCanvas(opts: UseFabricCanvasOptions) {
       pendingTextRef.current = txt;
     };
 
+    const onMouseMove = (e: { target?: unknown; e?: Event }) => {
+      const target = e.target;
+      const type = (target as { type?: string })?.type;
+      if (!target || (type !== "i-text" && type !== "textbox")) {
+        fc.setCursor("default");
+        return;
+      }
+      // Only show pointer when the object is NOT the active (selected) object
+      const active = fc.getActiveObject();
+      if (active === target) return;
+
+      const txt = target as unknown as IText & {
+        hyperlinks?: Array<{ start: number; end: number; url: string }>;
+        getSelectionStartFromPointer(ev: Event): number;
+      };
+      const hyperlinks = txt.hyperlinks;
+      if (hyperlinks && hyperlinks.length > 0 && e.e) {
+        try {
+          const charIdx = txt.getSelectionStartFromPointer(e.e);
+          const onLink = hyperlinks.some(h => charIdx >= h.start && charIdx < h.end);
+          fc.setCursor(onLink ? "pointer" : "default");
+        } catch {
+          fc.setCursor("default");
+        }
+      } else {
+        fc.setCursor("default");
+      }
+    };
+
     const onMouseDblClick = (e: { target?: unknown; e?: Event }) => {
       const target = e.target;
       const type   = (target as { type?: string })?.type;
@@ -298,6 +327,8 @@ export function useFabricCanvas(opts: UseFabricCanvasOptions) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     fc.on("mouse:down",          onMouseDown         as any);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    fc.on("mouse:move",          onMouseMove         as any);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     fc.on("mouse:dblclick",      onMouseDblClick     as any);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     fc.on("text:editing:exited", onTextEditingExited as any);
@@ -315,6 +346,8 @@ export function useFabricCanvas(opts: UseFabricCanvasOptions) {
       fc.off("object:removed",      updateCanvasEmpty);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       fc.off("mouse:down",          onMouseDown         as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      fc.off("mouse:move",          onMouseMove         as any);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       fc.off("mouse:dblclick",      onMouseDblClick     as any);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

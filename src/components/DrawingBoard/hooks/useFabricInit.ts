@@ -177,6 +177,7 @@ export function useFabricInit({
           value === "grabbing"      ||
           value === "not-allowed"   ||
           value === "alias"         ||
+          value === "pointer"       ||
           (value === "crosshair" && !isPencil) ||
           value === "text";
         upperEl.style.setProperty("cursor", show ? value : "none", "important");
