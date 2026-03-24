@@ -30,12 +30,16 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <meta name="robots" content="noindex, nofollow"></meta>
+        <link rel="preload" href="/assets/fonts/PantasiaNTXT-Regular.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        <link rel="preload" href="/assets/fonts/Rhymes-Text-Regular.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        <link rel="preload" href="/assets/fonts/MaaxMono.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
       </head>
       <body className="antialiased" suppressHydrationWarning>
         <UploadProgressProvider>
           <UploadProgressBar />
           <CookieConsent />
           <Header />
+
           {children}
 
         </UploadProgressProvider>
