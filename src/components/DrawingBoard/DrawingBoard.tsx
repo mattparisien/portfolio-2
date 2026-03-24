@@ -635,11 +635,11 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
         onClearRequest={() => setClearConfirmOpen(true)}
       />
       {!panelVisible && <ZoomNav zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} />}
-      <BoardHeader isSyncing={isSyncing} />
+      {/* <BoardHeader isSyncing={isSyncing} /> */}
 
       {/* Top-right cluster: active users */}
       {!panelVisible && (
-        <div className="absolute top-5 right-5 z-[200]">
+        <div className="absolute top-appBounds right-appBounds z-[200]">
           <ActiveUsers />
         </div>
       )}

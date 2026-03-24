@@ -12,7 +12,7 @@ interface ZoomNavProps {
 export default function ZoomNav({ zoom, onZoomIn, onZoomOut, onZoomReset }: ZoomNavProps) {
   return (
     <div
-      className="absolute bottom-6 right-6 hidden sm:flex items-center gap-0.5 px-1.5 py-1.5 rounded-xl z-[200]"
+      className="absolute bottom-appBounds right-appBounds hidden sm:flex items-center gap-0.5 px-1.5 py-1.5 rounded-xl z-[200]"
       style={{
         background: "rgba(255,255,255,0.92)",
         backdropFilter: "blur(14px)",

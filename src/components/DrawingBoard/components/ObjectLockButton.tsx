@@ -90,9 +90,9 @@ export default function ObjectLockButton({ fabricRef, locked, onToggle, onDelete
       if (/^https?:\/\//i.test(trimmed)) {
         // Already has a scheme — use as-is
         url = trimmed;
-      } else if (trimmed.startsWith("/")) {
-        // Relative path — prepend current origin
-        url = `${window.location.origin}${trimmed}`;
+      } else if (trimmed.startsWith("/") || trimmed.startsWith("#")) {
+        // Relative path — store as-is
+        url = trimmed;
       } else {
         // Bare domain — prepend https://
         url = `https://${trimmed}`;

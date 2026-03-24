@@ -67,7 +67,7 @@ export default function DrawingTools({
   });
 
   return (
-    <ToolOverlaySurface className="fixed bottom-5 left-1/2 -translate-x-1/2">
+    <ToolOverlaySurface className="fixed bottom-appBounds left-1/2 -translate-x-1/2">
       <ToolButton
         active={tool === "select"}
         onClick={() => onToolChange("select")}

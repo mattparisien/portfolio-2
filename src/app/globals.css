@@ -22,6 +22,8 @@
   --shadow-inner: none;
   --inset-shadow-sm: none;
   --inset-shadow: none;
+
+  --spacing-appBounds: calc(var(--spacing) * 4);
 }
 
 /* *:not(:focus-visible) {

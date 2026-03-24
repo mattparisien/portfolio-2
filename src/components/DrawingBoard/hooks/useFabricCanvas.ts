@@ -1,4 +1,5 @@
 import { useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import type { Dispatch, SetStateAction } from "react";
 import type { Canvas, IText, Textbox } from "fabric";
 import type { Tool, FabricMods, TextProps, ShapeType, TextGradient } from "../types";
@@ -70,6 +71,7 @@ export function useFabricCanvas(opts: UseFabricCanvasOptions) {
     setIsOverHandle, setCanvasEmpty, initialObjects,
   } = opts;
 
+  const router = useRouter();
   const modsRef = useRef<FabricMods | null>(null);
 
   const undoFnRef   = useRef(() => window.dispatchEvent(
@@ -245,7 +247,12 @@ export function useFabricCanvas(opts: UseFabricCanvasOptions) {
           const charIdx = txt.getSelectionStartFromPointer(e.e);
           const link = hyperlinks.find(h => charIdx >= h.start && charIdx < h.end);
           if (link) {
-            window.open(link.url, "_blank", "noopener,noreferrer");
+            const isRelative = /^\/|^#/.test(link.url) || !/^[a-z][a-z0-9+\-.]*:/i.test(link.url);
+            if (isRelative) {
+              router.push(link.url);
+            } else {
+              window.open(link.url, "_blank", "noopener,noreferrer");
+            }
             return; // don't enter editing mode
           }
         } catch {

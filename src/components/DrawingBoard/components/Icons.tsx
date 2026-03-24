@@ -151,7 +151,7 @@ export const TrashIcon = ({ width = 22, height = 22, strokeWidth = 2 }: IconProp
 export const LinkIcon = ({ width = 18, height = 18, strokeWidth = 1.5, className }: IconProps) => {
     return (
         <svg width={width} height={height} viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-            <g clip-path="url(#clip0_1545_10661)">
+            <g clipPath="url(#clip0_1545_10661)">
                 <path d="M8.53996 9.70001L10.54 7.70001L12.66 5.58001C13.2218 5.01751 13.5373 4.25501 13.5373 3.46001C13.5373 2.665 13.2218 1.90251 12.66 1.34001V1.34001C12.0975 0.778205 11.335 0.462646 10.54 0.462646C9.74496 0.462646 8.98246 0.778205 8.41996 1.34001L6.99996 2.76001L5.45996 4.30001" strokeWidth={strokeWidth} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
                 <path d="M3.49998 6.26001L1.37998 8.38001C0.818183 8.94251 0.502625 9.70501 0.502625 10.5C0.502625 11.295 0.818183 12.0575 1.37998 12.62V12.62C1.94249 13.1818 2.70498 13.4974 3.49998 13.4974C4.29499 13.4974 5.05748 13.1818 5.61998 12.62L6.61998 11.62" strokeWidth={strokeWidth} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
                 <path d="M4.16998 2.05005L9.82998 11.95" strokeWidth={strokeWidth} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
