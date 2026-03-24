@@ -83,8 +83,8 @@ test.describe("Drawing board", () => {
   });
 
   test("renders the CRUMB logo in the header", async ({ page }) => {
-    // BoardHeader contains an SVG with data-name="Layer 1"
-    await expect(page.locator('svg[data-name="Layer 1"]')).toBeVisible({ timeout: 10_000 });
+    // BoardHeader now renders the logo as text
+    await expect(page.locator(".font-heading").filter({ hasText: /crumb/i })).toBeVisible({ timeout: 10_000 });
   });
 
   test("renders the drawing tools panel", async ({ page }) => {
