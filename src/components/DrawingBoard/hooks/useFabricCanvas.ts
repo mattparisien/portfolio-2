@@ -229,11 +229,30 @@ export function useFabricCanvas(opts: UseFabricCanvasOptions) {
       pendingTextRef.current = txt;
     };
 
-    const onMouseDblClick = (e: { target?: unknown }) => {
+    const onMouseDblClick = (e: { target?: unknown; e?: Event }) => {
       const target = e.target;
       const type   = (target as { type?: string })?.type;
       if (!target || (type !== "i-text" && type !== "textbox")) return;
-      const txt = target as unknown as IText;
+      const txt = target as unknown as IText & {
+        hyperlinks?: Array<{ start: number; end: number; url: string }>;
+        getSelectionStartFromPointer(ev: Event): number;
+      };
+
+      // Navigate if the double-click lands on a hyperlinked character
+      const hyperlinks = txt.hyperlinks;
+      if (hyperlinks && hyperlinks.length > 0 && e.e) {
+        try {
+          const charIdx = txt.getSelectionStartFromPointer(e.e);
+          const link = hyperlinks.find(h => charIdx >= h.start && charIdx < h.end);
+          if (link) {
+            window.open(link.url, "_blank", "noopener,noreferrer");
+            return; // don't enter editing mode
+          }
+        } catch {
+          // fall through to normal editing if method unavailable
+        }
+      }
+
       txt.set({ editable: true });
       fc.setActiveObject(txt);
       txt.enterEditing();
@@ -297,5 +316,5 @@ export function useFabricCanvas(opts: UseFabricCanvasOptions) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReady]);
 
-  return { modsRef, undoFnRef, redoFnRef, deleteFnRef };
+  return { modsRef, undoFnRef, redoFnRef, deleteFnRef, isReady };
 }

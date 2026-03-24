@@ -143,8 +143,26 @@ export const LockClosedIcon = ({ width = 22, height = 22, strokeWidth = 2, class
 export const TrashIcon = ({ width = 22, height = 22, strokeWidth = 2 }: IconProps) => {
     return (
         <svg width={width} height={height} viewBox="0 0 18 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M1 4.17647H17M6 1H12M12.5 19H5.5C4.39543 19 3.5 18.0519 3.5 16.8824L3.0434 5.27937C3.01973 4.67783 3.47392 4.17647 4.04253 4.17647H13.9575C14.5261 4.17647 14.9803 4.67783 14.9566 5.27937L14.5 16.8824C14.5 18.0519 13.6046 19 12.5 19Z" stroke="black" strokeWidth={strokeWidth} strokeLinecap="round" />
+            <path d="M1 4.17647H17M6 1H12M12.5 19H5.5C4.39543 19 3.5 18.0519 3.5 16.8824L3.0434 5.27937C3.01973 4.67783 3.47392 4.17647 4.04253 4.17647H13.9575C14.5261 4.17647 14.9803 4.67783 14.9566 5.27937L14.5 16.8824C14.5 18.0519 13.6046 19 12.5 19Z" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" />
         </svg>
+    )
+}
+
+export const LinkIcon = ({ width = 18, height = 18, strokeWidth = 1.5, className }: IconProps) => {
+    return (
+        <svg width={width} height={height} viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+            <g clip-path="url(#clip0_1545_10661)">
+                <path d="M8.53996 9.70001L10.54 7.70001L12.66 5.58001C13.2218 5.01751 13.5373 4.25501 13.5373 3.46001C13.5373 2.665 13.2218 1.90251 12.66 1.34001V1.34001C12.0975 0.778205 11.335 0.462646 10.54 0.462646C9.74496 0.462646 8.98246 0.778205 8.41996 1.34001L6.99996 2.76001L5.45996 4.30001" strokeWidth={strokeWidth} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M3.49998 6.26001L1.37998 8.38001C0.818183 8.94251 0.502625 9.70501 0.502625 10.5C0.502625 11.295 0.818183 12.0575 1.37998 12.62V12.62C1.94249 13.1818 2.70498 13.4974 3.49998 13.4974C4.29499 13.4974 5.05748 13.1818 5.61998 12.62L6.61998 11.62" strokeWidth={strokeWidth} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M4.16998 2.05005L9.82998 11.95" strokeWidth={strokeWidth} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+            </g>
+            <defs>
+                <clipPath id="clip0_1545_10661">
+                    <rect width={width} height={height} fill="white" />
+                </clipPath>
+            </defs>
+        </svg>
+
     )
 }
 
@@ -174,7 +192,7 @@ export const CursorArrowIcon = ({ width = 15, height = 15, fill = "#1a1a1a", wit
             fill={fill}
             stroke={withStroke ? "white" : "none"}
             strokeWidth={withStroke ? "30px" : "0"}
-            style={{ filter: "drop-shadow(0 0 4px rgba(15, 15, 15, 1))",transform: 'rotate(-7deg)' }}
+            style={{ filter: "drop-shadow(0 0 4px rgba(15, 15, 15, 1))", transform: 'rotate(-7deg)' }}
         />
     </svg>
 )

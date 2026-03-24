@@ -2,8 +2,8 @@
 
 import classNames from "classnames";
 import type { Canvas } from "fabric";
-import { useEffect, useRef } from "react";
-import { LockClosedIcon, LockOpenIcon, TrashIcon } from "./Icons";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { LockClosedIcon, LockOpenIcon, TrashIcon, LinkIcon } from "./Icons";
 import ToolOverlaySurface from "./ToolOverlaySurface";
 
 interface ObjectLockButtonProps {
@@ -11,6 +11,12 @@ interface ObjectLockButtonProps {
   locked: boolean;
   onToggle: () => void;
   onDelete?: () => void;
+  /** Whether the currently selected object is a text object */
+  isText?: boolean;
+  /** Called when a hyperlink URL should be applied to the selected text */
+  onSetLink?: (url: string | null) => void;
+  /** Current hyperlink on the selected text (if any) */
+  currentLink?: string | null;
 }
 
 function LockIcon({ open, className }: { open: boolean; className?: string }) {
@@ -50,9 +56,57 @@ function IconBtn({
   );
 }
 
-export default function ObjectLockButton({ fabricRef, locked, onToggle, onDelete }: ObjectLockButtonProps) {
+export default function ObjectLockButton({ fabricRef, locked, onToggle, onDelete, isText, onSetLink, currentLink }: ObjectLockButtonProps) {
   const btnRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
+  const [linkPopoverOpen, setLinkPopoverOpen] = useState(false);
+  const [linkInput, setLinkInput] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Sync link input to current link when selection changes
+  useEffect(() => {
+    setLinkInput(currentLink ?? "");
+    setLinkPopoverOpen(false);
+  }, [currentLink]);
+
+  const handleLinkBtnClick = useCallback(() => {
+    setLinkInput(currentLink ?? "");
+    setLinkPopoverOpen(prev => !prev);
+  }, [currentLink]);
+
+  useEffect(() => {
+    if (linkPopoverOpen) {
+      // Focus input on next tick after render
+      requestAnimationFrame(() => inputRef.current?.focus());
+    }
+  }, [linkPopoverOpen]);
+
+  const handleApplyLink = useCallback(() => {
+    const trimmed = linkInput.trim();
+    if (!trimmed) {
+      onSetLink?.(null);
+    } else {
+      let url: string;
+      if (/^https?:\/\//i.test(trimmed)) {
+        // Already has a scheme — use as-is
+        url = trimmed;
+      } else if (trimmed.startsWith("/")) {
+        // Relative path — prepend current origin
+        url = `${window.location.origin}${trimmed}`;
+      } else {
+        // Bare domain — prepend https://
+        url = `https://${trimmed}`;
+      }
+      onSetLink?.(url);
+    }
+    setLinkPopoverOpen(false);
+  }, [linkInput, onSetLink]);
+
+  const handleRemoveLink = useCallback(() => {
+    onSetLink?.(null);
+    setLinkInput("");
+    setLinkPopoverOpen(false);
+  }, [onSetLink]);
 
   useEffect(() => {
     const btn = btnRef.current;
@@ -91,28 +145,91 @@ export default function ObjectLockButton({ fabricRef, locked, onToggle, onDelete
     return () => cancelAnimationFrame(rafRef.current);
   }, [fabricRef]);
 
+  const hasLink = !!(currentLink && currentLink.trim());
+
   return (
-    <ToolOverlaySurface
+    <div
       ref={btnRef}
-      className="fixed flex items-center select-none -left-[9999px] -top-[9999px] gap-0 !p-1"
+      className="fixed -left-[9999px] -top-[9999px] select-none"
+      style={{ zIndex: 150 }}
     >
-      <IconBtn
-        onClick={onToggle}
-        title={locked ? "Unlock object" : "Lock object"}
-        active={locked}
-      >
-        <LockIcon open={!locked} className={classNames("", {
-          "[&>path]:stroke-accent": locked,
-          "[&>path]:stroke-overlay-fg": !locked,
-        })}/>
-      </IconBtn>
-      {onDelete && !locked && (
-        <>
+      {/* Link input popover — rendered above the main pill */}
+      {linkPopoverOpen && isText && (
+        <div
+          className="absolute bottom-[calc(100%+8px)] left-1/2 -translate-x-1/2 rounded-xl border border-neutral-200 bg-overlay-bg overflow-hidden select-none"
+          style={{ minWidth: 248, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
+        >
+          <div className="px-3 pt-2.5 pb-1.5">
+            <p className="text-[10px] font-medium text-neutral-400 uppercase tracking-wide mb-1.5">URL</p>
+            <input
+              ref={inputRef}
+              type="url"
+              value={linkInput}
+              onChange={e => setLinkInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === "Enter") handleApplyLink();
+                if (e.key === "Escape") setLinkPopoverOpen(false);
+              }}
+              placeholder="https://example.com"
+              className="w-full text-xs outline-none bg-neutral-50 border border-neutral-200 rounded-lg px-2.5 py-1.5 text-neutral-900 placeholder:text-neutral-400 focus:border-accent transition-colors"
+              style={{ fontFamily: "inherit" }}
+            />
+          </div>
+          <div className="flex items-center justify-between px-3 py-2 border-t border-neutral-100">
+            {hasLink ? (
+              <button
+                onClick={handleRemoveLink}
+                title="Remove link"
+                className="text-xs text-red-400 hover:text-red-500 transition-colors cursor-pointer font-medium"
+              >
+                Remove
+              </button>
+            ) : <span />}
+            <button
+              onClick={handleApplyLink}
+              title="Apply link"
+              className="text-xs font-semibold text-accent hover:opacity-70 transition-opacity cursor-pointer"
+            >
+              Apply
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Main pill — lock / link / delete */}
+      <ToolOverlaySurface className="flex items-center gap-0 !p-1">
+        <IconBtn
+          onClick={onToggle}
+          title={locked ? "Unlock object" : "Lock object"}
+          active={locked}
+        >
+          <LockIcon open={!locked} className={classNames("", {
+            "[&>path]:stroke-accent": locked,
+            "[&>path]:stroke-overlay-fg": !locked,
+          })}/>
+        </IconBtn>
+        {isText && !locked && onSetLink && (
+          <IconBtn
+            onClick={handleLinkBtnClick}
+            title={hasLink ? "Edit link" : "Add link"}
+            active={hasLink || linkPopoverOpen}
+          >
+            <LinkIcon
+              width={15}
+              height={15}
+              strokeWidth={0.8}
+              className={classNames(
+                hasLink || linkPopoverOpen ? "text-accent" : "text-overlay-fg"
+              )}
+            />
+          </IconBtn>
+        )}
+        {onDelete && !locked && (
           <IconBtn onClick={onDelete} title="Delete object">
             <TrashIcon width={16} height={16} strokeWidth={1} className={"[&>path]:stroke-overlay-fg"}/>
           </IconBtn>
-        </>
-      )}
-    </ToolOverlaySurface>
+        )}
+      </ToolOverlaySurface>
+    </div>
   );
 }

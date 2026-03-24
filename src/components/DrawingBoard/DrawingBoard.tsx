@@ -106,6 +106,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
   const [textProps, setTextProps]               = useState<TextProps>(DEFAULT_TEXT_PROPS);
   const [shapeType, setShapeType]               = useState<ShapeType>("rect");
   const [fillGradient, setFillGradient]         = useState<TextGradient | null>(null);
+  const [selectedTextLink, setSelectedTextLink] = useState<string | null>(null);
 
   // Clear confirm dialog
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
@@ -160,7 +161,9 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
   const isMobile      = windowWidth > 0 && windowWidth < 768;
   const showMobileWarn = isMobile && !mobileWarnDismissed;
 
-  const penOverlayRef    = useRef<HTMLCanvasElement>(null);
+  const penOverlayRef        = useRef<HTMLCanvasElement>(null);
+  /** Tracks the most recent text selection range inside an IText while editing. */
+  const textSelectionRef      = useRef<{ start: number; end: number } | null>(null);
 
   // Keep refs in sync so async canvas callbacks always read the latest values
   const toolRef               = useRef<Tool>("select");
@@ -195,7 +198,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
 
   const { saveObject } = useBoardSync({ broadcast: broadcastEvent, fabricRef });
 
-  const { modsRef, undoFnRef, redoFnRef, deleteFnRef } = useFabricCanvas({
+  const { modsRef, undoFnRef, redoFnRef, deleteFnRef, isReady } = useFabricCanvas({
     canvasElRef,
     fabricRef,
     colorRef,
@@ -279,6 +282,115 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
     setBrushSize(0);
     setShapeStrokeColor("#000000");
   }, []);
+
+  // ── Track hyperlinks / text selection for the link popover ──────────
+  useEffect(() => {
+    const fc = fabricRef.current;
+    if (!fc) return;
+
+    type HLink = { start: number; end: number; url: string };
+    type ITextLike = {
+      selectionStart: number;
+      selectionEnd: number;
+      hyperlinks?: HLink[];
+      on(event: string, handler: () => void): void;
+      off(event: string, handler: () => void): void;
+    };
+
+    let activeText: ITextLike | null = null;
+
+    // Called on every cursor/selection move while editing
+    const onTextSel = () => {
+      if (!activeText) return;
+      textSelectionRef.current = { start: activeText.selectionStart, end: activeText.selectionEnd };
+      const charIdx = activeText.selectionStart;
+      const link = (activeText.hyperlinks ?? []).find(h => charIdx >= h.start && charIdx < h.end);
+      setSelectedTextLink(link?.url ?? null);
+    };
+
+    const onEditingEntered = (e: { target: unknown }) => {
+      activeText = e.target as ITextLike;
+      textSelectionRef.current = { start: activeText.selectionStart, end: activeText.selectionEnd };
+      activeText.on("selection:changed", onTextSel);
+    };
+
+    const onEditingExited = (e: { target: unknown }) => {
+      (e.target as ITextLike).off("selection:changed", onTextSel);
+      activeText = null;
+      // Keep textSelectionRef set so handleSetLink can use the last selection
+    };
+
+    // When a text object is selected (not editing), show first link or null
+    const readObjLink = () => {
+      const obj = fc.getActiveObject();
+      if (!obj) { setSelectedTextLink(null); return; }
+      const isText = ["i-text", "textbox"].includes((obj as { type?: string }).type ?? "");
+      if (!isText) { setSelectedTextLink(null); return; }
+      const links = (obj as unknown as { hyperlinks?: HLink[] }).hyperlinks ?? [];
+      setSelectedTextLink(links.length > 0 ? links[0].url : null);
+    };
+
+    const onCleared = () => {
+      setSelectedTextLink(null);
+      textSelectionRef.current = null;
+    };
+
+    fc.on("selection:created", readObjLink);
+    fc.on("selection:updated", readObjLink);
+    fc.on("selection:cleared", onCleared);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    fc.on("text:editing:entered", onEditingEntered as any);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    fc.on("text:editing:exited",  onEditingExited  as any);
+
+    return () => {
+      fc.off("selection:created", readObjLink);
+      fc.off("selection:updated", readObjLink);
+      fc.off("selection:cleared", onCleared);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      fc.off("text:editing:entered", onEditingEntered as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      fc.off("text:editing:exited",  onEditingExited  as any);
+      if (activeText) activeText.off("selection:changed", onTextSel);
+    };
+  }, [fabricRef, isReady]);
+
+  // ── Apply a hyperlink to the selected (or previously selected) text ──
+  const handleSetLink = useCallback((url: string | null) => {
+    const fc = fabricRef.current;
+    if (!fc) return;
+    const obj = fc.getActiveObject();
+    if (!obj) return;
+    const isText = ["i-text", "textbox"].includes((obj as { type?: string }).type ?? "");
+    if (!isText) return;
+
+    type ITextAPI = {
+      text?: string;
+      hyperlinks?: Array<{ start: number; end: number; url: string }>;
+      setSelectionStyles(styles: object, startIndex: number, endIndex?: number): void;
+    };
+    const itext = obj as unknown as ITextAPI;
+    const totalLen = (itext.text ?? "").length;
+
+    // Use stored selection if there was one, otherwise apply to whole text
+    const sel = textSelectionRef.current;
+    const hasRange = !!(sel && sel.start !== sel.end);
+    const start = hasRange ? Math.min(sel!.start, sel!.end) : 0;
+    const end   = hasRange ? Math.max(sel!.start, sel!.end) : totalLen;
+
+    // Apply underline per-character via Fabric's styled-text API
+    itext.setSelectionStyles({ underline: !!url }, start, end);
+
+    // Update the hyperlinks metadata array
+    const existing = itext.hyperlinks ?? [];
+    itext.hyperlinks = url
+      ? [...existing.filter(h => h.end <= start || h.start >= end), { start, end, url }]
+      : existing.filter(h => h.end <= start || h.start >= end);
+
+    fc.requestRenderAll();
+    saveObject(obj as Parameters<typeof saveObject>[0]);
+    setSelectedTextLink(url);
+  }, [fabricRef, saveObject]);
 
   // ── Global keyboard shortcuts for tool switching / actions ────────────
   useEffect(() => {
@@ -542,6 +654,9 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
             lockSelected(next);
           }}
           onDelete={() => deleteFnRef.current?.()}
+          isText={selectedIsText}
+          onSetLink={handleSetLink}
+          currentLink={selectedTextLink}
         />
       )}
       <CapacityWall />

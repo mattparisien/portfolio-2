@@ -35,7 +35,7 @@ export function useBoardSync({ broadcast, fabricRef }: UseBoardSyncOptions = {})
       : -1;
     const zIndex = canvasIdx !== -1 ? canvasIdx : obj.zIndex;
 
-    const LOCK_PROPS = ['lockMovementX', 'lockMovementY', 'lockRotation', 'lockScalingX', 'lockScalingY', 'hasControls'];
+    const LOCK_PROPS = ['lockMovementX', 'lockMovementY', 'lockRotation', 'lockScalingX', 'lockScalingY', 'hasControls', 'hyperlinks'];
     const fabricJSON = JSON.stringify({
       ...(obj.toObject(LOCK_PROPS)),
       boardObjectId: objectId,

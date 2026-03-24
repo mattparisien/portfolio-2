@@ -139,6 +139,7 @@ export function useCanvasLoad({
           const src = nonVideoParsed[i];
           if (src.boardObjectId) (obj as Record<string, unknown>).boardObjectId = src.boardObjectId;
           if (src.zIndex !== undefined) (obj as Record<string, unknown>).zIndex  = src.zIndex;
+          if (src.hyperlinks) (obj as Record<string, unknown>).hyperlinks = src.hyperlinks;
           fc.add(obj as Parameters<typeof fc.add>[0]);
 
           if (src.giphyId && src._gifUrl) {
