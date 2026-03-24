@@ -17,7 +17,13 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   await dbConnect();
-  const { boardId = "main", objectId, fabricJSON } = await request.json();
+  let body: { boardId?: string; objectId?: string; fabricJSON?: unknown } = {};
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+  const { boardId = "main", objectId, fabricJSON } = body;
   if (!objectId) return NextResponse.json({ error: "objectId required" }, { status: 400 });
   await FabricObject.findOneAndUpdate(
     { boardId, objectId },
