@@ -1,13 +1,12 @@
-import type { Metadata } from "next";
 import 'locomotive-scroll/dist/locomotive-scroll.css';
+import type { Metadata } from "next";
 
 
-import "./globals.css";
-import SmoothScroller from "@/components/SmoothScroller";
 import { UploadProgressProvider } from "@/app/contexts/UploadProgress.context";
-import { UploadProgressBar } from "@/components/UploadProgressBar";
 import { CookieConsent } from "@/components/CookieConsent";
 import Header from "@/components/Header";
+import { UploadProgressBar } from "@/components/UploadProgressBar";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Crumb",

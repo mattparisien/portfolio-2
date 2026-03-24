@@ -48,7 +48,6 @@ const Page = () => {
                     stagger: 0.05,
                     duration: 0,
                     ease: "power4.out",
-                    onStart: () => gsap.set(logo, { opacity: 0 }),
                 })  
             }
         })
