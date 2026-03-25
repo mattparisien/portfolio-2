@@ -41,7 +41,7 @@ function Avatar({
       {hovered && (
         <div
           className="absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap px-2.5 py-1 rounded-lg text-xs font-semibold text-white pointer-events-none z-10"
-          style={{ background: color }}
+          style={{ background: color }} 
         >
           {/* Arrow */}
           <div
