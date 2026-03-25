@@ -40,15 +40,15 @@ function Avatar({
       {/* Tooltip */}
       {hovered && (
         <div
-          className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap px-2.5 py-1 rounded-lg text-xs font-semibold text-white pointer-events-none z-10"
+          className="absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap px-2.5 py-1 rounded-lg text-xs font-semibold text-white pointer-events-none z-10"
           style={{ background: color }}
         >
-          {name}{isYou ? " (you)" : ""}
           {/* Arrow */}
           <div
-            className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent"
-            style={{ borderTopColor: color }}
+            className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent"
+            style={{ borderBottomColor: color }}
           />
+          {name}{isYou ? " (you)" : ""}
         </div>
       )}
     </div>
