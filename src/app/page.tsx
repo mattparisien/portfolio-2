@@ -2,6 +2,8 @@ import HomeClient from "@/components/HomeClient";
 import dbConnect from "@/lib/mongodb";
 import FabricObject from "@/models/FabricObject";
 
+export const dynamic = "force-dynamic";
+
 async function getBoardObjects(): Promise<{ fabricJSON: string }[]> {
   await dbConnect();
   const docs = await FabricObject.find({ boardId: "main" })
