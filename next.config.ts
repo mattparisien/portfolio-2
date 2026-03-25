@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        source: "/((?!_next|api|assets|favicon.ico).+)",
+        source: "/((?!_next|api|assets|favicon\\.ico|favicon\\.svg).+)",
         destination: "/",
         permanent: false,
         missing: [
