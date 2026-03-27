@@ -119,6 +119,7 @@ export function useFabricInit({
       FabricObject.ownDefaults.cornerSize            = 10;
       FabricObject.ownDefaults.transparentCorners    = false;
       FabricObject.ownDefaults.borderOpacityWhenMoving = 1;
+      FabricObject.ownDefaults.borderScaleFactor     = 2;
 
       // ── Replace single top-centre mtr handle with four corner rotate handles ──
       const _origCreateControls = FabricObject.createControls.bind(FabricObject);
@@ -160,7 +161,7 @@ export function useFabricInit({
         backgroundColor:      getCanvasBgColor(),
         selectionColor:       "rgba(69,151,248,0.15)",
         selectionBorderColor: "#4597f8",
-        selectionLineWidth:   2,
+        selectionLineWidth:   2.5,
       });
       fabricRef.current = fc;
       fc.renderAll();
