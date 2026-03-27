@@ -18,7 +18,7 @@ export default function HomeClient({
       <Suspense
         fallback={
           // Canvas-coloured blank so the layout is stable while objects stream in
-          <div className="fixed inset-0" style={{ background: "#F6F6F6" }} />
+          <div className="fixed inset-0 w-screen h-screen bg-canvas-bg" />
         }
       >
         <BoardWithData promise={objectsPromise} />

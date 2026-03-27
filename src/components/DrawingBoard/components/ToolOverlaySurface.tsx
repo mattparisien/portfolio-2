@@ -9,10 +9,6 @@ const ToolOverlaySurface = forwardRef<HTMLDivElement, { children: React.ReactNod
             style={{ zIndex: 150, ...style }}
             rounded
             boxShadow
-            borderTop
-            borderBottom
-            borderLeft
-            borderRight
         >
             {children}
         </OverlaySurface>

@@ -6,7 +6,7 @@
   --font-serif: 'Rhymes', serif;
   --font-heading: 'Pantasia', serif;
 
-  --color-accent: var(--color-blue-500);
+  --color-accent: #0a99ff;
   --color-fg: var(--color-neutral-900);
   --color-bg: white;
   --color-canvas-bg: var(--color-neutral-50);
