@@ -633,6 +633,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
         activeShapeType={shapeType}
         onPopoverOpened={onDrawingToolsPopoverOpened}
         onClearRequest={() => setClearConfirmOpen(true)}
+        isReady={isReady}
       />
       {!panelVisible && <ZoomNav zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} />}
       {/* <BoardHeader isSyncing={isSyncing} /> */}

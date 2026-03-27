@@ -30,6 +30,8 @@ interface DrawingToolsProps {
   /** Called when this component opens any of its own popovers */
   onPopoverOpened?: () => void;
   onClearRequest?: () => void;
+  /** Whether the canvas is fully initialised — drives the entrance animation */
+  isReady?: boolean;
 }
 
 type OpenGroup = "draw" | "shape" | "gif" | null;
@@ -47,6 +49,7 @@ export default function DrawingTools({
   uploadSignal,
   activeShapeType,
   onPopoverOpened,
+  isReady,
 }: DrawingToolsProps) {
   const [openGroup, setOpenGroup] = useState<OpenGroup>(null);
 
@@ -67,7 +70,7 @@ export default function DrawingTools({
   });
 
   return (
-    <ToolOverlaySurface className="fixed bottom-appBounds left-1/2 -translate-x-1/2">
+    <ToolOverlaySurface className={`fixed bottom-appBounds left-1/2 -translate-x-1/2 transition-none${isReady ? " toolbar-enter" : " opacity-0"}`}>
       <ToolButton
         active={tool === "select"}
         onClick={() => onToolChange("select")}
