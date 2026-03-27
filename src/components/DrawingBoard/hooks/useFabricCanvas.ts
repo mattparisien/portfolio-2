@@ -298,6 +298,33 @@ export function useFabricCanvas(opts: UseFabricCanvasOptions) {
       pendingTextRef.current = txt;
     };
 
+    // ── Hover border (selection border without control handles) ─────────
+    type WithRenderControls = { _renderControls(ctx: CanvasRenderingContext2D, style: object): void };
+    const hoveredObjRef: { current: Parameters<typeof fc.add>[0] | null } = { current: null };
+
+    const onMouseOver = (e: { target?: Parameters<typeof fc.add>[0] }) => {
+      const target = e.target;
+      if (!target || target === fc.getActiveObject()) return;
+      hoveredObjRef.current = target;
+      fc.requestRenderAll();
+    };
+
+    const onMouseOut = (e: { target?: Parameters<typeof fc.add>[0] }) => {
+      if (e.target !== hoveredObjRef.current) return;
+      hoveredObjRef.current = null;
+      fc.requestRenderAll();
+    };
+
+    const onAfterRender = ({ ctx }: { ctx: CanvasRenderingContext2D }) => {
+      const hovered = hoveredObjRef.current;
+      if (!hovered) return;
+      const active = fc.getActiveObject();
+      if (active === hovered) return;
+      if (active && typeof (active as { contains?: (o: unknown) => boolean }).contains === "function"
+          && (active as { contains: (o: unknown) => boolean }).contains(hovered)) return;
+      (hovered as unknown as WithRenderControls)._renderControls(ctx, { hasControls: false, hasBorders: true });
+    };
+
     const onTextEditingExited = (e: { target: IText | Textbox }) => {
       const txt   = e.target as IText;
       const isNew = txt === pendingTextRef.current;
@@ -318,6 +345,12 @@ export function useFabricCanvas(opts: UseFabricCanvasOptions) {
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    fc.on("mouse:over",          onMouseOver         as any);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    fc.on("mouse:out",           onMouseOut          as any);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    fc.on("after:render",        onAfterRender       as any);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     fc.on("path:created",        onPathCreated       as any);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     fc.on("object:modified",     onObjectModified    as any);
@@ -337,6 +370,12 @@ export function useFabricCanvas(opts: UseFabricCanvasOptions) {
     fc.on("text:editing:exited", onTextEditingExited as any);
 
     return () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      fc.off("mouse:over",          onMouseOver         as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      fc.off("mouse:out",           onMouseOut          as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      fc.off("after:render",        onAfterRender       as any);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       fc.off("path:created",        onPathCreated       as any);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
