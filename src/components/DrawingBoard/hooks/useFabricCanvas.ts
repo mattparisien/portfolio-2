@@ -160,6 +160,9 @@ export function useFabricCanvas(opts: UseFabricCanvasOptions) {
     const mods = modsRef.current;
     if (!fc || !mods) return;
 
+    // Sync initial empty state now that the canvas is ready
+    setCanvasEmpty?.(fc.getObjects().length === 0);
+
     const onPathCreated = (e: { path: Parameters<typeof fc.add>[0] }) => {
       if (isUndoingRef.current) return;
       const path = e.path as unknown as {
