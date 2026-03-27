@@ -110,8 +110,8 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
 
   // Clear confirm dialog
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
-  // Blank-canvas guidance
-  const [canvasEmpty, setCanvasEmpty]           = useState(true);
+  // Blank-canvas guidance — start false so it never flashes before canvas loads
+  const [canvasEmpty, setCanvasEmpty]           = useState(false);
   // Mobile warning banner
   const [mobileWarnDismissed, setMobileWarnDismissed] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -573,7 +573,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
       )}
 
       {/* ── Blank canvas guidance ─────────────────────────────────────────── */}
-      {canvasEmpty && (
+      {isReady && canvasEmpty && (
         <div
           className="pointer-events-none fixed inset-0 flex items-center justify-center z-[50]"
           style={{ opacity: 0.12 }}
