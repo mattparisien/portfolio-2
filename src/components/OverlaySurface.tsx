@@ -19,10 +19,10 @@ const OverlaySurface = forwardRef<HTMLDivElement, FloatingPanelProps>(
         <div
             ref={ref}
             className={classNames("drawing-ui-overlay z-[300] bg-overlay-bg", className, {
-                "border-t border-neutral-200": borderTop,
-                "border-l border-neutral-200": borderLeft,
-                "border-r border-neutral-200": borderRight,
-                "border-b border-neutral-200": borderBottom,
+                "border-t border-overlay-border": borderTop,
+                "border-l border-overlay-border": borderLeft,
+                "border-r border-overlay-border": borderRight,
+                "border-b border-overlay-border": borderBottom,
                 "rounded-xl": rounded,
             })}
             onPointerOver={onPointerOver}

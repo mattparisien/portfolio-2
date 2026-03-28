@@ -12,6 +12,12 @@ import {
 } from "react-icons/md";
 import OverlaySurface from "@/components/OverlaySurface";
 import { FontFamilyPicker } from "./FontFamilyPicker";
+import StepButton from "@/components/ui/StepButton";
+import ToggleButton from "@/components/ui/ToggleButton";
+import InlineSlider from "@/components/ui/InlineSlider";
+import Label from "@/components/ui/Label";
+import Rule from "@/components/ui/Rule";
+import Group from "@/components/ui/Group";
 
 const FONT_FAMILIES = [
   "sans-serif",
@@ -68,19 +74,8 @@ export interface PropertiesPanelProps {
   onBlendModeChange?: (mode: string) => void;
 }
 
-// ── Primitives ───────────────────────────────────────────────────────────────
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-black/30 mb-2 select-none">
-      {children}
-    </p>
-  );
-}
 
-function Rule() {
-  return <div className="h-px bg-black/[0.07]" />;
-}
 
 const SWATCH_SHADOW =
   "0 0 0 1.5px rgba(0,0,0,0.14), 0 0 0 3.5px #fff, 0 0 0 5px rgba(0,0,0,0.07)";
@@ -139,95 +134,8 @@ function ColorRow({
   );
 }
 
-function InlineSlider({
-  label,
-  value,
-  displayValue,
-  min,
-  max,
-  step = 1,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  displayValue: string;
-  min: number;
-  max: number;
-  step?: number;
-  onChange: (v: number) => void;
-}) {
-  const pct = Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[11px] font-medium text-black/40 select-none">{label}</span>
-        <span className="text-[11px] font-semibold tabular-nums text-black/60 select-none">
-          {displayValue}
-        </span>
-      </div>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="toolbar-slider w-full"
-        style={{
-          background: `linear-gradient(to right, #111 ${pct}%, #e0e0e0 ${pct}%)`,
-        }}
-      />
-    </div>
-  );
-}
 
-function ToggleBtn({
-  active,
-  title,
-  onClick,
-  children,
-  style,
-}: {
-  active: boolean;
-  title: string;
-  onClick: () => void;
-  children: React.ReactNode;
-  style?: React.CSSProperties;
-}) {
-  return (
-    <button
-      title={title}
-      onClick={onClick}
-      style={style}
-      className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm transition-all duration-150 select-none cursor-pointer flex-shrink-0 ${active
-        ? "bg-black text-white shadow-sm"
-        : "hover:bg-black/[0.07] text-gray-600 hover:text-gray-900"
-        }`}
-    >
-      {children}
-    </button>
-  );
-}
 
-function StepBtn({
-  title,
-  onClick,
-  children,
-}: {
-  title: string;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      title={title}
-      onClick={onClick}
-      className="w-7 h-7 rounded-md bg-black/[0.04] hover:bg-black/[0.09] flex items-center justify-center text-gray-500 transition-colors cursor-pointer flex-shrink-0"
-    >
-      {children}
-    </button>
-  );
-}
 
 // ── Main component ─────────────────────────────────────────────────────────
 
@@ -298,8 +206,8 @@ export default function PropertiesPanel({
         /* ═══════════════════ TEXT VIEW ═══════════════════ */
         <>
           {/* ── Color ── */}
-          <div className="px-4 pt-3 pb-3">
-            <SectionLabel>Color</SectionLabel>
+          <Group>
+            <Label>Color</Label>
             <ColorRow
               color={gradient ? "#000000" : color}
               isOpen={textColorOpen}
@@ -311,13 +219,12 @@ export default function PropertiesPanel({
                 <span className="text-[11px] font-mono font-medium text-black/40">Gradient</span>
               </div>
             )}
-          </div>
-
+          </Group>
           <Rule />
 
           {/* ── Font ── */}
-          <div className="px-4 pt-3 pb-3">
-            <SectionLabel>Font</SectionLabel>
+            <Group>
+            <Label>Font</Label>
 
             <div className="rounded-lg bg-black/[0.04] mb-2.5">
               <FontFamilyPicker
@@ -330,7 +237,7 @@ export default function PropertiesPanel({
 
             {/* Font size stepper */}
             <div className="flex items-center gap-1.5">
-              <StepBtn
+              <StepButton
                 title="Decrease font size"
                 onClick={() => {
                   const i = FONT_SIZES.indexOf(fontSize);
@@ -338,7 +245,7 @@ export default function PropertiesPanel({
                 }}
               >
                 <MdRemove size={11} />
-              </StepBtn>
+              </StepButton>
               <select
                 value={fontSize}
                 onChange={(e) => onApplyText({ fontSize: Number(e.target.value) })}
@@ -349,7 +256,7 @@ export default function PropertiesPanel({
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>
-              <StepBtn
+              <StepButton
                 title="Increase font size"
                 onClick={() => {
                   const i = FONT_SIZES.indexOf(fontSize);
@@ -358,46 +265,46 @@ export default function PropertiesPanel({
                 }}
               >
                 <MdAdd size={11} />
-              </StepBtn>
+              </StepButton>
             </div>
-          </div>
+          </Group>
 
           <Rule />
 
           {/* ── Style ── */}
-          <div className="px-4 pt-3 pb-3">
-            <SectionLabel>Style</SectionLabel>
+          <Group>
+            <Label>Style</Label>
 
             {/* B I U S AA — all in one row */}
             <div className="flex items-center gap-0.5 mb-2">
-              <ToggleBtn active={bold} title="Bold" onClick={() => onApplyText({ bold: !bold })} style={{ fontWeight: 700 }}>B</ToggleBtn>
-              <ToggleBtn active={italic} title="Italic" onClick={() => onApplyText({ italic: !italic })} style={{ fontStyle: "italic" }}>I</ToggleBtn>
-              <ToggleBtn active={underline} title="Underline" onClick={() => onApplyText({ underline: !underline })} style={{ textDecoration: "underline" }}>U</ToggleBtn>
-              <ToggleBtn active={linethrough} title="Strikethrough" onClick={() => onApplyText({ linethrough: !linethrough })} style={{ textDecoration: "line-through" }}>S</ToggleBtn>
-              <ToggleBtn active={uppercase} title="All caps" onClick={() => onApplyText({ uppercase: !uppercase })}>
+              <ToggleButton active={bold} title="Bold" onClick={() => onApplyText({ bold: !bold })} style={{ fontWeight: 700 }}>B</ToggleButton>
+              <ToggleButton active={italic} title="Italic" onClick={() => onApplyText({ italic: !italic })} style={{ fontStyle: "italic" }}>I</ToggleButton>
+              <ToggleButton active={underline} title="Underline" onClick={() => onApplyText({ underline: !underline })} style={{ textDecoration: "underline" }}>U</ToggleButton>
+              <ToggleButton active={linethrough} title="Strikethrough" onClick={() => onApplyText({ linethrough: !linethrough })} style={{ textDecoration: "line-through" }}>S</ToggleButton>
+              <ToggleButton active={uppercase} title="All caps" onClick={() => onApplyText({ uppercase: !uppercase })}>
                 <span className="text-[10px] font-bold tracking-wider">AA</span>
-              </ToggleBtn>
+              </ToggleButton>
             </div>
 
             {/* Alignment */}
             <div className="flex items-center gap-0.5">
-              <ToggleBtn active={textAlign === "left"} title="Align left" onClick={() => onApplyText({ textAlign: "left" })}>
+              <ToggleButton active={textAlign === "left"} title="Align left" onClick={() => onApplyText({ textAlign: "left" })}>
                 <MdFormatAlignLeft size={14} />
-              </ToggleBtn>
-              <ToggleBtn active={textAlign === "center"} title="Align center" onClick={() => onApplyText({ textAlign: "center" })}>
+              </ToggleButton>
+              <ToggleButton active={textAlign === "center"} title="Align center" onClick={() => onApplyText({ textAlign: "center" })}>
                 <MdFormatAlignCenter size={14} />
-              </ToggleBtn>
-              <ToggleBtn active={textAlign === "right"} title="Align right" onClick={() => onApplyText({ textAlign: "right" })}>
+              </ToggleButton>
+              <ToggleButton active={textAlign === "right"} title="Align right" onClick={() => onApplyText({ textAlign: "right" })}>
                 <MdFormatAlignRight size={14} />
-              </ToggleBtn>
+              </ToggleButton>
             </div>
-          </div>
+          </Group>
 
           <Rule />
 
           {/* ── Spacing ── */}
-          <div className="px-4 pt-3 pb-3">
-            <SectionLabel>Spacing</SectionLabel>
+          <Group>
+            <Label>Spacing</Label>
             <div className="flex flex-col gap-4">
               <InlineSlider
                 label="Line height"
@@ -418,14 +325,14 @@ export default function PropertiesPanel({
                 onChange={(v) => onApplyText({ charSpacing: v })}
               />
             </div>
-          </div>
+          </Group>
         </>
       ) : selectedIsImage ? (
         /* ═════════════════════ IMAGE VIEW ═════════════════════ */
         <>
           {/* ── Remove Background ── */}
-          <div className="px-4 pt-3 pb-3">
-            <SectionLabel>Image</SectionLabel>
+          <Group>
+            <Label>Image</Label>
             <button
               title="Remove background"
               disabled={isRemovingBg}
@@ -440,13 +347,13 @@ export default function PropertiesPanel({
               <MdAutoFixHigh size={14} />
               {isRemovingBg ? "Removing…" : "Remove Background"}
             </button>
-          </div>
+          </Group>
 
           <Rule />
 
           {/* ── Opacity ── */}
-          <div className="px-4 pt-3 pb-3">
-            <SectionLabel>Properties</SectionLabel>
+          <Group>
+            <Label>Properties</Label>
             <InlineSlider
               label="Opacity"
               value={Math.round(opacity * 100)}
@@ -455,13 +362,13 @@ export default function PropertiesPanel({
               max={100}
               onChange={(v) => onOpacityChange(v / 100)}
             />
-          </div>
+          </Group>
 
           <Rule />
 
           {/* ── Blend Mode ── */}
-          <div className="px-4 pt-3 pb-3">
-            <SectionLabel>Blend Mode</SectionLabel>
+          <Group>
+            <Label>Blend Mode</Label>
             <select
               value={imageBlendMode}
               onChange={(e) => onBlendModeChange?.(e.target.value)}
@@ -485,14 +392,14 @@ export default function PropertiesPanel({
               <option value="color">Color</option>
               <option value="luminosity">Luminosity</option>
             </select>
-          </div>
+          </Group>
         </>
       ) : (
         /* ═══════════════════ OBJECT / DRAWING VIEW ═══════════════════ */
         <>
           {/* ── Fill / Stroke color ── */}
-          <div className="px-4 pt-3 pb-3">
-            <SectionLabel>{selectedIsLine ? "Stroke" : "Fill"}</SectionLabel>
+          <Group>
+            <Label>{selectedIsLine ? "Stroke" : "Fill"}</Label>
             <ColorRow
               color={color}
               gradientCss={selectedIsLine ? undefined : fillGradientCss}
@@ -500,29 +407,29 @@ export default function PropertiesPanel({
               onSwatchClick={() => (fillColorOpen ? onCloseColor() : onOpenFillColor())}
               onColorChange={onFillColorChange}
             />
-          </div>
+          </Group>
 
           {/* ── Stroke color — shapes only ── */}
           {selectedIsShape && strokeColor !== undefined && (
             <>
               <Rule />
-              <div className="px-4 pt-3 pb-3">
-                <SectionLabel>Stroke</SectionLabel>
+              <Group>
+                <Label>Stroke</Label>
                 <ColorRow
                   color={strokeColor}
                   isOpen={strokeColorOpen}
                   onSwatchClick={() => (strokeColorOpen ? onCloseColor() : onOpenStrokeColor())}
                   onColorChange={onStrokeColorChange ?? (() => { })}
                 />
-              </div>
+              </Group>
             </>
           )}
 
           <Rule />
 
           {/* ── Weight + Opacity ── */}
-          <div className="px-4 pt-3 pb-3">
-            <SectionLabel>Properties</SectionLabel>
+          <Group>
+            <Label>Properties</Label>
             <div className="flex flex-col gap-4">
               <InlineSlider
                 label="Weight"
@@ -541,7 +448,7 @@ export default function PropertiesPanel({
                 onChange={(v) => onOpacityChange(v / 100)}
               />
             </div>
-          </div>
+          </Group>
         </>
       )}
     </OverlaySurface>
