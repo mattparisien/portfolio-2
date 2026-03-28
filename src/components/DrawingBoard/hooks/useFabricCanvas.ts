@@ -320,8 +320,8 @@ export function useFabricCanvas(opts: UseFabricCanvasOptions) {
       if (!hovered) return;
       const active = fc.getActiveObject();
       if (active === hovered) return;
-      if (active && typeof (active as { contains?: (o: unknown) => boolean }).contains === "function"
-          && (active as { contains: (o: unknown) => boolean }).contains(hovered)) return;
+      if (active && typeof (active as unknown as { contains?: (o: unknown) => boolean }).contains === "function"
+          && (active as unknown as { contains: (o: unknown) => boolean }).contains(hovered)) return;
       (hovered as unknown as WithRenderControls)._renderControls(ctx, { hasControls: false, hasBorders: true });
     };
 
