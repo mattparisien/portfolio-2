@@ -32,7 +32,7 @@ export default function ImagePanel({
           title="Remove background"
           disabled={isRemovingBg}
           onClick={onRemoveBg}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-[12px] font-semibold transition-all duration-150 cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-ui-component text-[12px] font-semibold transition-all duration-150 cursor-pointer"
           style={{
             background: isRemovingBg ? "rgba(0,0,0,0.04)" : "rgba(0,0,0,0.07)",
             color: isRemovingBg ? "#999" : "#222",
@@ -55,7 +55,7 @@ export default function ImagePanel({
           value={imageBlendMode}
           onChange={(e) => onBlendModeChange?.(e.target.value)}
           title="Blend mode"
-          className="w-full text-[12px] rounded-lg px-2.5 py-1.5 bg-black/[0.04] text-gray-700 font-medium border-0 outline-none cursor-pointer"
+          className="w-full text-[12px] rounded-ui-component px-2.5 py-1.5 bg-black/[0.04] text-gray-700 font-medium border-0 outline-none cursor-pointer"
         >
           <option value="source-over">Normal</option>
           <option value="multiply">Multiply</option>

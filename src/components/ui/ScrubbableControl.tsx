@@ -79,7 +79,7 @@ export default function ScrubbableControl({
   }, [inputVal, value, onChange, clamp]);
 
   return (
-    <div className="flex items-stretch h-6 max-w-1/2 rounded-sm overflow-hidden bg-black/[0.04] text-[12px] font-medium">
+    <div className="flex items-stretch h-6 max-w-1/2 rounded-ui-component overflow-hidden bg-black/[0.04] text-[12px]">
       {/* Scrub handle */}
       <div
         data-scrub-handle

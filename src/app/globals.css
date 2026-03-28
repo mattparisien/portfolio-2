@@ -14,6 +14,8 @@
   --color-overlay-hover: var(--color-neutral-200);
   --color-overlay-border: var(--color-neutral-200);
 
+  --radius-ui-component: var(--radius-md);
+
   --transition-overlay-hover: background-color 0.2s ease;
   --shadow-sm: none;
   --shadow: none;

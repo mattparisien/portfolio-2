@@ -64,7 +64,7 @@ export function FontFamilyPicker({ value, fonts, onChange, variant = "compact" }
         ref={btnRef}
         title="Font family"
         onClick={() => (open ? setOpen(false) : openPicker())}
-        className={`flex items-center gap-1 rounded-lg transition-colors hover:bg-black/[0.05] cursor-pointer select-none border-0 outline-none bg-transparent ${
+        className={`flex items-center gap-1 rounded-ui-component transition-colors hover:bg-black/[0.05] cursor-pointer select-none border-0 outline-none bg-transparent ${
           isCompact ? "px-2 py-1.5 text-xs" : "w-full px-2.5 py-1.5 text-[12px]"
         }`}
       >
@@ -113,7 +113,7 @@ export function FontFamilyPicker({ value, fonts, onChange, variant = "compact" }
                   onChange(f);
                   setOpen(false);
                 }}
-                className="w-full px-3 py-2 text-left rounded-lg text-[13px] text-gray-800 hover:bg-black/[0.05] transition-colors cursor-pointer flex items-center justify-between gap-2"
+                className="w-full px-3 py-2 text-left rounded-ui-component text-[13px] text-gray-800 hover:bg-black/[0.05] transition-colors cursor-pointer flex items-center justify-between gap-2"
                 style={{ fontFamily: f }}
               >
                 <span>{f}</span>

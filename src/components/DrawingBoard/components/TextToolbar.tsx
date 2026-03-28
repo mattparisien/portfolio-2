@@ -222,7 +222,7 @@ export default function TextToolbar({ textProps, color, onApply, closeSignal, on
           aria-label="Text color"
           aria-expanded={!!colorPopoverOpen}
           onClick={(e) => { e.stopPropagation(); colorPopoverOpen ? onCloseColorPopover?.() : onOpenColorPopover?.(); setLineHeightOpen(false); setLetterSpacingOpen(false); }}
-          className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-150 hover:scale-105"
+          className="w-8 h-8 rounded-ui-component flex items-center justify-center cursor-pointer transition-all duration-150 hover:scale-105"
           style={{ background: colorPopoverOpen ? "rgba(0,0,0,0.09)" : "transparent" }}
         >
           <span style={swatchStyle} className="flex-shrink-0 block" />
