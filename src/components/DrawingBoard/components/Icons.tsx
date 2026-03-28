@@ -211,3 +211,19 @@ export const BrushCursorIcon = ({ style }: { style?: React.CSSProperties }) => (
         <line x1="12.5" y1="3.5" x2="16.5" y2="7.5" stroke="white" strokeWidth="0.8" />
     </svg>
 )
+
+export const OpacityIcon = ({ width = 22, height = 22, strokeWidth = 2, stroke = "black" }: IconProps) => {
+    return (
+        <svg width={width} height={height} viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 10.25C8.79493 10.25 10.25 8.79493 10.25 7C10.25 5.20507 8.79493 3.75 7 3.75C5.20507 3.75 3.75 5.20507 3.75 7C3.75 8.79493 5.20507 10.25 7 10.25Z" strokeWidth={strokeWidth} stroke={stroke} strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M7 0.5V1.5" stroke={stroke} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M7 12.5V13.5" stroke={stroke} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M13.5 7H12.5" stroke={stroke} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M1.5 7H0.5" stroke={stroke} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M11.6 2.3999L10.89 3.1099" stroke={stroke} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M3.10999 10.8899L2.39999 11.5999" stroke={stroke} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M11.6 11.5999L10.89 10.8899" stroke={stroke} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M3.10999 3.1099L2.39999 2.3999" stroke={stroke} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    )
+}

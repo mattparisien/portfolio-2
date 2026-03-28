@@ -292,6 +292,12 @@ body {
   cursor: pointer !important;
 }
 
+/* Scrubbable drag handle needs ew-resize even inside the overlay */
+.board-no-cursor .drawing-ui-overlay [data-scrub-handle],
+.board-no-cursor .drawing-ui-overlay [data-scrub-handle] * {
+  cursor: ew-resize !important;
+}
+
 /* Restore pointer for all interactive elements board-wide (covers overlays without drawing-ui-overlay) */
 .board-no-cursor button,
 .board-no-cursor button *,
