@@ -10,12 +10,12 @@ import {
 import { FontFamilyPicker } from "../FontFamilyPicker";
 import StepButton from "@/components/ui/StepButton";
 import ToggleButton from "@/components/ui/ToggleButton";
-import InlineSlider from "@/components/ui/InlineSlider";
 import Label from "@/components/ui/Label";
 import Rule from "@/components/ui/Rule";
 import Group from "@/components/ui/Group";
 import ColorRow from "./ColorRow";
 import AppearanceGroup from "./AppearanceGroup";
+import ScrubbableControl from "@/components/ui/ScrubbableControl";
 import type { TextProps } from "../../types";
 
 const FONT_FAMILIES = [
@@ -224,20 +224,23 @@ export default function TextPanel({
       {/* ── Spacing ── */}
       <Group>
         <Label>Spacing</Label>
-        <div className="flex flex-col gap-4">
-          <InlineSlider
-            label="Line height"
+        <div className="flex items-center gap-2">
+          <ScrubbableControl
+            icon={
+              <span className="text-[10px] font-semibold tracking-wide select-none">LH</span>
+            }
             value={lineHeight}
-            displayValue={lineHeight.toFixed(1)}
             min={0.5}
             max={4}
             step={0.1}
+            sensitivity={0.02}
             onChange={(v) => onApplyText({ lineHeight: Math.round(v * 10) / 10 })}
           />
-          <InlineSlider
-            label="Letter spacing"
+          <ScrubbableControl
+            icon={
+              <span className="text-[10px] font-semibold tracking-wide select-none">LS</span>
+            }
             value={charSpacing}
-            displayValue={String(charSpacing)}
             min={-200}
             max={1000}
             step={5}

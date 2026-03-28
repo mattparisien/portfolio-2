@@ -212,7 +212,7 @@ export const BrushCursorIcon = ({ style }: { style?: React.CSSProperties }) => (
     </svg>
 )
 
-export const OpacityIcon = ({ width = 22, height = 22, strokeWidth = 2, stroke = "black" }: IconProps) => {
+export const OpacityIcon = ({ width = 22, height = 22, strokeWidth = 2, stroke = "currentColor" }: IconProps) => {
     return (
         <svg width={width} height={height} viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M7 10.25C8.79493 10.25 10.25 8.79493 10.25 7C10.25 5.20507 8.79493 3.75 7 3.75C5.20507 3.75 3.75 5.20507 3.75 7C3.75 8.79493 5.20507 10.25 7 10.25Z" strokeWidth={strokeWidth} stroke={stroke} strokeLinecap="round" strokeLinejoin="round" />

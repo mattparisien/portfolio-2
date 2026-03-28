@@ -79,12 +79,12 @@ export default function ScrubbableControl({
   }, [inputVal, value, onChange, clamp]);
 
   return (
-    <div className="flex items-stretch h-6 max-w-1/2 rounded-ui-component overflow-hidden bg-black/[0.04] text-[12px]">
+    <div className="flex hover:border-[0.5px] hover:border-neutral-300 items-stretch min-h-6 max-w-1/2 flex-1 min-w-0 rounded-none overflow-hidden bg-black/[0.04] text-[12px] rounded-ui-component">
       {/* Scrub handle */}
       <div
         data-scrub-handle
         onMouseDown={handleScrubDown}
-        className="flex items-center justify-center px-1 text-black/40 transition-colors select-none"
+        className="flex items-center justify-center px-1 text-neutral-500 transition-colors select-none"
         style={{ cursor: "ew-resize" }}
         title="Drag to scrub"
       >
