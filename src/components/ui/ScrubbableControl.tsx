@@ -95,7 +95,7 @@ export default function ScrubbableControl({
       <div className="w-px bg-black/[0.07] self-stretch" />
 
       {/* Value input */}
-      <div className="flex items-center flex-1 min-w-0 px-2 gap-0.5">
+      <div className="flex font-light items-center flex-1 min-w-0 px-2 gap-0.5">
         <input
           ref={inputRef}
           type="text"
@@ -123,7 +123,7 @@ export default function ScrubbableControl({
               onChange(clamp(value - step));
             }
           }}
-          className="w-full bg-transparent border-0 outline-none tabular-nums text-black/70 font-semibold text-[12px] text-right"
+          className="w-full bg-transparent border-0 outline-none tabular-nums text-black/70 font-semibold text-[11px] text-left"
         />
       </div>
     </div>
