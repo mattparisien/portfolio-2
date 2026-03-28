@@ -79,7 +79,7 @@ export default function ScrubbableControl({
   }, [inputVal, value, onChange, clamp]);
 
   return (
-    <div className="flex hover:border-[0.5px] hover:border-neutral-300 items-stretch min-h-6 max-w-1/2 flex-1 min-w-0 rounded-none overflow-hidden bg-black/[0.04] text-[12px] rounded-ui-component">
+    <div className="flex hover:ring-[0.5px] hover:ring-neutral-300 items-stretch min-h-6 max-w-1/2 flex-1 min-w-0 rounded-none overflow-hidden bg-black/[0.04] text-[12px] rounded-ui-component">
       {/* Scrub handle */}
       <div
         data-scrub-handle
@@ -92,7 +92,7 @@ export default function ScrubbableControl({
       </div>
 
       {/* Divider */}
-      <div className="w-px bg-black/[0.07] self-stretch" />
+      <div className="w-px bg-bg self-stretch" />
 
       {/* Value input */}
       <div className="flex font-light items-center flex-1 min-w-0 px-2 gap-0.5">
