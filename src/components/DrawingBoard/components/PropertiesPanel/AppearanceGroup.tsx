@@ -8,8 +8,8 @@ import ScrubbableControl from "@/components/ui/ScrubbableControl";
 import { OpacityIcon } from "../Icons";
 
 export interface AppearanceGroupProps {
-  opacity: number;
-  onOpacityChange: (v: number) => void;
+  opacity?: number;
+  onOpacityChange?: (v: number) => void;
   strokeWeight?: number;
   onStrokeWeightChange?: (v: number) => void;
 }
@@ -20,6 +20,12 @@ export default function AppearanceGroup({
   strokeWeight,
   onStrokeWeightChange,
 }: AppearanceGroupProps) {
+  const hasContent =
+    (strokeWeight !== undefined && onStrokeWeightChange) ||
+    (opacity !== undefined && onOpacityChange);
+
+  if (!hasContent) return null;
+
   return (
     <>
       <Rule />
@@ -36,19 +42,21 @@ export default function AppearanceGroup({
               onChange={onStrokeWeightChange}
             />
           )}
-          <ScrubbableControl
-            icon={
-              <OpacityIcon
-                strokeWidth={1}
-                height={14}
-              />
-            }
-            value={Math.round(opacity * 100)}
-            min={0}
-            max={100}
-            unit="%"
-            onChange={(v) => onOpacityChange(v / 100)}
-          />
+          {opacity !== undefined && onOpacityChange && (
+            <ScrubbableControl
+              icon={
+                <OpacityIcon
+                  strokeWidth={1}
+                  height={14}
+                />
+              }
+              value={Math.round(opacity * 100)}
+              min={0}
+              max={100}
+              unit="%"
+              onChange={(v) => onOpacityChange(v / 100)}
+            />
+          )}
         </div>
       </Group>
     </>

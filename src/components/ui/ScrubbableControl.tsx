@@ -11,6 +11,8 @@ export interface ScrubbableControlProps {
   unit?: string;
   sensitivity?: number;
   onChange: (v: number) => void;
+  /** When provided, the left slot becomes a clickable button and scrubbing moves to the value area. */
+  onIconClick?: () => void;
 }
 
 export default function ScrubbableControl({
@@ -22,6 +24,7 @@ export default function ScrubbableControl({
   unit = "",
   sensitivity = 1,
   onChange,
+  onIconClick,
 }: ScrubbableControlProps) {
   const [inputVal, setInputVal] = useState(String(value));
   const [editing, setEditing] = useState(false);
@@ -79,23 +82,40 @@ export default function ScrubbableControl({
   }, [inputVal, value, onChange, clamp]);
 
   return (
-    <div className="flex hover:ring-[0.5px] hover:ring-neutral-300 items-stretch min-h-6 max-w-1/2 flex-1 min-w-0 rounded-none overflow-hidden bg-black/[0.04] text-[12px] rounded-ui-component">
-      {/* Scrub handle */}
-      <div
-        data-scrub-handle
-        onMouseDown={handleScrubDown}
-        className="flex items-center justify-center px-1 text-neutral-500 transition-colors select-none"
-        style={{ cursor: "ew-resize" }}
-        title="Drag to scrub"
-      >
-        {icon}
-      </div>
+    <div className="flex hover:ring-[0.5px] hover:ring-neutral-300 items-stretch min-h-6 flex-1 min-w-0 overflow-hidden bg-black/[0.04] text-[12px] rounded-ui-component">
+      {/* Left slot — scrub handle OR clickable icon */}
+      {onIconClick ? (
+        <button
+          onClick={(e) => { e.stopPropagation(); onIconClick(); }}
+          className="flex items-center justify-center px-1.5 cursor-pointer bg-transparent border-0 flex-shrink-0"
+        >
+          {icon}
+        </button>
+      ) : (
+        <div
+          data-scrub-handle
+          onMouseDown={handleScrubDown}
+          className="flex items-center justify-center px-1 text-neutral-500 transition-colors select-none cursor-ew-resize"
+          title="Drag to scrub"
+        >
+          {icon}
+        </div>
+      )}
 
       {/* Divider */}
       <div className="w-px bg-bg self-stretch" />
 
-      {/* Value input */}
-      <div className="flex font-light items-center flex-1 min-w-0 px-2 gap-0.5">
+      {/* Value input — also the scrub area when onIconClick is set */}
+      <div
+        className={`flex font-light items-center flex-1 min-w-0 px-2 gap-0.5${onIconClick && !editing ? " cursor-ew-resize" : ""}`}
+        onMouseDown={
+          onIconClick
+            ? (e) => {
+                if ((e.target as HTMLElement).tagName !== "INPUT") handleScrubDown(e);
+              }
+            : undefined
+        }
+      >
         <input
           ref={inputRef}
           type="text"

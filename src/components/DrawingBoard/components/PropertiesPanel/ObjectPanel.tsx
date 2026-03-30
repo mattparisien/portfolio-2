@@ -3,7 +3,7 @@
 import Label from "@/components/ui/Label";
 import Rule from "@/components/ui/Rule";
 import Group from "@/components/ui/Group";
-import ColorRow from "./ColorRow";
+import ColorOpacityRow from "./ColorOpacityRow";
 import AppearanceGroup from "./AppearanceGroup";
 
 export interface ObjectPanelProps {
@@ -48,14 +48,16 @@ export default function ObjectPanel({
       {/* ── Fill / Stroke color ── */}
       <Group>
         <Label>{selectedIsLine ? "Stroke" : "Fill"}</Label>
-        <ColorRow
+        <ColorOpacityRow
           color={color}
           gradientCss={selectedIsLine ? undefined : fillGradientCss}
+          opacity={Math.round(opacity * 100)}
           isOpen={fillColorOpen}
           onSwatchClick={() =>
             fillColorOpen ? onCloseColor() : onOpenFillColor()
           }
           onColorChange={onFillColorChange}
+          onOpacityChange={(v) => onOpacityChange(v / 100)}
         />
       </Group>
 
@@ -65,21 +67,21 @@ export default function ObjectPanel({
           <Rule />
           <Group>
             <Label>Stroke</Label>
-            <ColorRow
+            <ColorOpacityRow
               color={strokeColor}
+              opacity={Math.round(opacity * 100)}
               isOpen={strokeColorOpen}
               onSwatchClick={() =>
                 strokeColorOpen ? onCloseColor() : onOpenStrokeColor()
               }
               onColorChange={onStrokeColorChange ?? (() => {})}
+              onOpacityChange={(v) => onOpacityChange(v / 100)}
             />
           </Group>
         </>
       )}
 
       <AppearanceGroup
-        opacity={opacity}
-        onOpacityChange={onOpacityChange}
         strokeWeight={strokeWeight}
         onStrokeWeightChange={onStrokeWeightChange}
       />
