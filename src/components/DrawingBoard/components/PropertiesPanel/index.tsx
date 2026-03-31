@@ -13,6 +13,7 @@ export interface PropertiesPanelProps {
   selectedIsImage?: boolean;
   selectedIsShape: boolean;
   selectedIsLine: boolean;
+  selectedIsPath: boolean;
   color: string;
   fillGradient?: TextGradient | null;
   strokeColor?: string;
@@ -44,6 +45,7 @@ export default function PropertiesPanel({
   selectedIsImage,
   selectedIsShape,
   selectedIsLine,
+  selectedIsPath,
   color,
   fillGradient,
   strokeColor,
@@ -113,6 +115,7 @@ export default function PropertiesPanel({
           strokeColor={strokeColor}
           selectedIsShape={selectedIsShape}
           selectedIsLine={selectedIsLine}
+          selectedIsPath={selectedIsPath}
           opacity={opacity}
           strokeWeight={strokeWeight}
           fillColorOpen={fillColorOpen}

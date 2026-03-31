@@ -593,6 +593,7 @@ function DrawingBoardInner({ initialObjects }: { initialObjects: { fabricJSON: s
           selectedIsImage={selectedIsImage}
           selectedIsShape={selectedIsShape}
           selectedIsLine={selectedIsLine}
+          selectedIsPath={selectedIsPath}
           color={color}
           fillGradient={fillGradient}
           strokeColor={selectedIsShape ? shapeStrokeColor : undefined}

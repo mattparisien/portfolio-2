@@ -3,6 +3,8 @@
 import Label from "@/components/ui/Label";
 import Rule from "@/components/ui/Rule";
 import Group from "@/components/ui/Group";
+import ScrubbableControl from "@/components/ui/ScrubbableControl";
+import { StrokeWeightIcon } from "../Icons";
 import ColorOpacityRow from "./ColorOpacityRow";
 import AppearanceGroup from "./AppearanceGroup";
 
@@ -12,6 +14,7 @@ export interface ObjectPanelProps {
   strokeColor?: string;
   selectedIsShape: boolean;
   selectedIsLine: boolean;
+  selectedIsPath: boolean;
   opacity: number;
   strokeWeight: number;
   fillColorOpen: boolean;
@@ -31,6 +34,7 @@ export default function ObjectPanel({
   strokeColor,
   selectedIsShape,
   selectedIsLine,
+  selectedIsPath,
   opacity,
   strokeWeight,
   fillColorOpen,
@@ -45,20 +49,33 @@ export default function ObjectPanel({
 }: ObjectPanelProps) {
   return (
     <>
-      {/* ── Fill / Stroke color ── */}
+      {/* ── Fill / Stroke color + weight ── */}
       <Group>
-        <Label>{selectedIsLine ? "Stroke" : "Fill"}</Label>
-        <ColorOpacityRow
-          color={color}
-          gradientCss={selectedIsLine ? undefined : fillGradientCss}
-          opacity={Math.round(opacity * 100)}
-          isOpen={fillColorOpen}
-          onSwatchClick={() =>
-            fillColorOpen ? onCloseColor() : onOpenFillColor()
-          }
-          onColorChange={onFillColorChange}
-          onOpacityChange={(v) => onOpacityChange(v / 100)}
-        />
+        <Label>{(selectedIsLine || selectedIsPath) ? "Stroke" : "Fill"}</Label>
+        <div className="flex flex-col gap-2">
+          <ColorOpacityRow
+            color={color}
+            gradientCss={selectedIsLine ? undefined : fillGradientCss}
+            opacity={Math.round(opacity * 100)}
+            isOpen={fillColorOpen}
+            onSwatchClick={() =>
+              fillColorOpen ? onCloseColor() : onOpenFillColor()
+            }
+            onColorChange={onFillColorChange}
+            onOpacityChange={(v) => onOpacityChange(v / 100)}
+          />
+          <div className="w-1/2">
+            <ScrubbableControl
+              icon={<StrokeWeightIcon width={18} height={18} strokeWidth={1.5} />}
+              value={strokeWeight}
+              min={1}
+              max={60}
+              step={1}
+              unit="px"
+              onChange={onStrokeWeightChange}
+            />
+          </div>
+        </div>
       </Group>
 
       {/* ── Stroke color — shapes only ── */}
@@ -82,7 +99,6 @@ export default function ObjectPanel({
       )}
 
       <AppearanceGroup
-        strokeWeight={strokeWeight}
         onStrokeWeightChange={onStrokeWeightChange}
       />
     </>
