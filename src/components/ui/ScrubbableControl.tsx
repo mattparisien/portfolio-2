@@ -87,7 +87,7 @@ export default function ScrubbableControl({
       {onIconClick ? (
         <button
           onClick={(e) => { e.stopPropagation(); onIconClick(); }}
-          className="flex items-center justify-center px-2 self-stretch cursor-pointer bg-transparent border-0 flex-shrink-0"
+          className="flex items-center justify-center p-1 cursor-pointer bg-transparent border-0 flex-shrink-0"
         >
           {icon}
         </button>
@@ -95,7 +95,7 @@ export default function ScrubbableControl({
         <div
           data-scrub-handle
           onMouseDown={handleScrubDown}
-          className="flex items-center justify-center px-2 self-stretch text-neutral-500 transition-colors select-none cursor-ew-resize"
+          className="flex items-center justify-center p-1 text-neutral-500 transition-colors select-none cursor-ew-resize"
           title="Drag to scrub"
         >
           {icon}

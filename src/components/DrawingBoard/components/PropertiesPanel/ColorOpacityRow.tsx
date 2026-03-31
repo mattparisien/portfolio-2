@@ -80,7 +80,7 @@ export default function ColorOpacityRow({
         <button
           title="Pick colour"
           onClick={(e) => { e.stopPropagation(); onSwatchClick(); }}
-          className="flex items-center justify-center px-2 self-stretch flex-shrink-0 cursor-pointer bg-transparent border-0"
+          className="flex items-center justify-center p-1 flex-shrink-0 cursor-pointer bg-transparent border-0"
         >
           <span
             className="rounded-sm block"
