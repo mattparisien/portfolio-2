@@ -39,9 +39,6 @@ export default function ColorRow({
           width: 22,
           height: 22,
           background: gradientCss ?? color,
-          boxShadow: isOpen
-            ? `0 0 0 2px #fff, 0 0 0 4px #000`
-            : SWATCH_SHADOW,
         }}
       />
       <input

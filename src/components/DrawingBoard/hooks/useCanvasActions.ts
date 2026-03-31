@@ -486,7 +486,10 @@ export function useCanvasActions({
     // Pencil/brush paths and lines store color on `stroke`; shapes/text on `fill`
     const type = (obj as { type?: string }).type;
     if (type === "path" || type === "line") {
-      obj.set({ stroke: c });
+      // Closed pen paths also have a fill set — keep it in sync with stroke
+      const hasFill = typeof (obj as unknown as { fill?: unknown }).fill === "string" &&
+        (obj as unknown as { fill?: string }).fill !== "";
+      obj.set(hasFill ? { stroke: c, fill: c } : { stroke: c });
     } else {
       obj.set({ fill: c });
     }
@@ -505,7 +508,9 @@ export function useCanvasActions({
     if (!g) {
       // Clear gradient → revert to solid color
       if (type === "path" || type === "line") {
-        obj.set({ stroke: colorRef.current });
+        const hasFill = typeof (obj as unknown as { fill?: unknown }).fill === "string" &&
+          (obj as unknown as { fill?: string }).fill !== "";
+        obj.set(hasFill ? { stroke: colorRef.current, fill: colorRef.current } : { stroke: colorRef.current });
       } else {
         obj.set({ fill: colorRef.current });
       }

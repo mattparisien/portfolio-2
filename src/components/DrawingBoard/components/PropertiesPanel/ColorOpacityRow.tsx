@@ -76,7 +76,7 @@ export default function ColorOpacityRow({
     <div className="flex hover:ring-[0.5px] hover:ring-neutral-300 items-stretch min-h-6 w-full rounded-ui-component overflow-hidden bg-black/[0.04] text-[12px]">
 
       {/* Left half: swatch + hex */}
-      <div className="flex items-center w-1/2 min-w-0">
+      <div className="flex items-center w-2/3 min-w-0">
         <button
           title="Pick colour"
           onClick={(e) => { e.stopPropagation(); onSwatchClick(); }}
@@ -87,8 +87,7 @@ export default function ColorOpacityRow({
             style={{
               width: 14,
               height: 14,
-              background: gradientCss ?? color,
-              boxShadow: isOpen ? "0 0 0 2px #fff, 0 0 0 4px #000" : SWATCH_SHADOW,
+              background: gradientCss ?? color
             }}
           />
         </button>
@@ -114,7 +113,7 @@ export default function ColorOpacityRow({
       <div className="w-px bg-bg self-stretch flex-shrink-0" />
 
       {/* Right half: opacity value + % scrub handle */}
-      <div className="flex items-center pl-2 w-1/2 min-w-0">
+      <div className="flex items-center pl-2 w-1/3 min-w-0">
         <input
           ref={opacityInputRef}
           type="text"
