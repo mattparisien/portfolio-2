@@ -7,6 +7,18 @@ import type { SaveableObj } from "./useBoardSync";
 
 // ── extractTextProps ──────────────────────────────────────────────────────
 
+/** Normalize Fabric's rgb(...) / rgba(...) color values back to #rrggbb hex */
+function toHex(c: string): string {
+  const rgb = c.match(/rgba?\(\s*(\d+),\s*(\d+),\s*(\d+)/);
+  if (!rgb) return c;
+  return (
+    "#" +
+    [rgb[1], rgb[2], rgb[3]]
+      .map((n) => parseInt(n).toString(16).padStart(2, "0"))
+      .join("")
+  );
+}
+
 function extractTextProps(txt: IText): TextProps {
   const align = (txt.textAlign as string) || "left";
   const fill  = txt.fill;
@@ -124,22 +136,22 @@ export function useSelectionState({
 
       if (isPath) {
         const p = obj as unknown as { stroke?: string; strokeWidth?: number; opacity?: number };
-        if (p.stroke)                setColor(p.stroke);
+        if (p.stroke)                setColor(toHex(p.stroke));
         if (p.strokeWidth != null)   setBrushSize(p.strokeWidth);
         if (p.opacity     != null)   setOpacity(p.opacity);
       }
       if (isLine) {
         const l = obj as unknown as { stroke?: string; strokeWidth?: number; opacity?: number };
-        if (typeof l.stroke === "string" && l.stroke) setColor(l.stroke);
+        if (typeof l.stroke === "string" && l.stroke) setColor(toHex(l.stroke));
         if (l.strokeWidth != null) setBrushSize(l.strokeWidth);
         if (l.opacity     != null) setOpacity(l.opacity);
       }
       if (!isText && !isGif && !isImage && !isPath && !isLine && obj) {
         const s = obj as unknown as { fill?: string; stroke?: string; opacity?: number };
-        if (typeof s.fill === "string" && s.fill) setColor(s.fill);
+        if (typeof s.fill === "string" && s.fill) setColor(toHex(s.fill));
         if (s.opacity != null) setOpacity(s.opacity);
         const st = s.stroke;
-        setShapeStrokeColor(st && st !== "transparent" && st !== "" ? st : "#000000");
+        setShapeStrokeColor(st && st !== "transparent" && st !== "" ? toHex(st) : "#000000");
       }
 
       setSelectedIsLocked(!!(obj as unknown as Record<string, unknown>)?.lockMovementX);
