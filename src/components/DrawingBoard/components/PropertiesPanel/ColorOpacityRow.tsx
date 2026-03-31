@@ -105,7 +105,7 @@ export default function ColorOpacityRow({
             if (/^#[0-9a-fA-F]{6}$/.test(v)) onColorChange(v);
           }}
           onBlur={() => setHex(color)}
-          className="flex-1 min-w-0 px-2 text-[11px] font-mono font-medium text-black/60 uppercase tracking-wider bg-transparent border-0 outline-none"
+          className="flex-1 min-w-0 px-2 text-[11px] font-mono font-medium text-fg uppercase tracking-wider bg-transparent border-0 outline-none"
         />
       </div>
 
@@ -133,7 +133,8 @@ export default function ColorOpacityRow({
         />
         <span
           onMouseDown={handleScrubDown}
-          className="flex-shrink-0 px-2 self-stretch flex items-center text-[11px] font-semibold text-black/40 hover:text-black/70 select-none transition-colors cursor-ew-resize"
+          style={{ cursor: "ew-resize" }}
+          className="flex-shrink-0 px-2 self-stretch flex items-center text-[11px] font-semibold text-fg select-none transition-colors [cursor:ew-resize!important]"
         >
           %
         </span>
