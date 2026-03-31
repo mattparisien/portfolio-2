@@ -13,7 +13,7 @@ import ToggleButton from "@/components/ui/ToggleButton";
 import Label from "@/components/ui/Label";
 import Rule from "@/components/ui/Rule";
 import Group from "@/components/ui/Group";
-import ColorRow from "./ColorRow";
+import ColorOpacityRow from "./ColorOpacityRow";
 import AppearanceGroup from "./AppearanceGroup";
 import ScrubbableControl from "@/components/ui/ScrubbableControl";
 import type { TextProps } from "../../types";
@@ -73,27 +73,30 @@ export default function TextPanel({
     gradient,
   } = textProps;
 
+  const gradientCss = gradient
+    ? `linear-gradient(${gradient.angle}deg, ${[...gradient.stops]
+        .sort((a, b) => a.offset - b.offset)
+        .map((s) => `${s.color} ${Math.round(s.offset * 100)}%`)
+        .join(", ")})`
+    : undefined;
+
   return (
     <>
       {/* ── Color ── */}
       <Group>
         <Label>Color</Label>
-        <ColorRow
+        <ColorOpacityRow
           color={gradient ? "#000000" : color}
+          gradientCss={gradientCss}
+          opacity={Math.round(opacity * 100)}
           isOpen={textColorOpen}
           onSwatchClick={() => {
             if (textColorOpen) onCloseColor();
             else onOpenTextColor();
           }}
           onColorChange={onTextColorChange}
+          onOpacityChange={(v) => onOpacityChange(v / 100)}
         />
-        {gradient && (
-          <div className="mt-1 px-1">
-            <span className="text-[11px] font-mono font-medium text-black/40">
-              Gradient
-            </span>
-          </div>
-        )}
       </Group>
 
       <Rule />
