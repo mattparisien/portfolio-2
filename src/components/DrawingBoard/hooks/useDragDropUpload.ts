@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useUploadProgress } from "@/app/contexts/UploadProgress.context";
 
 const IMAGE_TYPES = new Set([
@@ -37,7 +37,15 @@ export function useDragDropUpload({
 }) {
   const [isDragOver, setIsDragOver] = useState(false);
   const dragCounterRef = useRef(0);
+  const activeXhrsRef = useRef<Set<XMLHttpRequest>>(new Set());
   const { startUpload, updateProgress, completeUpload } = useUploadProgress();
+
+  useEffect(() => {
+    return () => {
+      activeXhrsRef.current.forEach(x => x.abort());
+      activeXhrsRef.current.clear();
+    };
+  }, []);
 
   const uploadFile = useCallback(
     (file: File, dropPoint: { x: number; y: number }) => {
@@ -52,6 +60,7 @@ export function useDragDropUpload({
       startUpload();
 
       const xhr = new XMLHttpRequest();
+      activeXhrsRef.current.add(xhr);
       xhr.open("POST", endpoint);
 
       xhr.upload.onprogress = (event) => {
@@ -61,6 +70,7 @@ export function useDragDropUpload({
       };
 
       xhr.onload = () => {
+        activeXhrsRef.current.delete(xhr);
         completeUpload();
         if (xhr.status >= 200 && xhr.status < 300) {
           try {
@@ -76,7 +86,8 @@ export function useDragDropUpload({
         }
       };
 
-      xhr.onerror = () => completeUpload();
+      xhr.onerror = () => { activeXhrsRef.current.delete(xhr); completeUpload(); };
+      xhr.onabort = () => { activeXhrsRef.current.delete(xhr); };
 
       xhr.send(formData);
     },
