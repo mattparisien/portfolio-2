@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useOthersListener } from "@/liveblocks.config";
 
 interface Toast {
@@ -14,6 +14,11 @@ let nextId = 0;
 
 export default function ToastNotifications() {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  useEffect(() => {
+    return () => { timersRef.current.forEach(clearTimeout); };
+  }, []);
 
   const dismiss = useCallback((id: number) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -22,7 +27,7 @@ export default function ToastNotifications() {
   const addToast = useCallback((toast: Omit<Toast, "id">) => {
     const id = nextId++;
     setToasts((prev) => [...prev.slice(-4), { ...toast, id }]);
-    setTimeout(() => dismiss(id), 3500);
+    timersRef.current.push(setTimeout(() => dismiss(id), 3500));
   }, [dismiss]);
 
   useOthersListener(({ type, user }) => {
