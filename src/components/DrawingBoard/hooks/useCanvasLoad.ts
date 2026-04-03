@@ -127,8 +127,6 @@ export function useCanvasLoad({
       const videoParsed    = parsed.filter(o =>  o._isVideo && o._videoUrl);
       const audioParsed    = parsed.filter(o =>  o._isAudio && o._audioUrl);
 
-      setIsSyncing(false);
-
       // ── Enliven regular + GIF objects ──────────────────────────────
       if (nonVideoParsed.length > 0) {
         const enlivened = await mods.util.enlivenObjects(nonVideoParsed);
@@ -178,7 +176,10 @@ export function useCanvasLoad({
         });
 
         fc.requestRenderAll();
-        if (hasGifs) Promise.allSettled(gifDecodePromises).then(() => startGifLoop());
+        if (hasGifs) {
+          await Promise.allSettled(gifDecodePromises);
+          startGifLoop();
+        }
       }
 
       // ── Restore video objects ──────────────────────────────────────
@@ -243,31 +244,30 @@ export function useCanvasLoad({
           return { imgObj, src };
         });
 
-        Promise.allSettled(restorePromises).then(results => {
-          // Sort fulfilled results by stored zIndex, then insert in that order
-          // so each moveObjectTo call doesn't shift already-placed objects.
-          type VideoResult = { imgObj: InstanceType<typeof FabricImage>; src: Record<string, unknown> };
-          (results as PromiseSettledResult<VideoResult>[])
-            .filter((r): r is PromiseFulfilledResult<VideoResult> => r.status === "fulfilled")
-            .map(r => r.value)
-            .sort((a, b) => ((a.src.zIndex as number) ?? 0) - ((b.src.zIndex as number) ?? 0))
-            .forEach(({ imgObj, src }) => {
-              // The object's index in the pre-sorted `parsed` array is its
-              // intended absolute canvas position.
-              const targetIdx = parsed.findIndex(p => p.boardObjectId === src.boardObjectId);
-              const clamp = Math.min(
-                targetIdx >= 0 ? targetIdx : fc.getObjects().length - 1,
-                fc.getObjects().length - 1,
-              );
-              if (clamp < fc.getObjects().length - 1) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (fc as any).moveObjectTo(imgObj, clamp);
-              }
-            });
+        type VideoResult = { imgObj: InstanceType<typeof FabricImage>; src: Record<string, unknown> };
+        const videoResults = await Promise.allSettled(restorePromises);
+        // Sort fulfilled results by stored zIndex, then insert in that order
+        // so each moveObjectTo call doesn't shift already-placed objects.
+        (videoResults as PromiseSettledResult<VideoResult>[])
+          .filter((r): r is PromiseFulfilledResult<VideoResult> => r.status === "fulfilled")
+          .map(r => r.value)
+          .sort((a, b) => ((a.src.zIndex as number) ?? 0) - ((b.src.zIndex as number) ?? 0))
+          .forEach(({ imgObj, src }) => {
+            // The object's index in the pre-sorted `parsed` array is its
+            // intended absolute canvas position.
+            const targetIdx = parsed.findIndex(p => p.boardObjectId === src.boardObjectId);
+            const clampIdx = Math.min(
+              targetIdx >= 0 ? targetIdx : fc.getObjects().length - 1,
+              fc.getObjects().length - 1,
+            );
+            if (clampIdx < fc.getObjects().length - 1) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (fc as any).moveObjectTo(imgObj, clampIdx);
+            }
+          });
 
-          startGifLoop();
-          fc.requestRenderAll();
-        });
+        startGifLoop();
+        fc.requestRenderAll();
       }
       // ── Restore audio player objects ──────────────────────────────
       if (audioParsed.length > 0) {
@@ -338,14 +338,13 @@ export function useCanvasLoad({
           return { imgObj, src };
         });
 
-        Promise.allSettled(audioRestorePromises).then(() => {
-          startGifLoop();
-          fc.requestRenderAll();
-        });
+        await Promise.allSettled(audioRestorePromises);
+        startGifLoop();
+        fc.requestRenderAll();
       }
     })()
       .catch(e => console.error("Failed to load board objects", e))
-      .finally(() => { fc.renderAll(); });
+      .finally(() => { setIsSyncing(false); fc.renderAll(); });
     // Only re-run when the canvas becomes ready (initialObjects is captured via ref).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReady]);
