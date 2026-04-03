@@ -112,6 +112,8 @@ export function useCanvasLoad({
       return;
     }
 
+    let unmounted = false;
+
     void (async () => {
       const parsed = objects.map(o => JSON.parse(o.fabricJSON)) as Record<string, unknown>[];
       // Restore in persisted z-order
@@ -130,6 +132,7 @@ export function useCanvasLoad({
       // ── Enliven regular + GIF objects ──────────────────────────────
       if (nonVideoParsed.length > 0) {
         const enlivened = await mods.util.enlivenObjects(nonVideoParsed);
+        if (unmounted) return;
         let hasGifs = false;
         const gifDecodePromises: Promise<void>[] = [];
 
@@ -178,6 +181,7 @@ export function useCanvasLoad({
         fc.requestRenderAll();
         if (hasGifs) {
           await Promise.allSettled(gifDecodePromises);
+          if (unmounted) return;
           startGifLoop();
         }
       }
@@ -246,6 +250,7 @@ export function useCanvasLoad({
 
         type VideoResult = { imgObj: InstanceType<typeof FabricImage>; src: Record<string, unknown> };
         const videoResults = await Promise.allSettled(restorePromises);
+        if (unmounted) return;
         // Sort fulfilled results by stored zIndex, then insert in that order
         // so each moveObjectTo call doesn't shift already-placed objects.
         (videoResults as PromiseSettledResult<VideoResult>[])
@@ -339,12 +344,15 @@ export function useCanvasLoad({
         });
 
         await Promise.allSettled(audioRestorePromises);
+        if (unmounted) return;
         startGifLoop();
         fc.requestRenderAll();
       }
     })()
       .catch(e => console.error("Failed to load board objects", e))
-      .finally(() => { setIsSyncing(false); fc.renderAll(); });
+      .finally(() => { if (!unmounted) { setIsSyncing(false); fc.renderAll(); } });
+
+    return () => { unmounted = true; };
     // Only re-run when the canvas becomes ready (initialObjects is captured via ref).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReady]);
