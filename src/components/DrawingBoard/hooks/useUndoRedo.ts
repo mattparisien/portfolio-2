@@ -98,6 +98,7 @@ export function useUndoRedo({
           .then(() => broadcastRef.current?.({ type: "OBJECT_DELETED", objectId: entry.objectId }))
           .catch(console.error);
       }
+      isUndoingRef.current = false;
 
     } else if (entry.type === "delete") {
       const oid = (entry.serialized as Record<string, unknown>).boardObjectId as string | undefined;
@@ -109,6 +110,7 @@ export function useUndoRedo({
         fc.requestRenderAll();
         saveRef.current(obj);
         if (entry.wasGif) { gifCountRef.current += 1; startRef.current(); }
+        isUndoingRef.current = false;
       }).catch(console.error);
 
     } else if (entry.type === "modify") {
@@ -123,9 +125,8 @@ export function useUndoRedo({
         fc.requestRenderAll();
         saveRef.current(obj as unknown as SaveableObj);
       }
+      isUndoingRef.current = false;
     }
-
-    isUndoingRef.current = false;
   }).current;
 
   const executeRedo = useRef(() => {
@@ -150,6 +151,7 @@ export function useUndoRedo({
           const oid = obj.boardObjectId;
           if (oid) undoStack.current.push({ type: "add", objectId: oid, serialized: (obj as unknown as { toObject(): object }).toObject() });
         }, 0);
+        isUndoingRef.current = false;
       }).catch(console.error);
 
     } else if (entry.type === "delete") {
@@ -172,6 +174,7 @@ export function useUndoRedo({
           if (gifCountRef.current === 0) stopRef.current();
         }
       }
+      isUndoingRef.current = false;
 
     } else if (entry.type === "modify") {
       const obj = fc.getObjects().find(
@@ -185,9 +188,8 @@ export function useUndoRedo({
         fc.requestRenderAll();
         saveRef.current(obj as unknown as SaveableObj);
       }
+      isUndoingRef.current = false;
     }
-
-    isUndoingRef.current = false;
   }).current;
 
   return { pushUndo, executeUndo, executeRedo, isUndoingRef };
