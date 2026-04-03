@@ -32,11 +32,16 @@ export default function ScrubbableControl({
   const startX = useRef(0);
   const startValue = useRef(value);
   const inputRef = useRef<HTMLInputElement>(null);
+  const cleanupDragRef = useRef<(() => void) | null>(null);
 
   // Keep input text in sync when value changes externally (not while user types)
   useEffect(() => {
     if (!editing) setInputVal(String(value));
   }, [value, editing]);
+
+  useEffect(() => {
+    return () => { cleanupDragRef.current?.(); };
+  }, []);
 
   const clamp = useCallback(
     (v: number) =>
@@ -62,6 +67,7 @@ export default function ScrubbableControl({
 
       const onUp = () => {
         dragging.current = false;
+        cleanupDragRef.current = null;
         document.body.style.cursor = "";
         document.body.style.userSelect = "";
         window.removeEventListener("mousemove", onMove);
@@ -70,6 +76,7 @@ export default function ScrubbableControl({
 
       window.addEventListener("mousemove", onMove);
       window.addEventListener("mouseup", onUp);
+      cleanupDragRef.current = onUp;
     },
     [value, sensitivity, step, onChange, clamp]
   );
